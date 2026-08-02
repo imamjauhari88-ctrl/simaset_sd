@@ -1,0 +1,242 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { asetSchema, asetDefaultValues, type AsetFormValues } from "@/lib/validasi/aset";
+import { useSimpanAset } from "@/lib/queries/aset";
+import { FotoAsetInput } from "@/components/aset/foto-aset-input";
+import { TombolScanQr } from "@/components/ui/tombol-scan-qr";
+import type { KategoriAset, Ruangan, Aset } from "@/types/database";
+
+const inputClass =
+  "w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface";
+const labelClass = "text-[13px] text-ink-soft block mb-1";
+const errorClass = "text-[12px] text-brick mt-1";
+
+export function FormAset({
+  kategoriList,
+  ruanganList,
+  asetAwal,
+  bisaSimpan = true,
+}: {
+  kategoriList: KategoriAset[];
+  ruanganList: Ruangan[];
+  asetAwal?: Aset;
+  bisaSimpan?: boolean;
+}) {
+  const router = useRouter();
+  const { mutateAsync, isPending } = useSimpanAset();
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm<AsetFormValues>({
+    resolver: zodResolver(asetSchema),
+    defaultValues: asetAwal
+      ? {
+          kode_aset: asetAwal.kode_aset,
+          nama: asetAwal.nama,
+          kategori_id: asetAwal.kategori_id,
+          ruangan_id: asetAwal.ruangan_id,
+          merk_tipe: asetAwal.merk_tipe ?? "",
+          tahun_perolehan: asetAwal.tahun_perolehan,
+          sumber_dana: asetAwal.sumber_dana,
+          harga_perolehan: asetAwal.harga_perolehan,
+          kondisi: asetAwal.kondisi,
+          foto_url: asetAwal.foto_url ?? "",
+          foto_public_id: asetAwal.foto_public_id ?? "",
+          catatan: asetAwal.catatan ?? "",
+        }
+      : asetDefaultValues,
+  });
+
+  async function onSubmit(values: AsetFormValues) {
+    try {
+      await mutateAsync({ id: asetAwal?.id, values });
+      toast.success(asetAwal ? "Perubahan disimpan" : "Aset berhasil ditambahkan");
+      router.push("/aset");
+      router.refresh();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Gagal menyimpan aset");
+    }
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="tag-card p-6 space-y-5 max-w-3xl"
+    >
+      {!bisaSimpan && (
+        <p className="text-[13px] text-ink-soft bg-paper border border-line rounded-lg px-3 py-2">
+          Kamu cuma bisa melihat data aset ini — hanya admin atau guru yang
+          menambahkan aset ini yang bisa mengubahnya.
+        </p>
+      )}
+      <fieldset disabled={!bisaSimpan} className="space-y-5 disabled:opacity-70">
+      <FotoAsetInput
+        fotoUrlAwal={watch("foto_url")}
+        onChange={(hasil) => {
+          setValue("foto_url", hasil?.url ?? "", { shouldDirty: true });
+          setValue("foto_public_id", hasil?.publicId ?? "", {
+            shouldDirty: true,
+          });
+        }}
+      />
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <div className="flex items-center justify-between mb-1">
+            <label className={labelClass + " mb-0"}>Kode Aset</label>
+            <TombolScanQr
+              onScan={(kode) => {
+                setValue("kode_aset", kode, { shouldValidate: true, shouldDirty: true });
+                toast.success(`Kode terbaca: ${kode}`);
+              }}
+            />
+          </div>
+          <input
+            {...register("kode_aset")}
+            placeholder="mis. ELK-0042"
+            className={`${inputClass} font-mono`}
+          />
+          {errors.kode_aset && (
+            <p className={errorClass}>{errors.kode_aset.message}</p>
+          )}
+        </div>
+        <div>
+          <label className={labelClass}>Nama Aset</label>
+          <input
+            {...register("nama")}
+            placeholder="mis. Proyektor Epson EB-X06"
+            className={inputClass}
+          />
+          {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={labelClass}>Kategori</label>
+          <select {...register("kategori_id")} className={inputClass}>
+            <option value="">Pilih kategori</option>
+            {kategoriList.map((k) => (
+              <option key={k.id} value={k.id}>
+                {k.nama}
+              </option>
+            ))}
+          </select>
+          {errors.kategori_id && (
+            <p className={errorClass}>{errors.kategori_id.message}</p>
+          )}
+        </div>
+        <div>
+          <label className={labelClass}>Ruangan</label>
+          <select {...register("ruangan_id")} className={inputClass}>
+            <option value="">Pilih ruangan</option>
+            {ruanganList.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.nama}
+              </option>
+            ))}
+          </select>
+          {errors.ruangan_id && (
+            <p className={errorClass}>{errors.ruangan_id.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label className={labelClass}>Merk / Tipe</label>
+          <input
+            {...register("merk_tipe")}
+            placeholder="mis. Epson EB-X06"
+            className={inputClass}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Tahun Perolehan</label>
+          <input
+            type="number"
+            {...register("tahun_perolehan")}
+            className={inputClass}
+          />
+          {errors.tahun_perolehan && (
+            <p className={errorClass}>{errors.tahun_perolehan.message}</p>
+          )}
+        </div>
+        <div>
+          <label className={labelClass}>Harga Perolehan (Rp)</label>
+          <input
+            type="number"
+            {...register("harga_perolehan")}
+            className={inputClass}
+          />
+          {errors.harga_perolehan && (
+            <p className={errorClass}>{errors.harga_perolehan.message}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={labelClass}>Sumber Dana</label>
+          <select {...register("sumber_dana")} className={inputClass}>
+            <option value="bos">BOS</option>
+            <option value="apbd">APBD</option>
+            <option value="hibah">Hibah</option>
+            <option value="swadaya">Swadaya</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Kondisi</label>
+          <select {...register("kondisi")} className={inputClass}>
+            <option value="baik">Baik</option>
+            <option value="rusak_ringan">Rusak Ringan</option>
+            <option value="rusak_berat">Rusak Berat</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>Catatan</label>
+        <textarea
+          rows={3}
+          {...register("catatan")}
+          placeholder="Catatan tambahan (opsional)"
+          className={inputClass}
+        />
+      </div>
+      </fieldset>
+
+      <div className="flex gap-3 pt-2">
+        {bisaSimpan && (
+          <button
+            type="submit"
+            disabled={isPending}
+            className="bg-pine text-white font-medium text-sm px-5 py-2.5 rounded-lg hover:bg-pine-dark transition-colors disabled:opacity-60"
+          >
+            {isPending
+              ? "Menyimpan..."
+              : asetAwal
+              ? "Simpan Perubahan"
+              : "Simpan Aset"}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="text-ink-soft text-sm px-5 py-2.5 rounded-lg hover:bg-paper transition-colors"
+        >
+          {bisaSimpan ? "Batal" : "Kembali"}
+        </button>
+      </div>
+    </form>
+  );
+}

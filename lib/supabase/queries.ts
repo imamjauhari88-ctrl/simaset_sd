@@ -1,0 +1,492 @@
+import { createClient } from "@/lib/supabase/server";
+import { formatWaktuRelatif } from "@/lib/format";
+import type {
+  Aset,
+  KategoriAset,
+  KondisiAset,
+  MutasiAset,
+  PemeliharaanAset,
+  Ruangan,
+} from "@/types/database";
+
+export type AsetWithRelasi = Aset & {
+  kategori_aset: Pick<KategoriAset, "id" | "nama"> | null;
+  ruangan: Pick<Ruangan, "id" | "nama"> | null;
+};
+
+export type MutasiWithRelasi = MutasiAset & {
+  aset: Pick<Aset, "id" | "kode_aset" | "nama"> | null;
+  ruangan_asal: Pick<Ruangan, "id" | "nama"> | null;
+  ruangan_tujuan: Pick<Ruangan, "id" | "nama"> | null;
+};
+
+export type PemeliharaanWithRelasi = PemeliharaanAset & {
+  aset: Pick<Aset, "id" | "kode_aset" | "nama"> | null;
+};
+
+export async function getDaftarAset(): Promise<AsetWithRelasi[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id ( id, nama ), ruangan:ruangan_id ( id, nama )`
+    )
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Gagal mengambil data aset:", error.message);
+    return [];
+  }
+
+  return data as unknown as AsetWithRelasi[];
+}
+
+export interface DaftarAsetParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  kondisi?: KondisiAset | "semua";
+}
+
+export interface DaftarAsetResult {
+  data: AsetWithRelasi[];
+  count: number;
+}
+
+/**
+ * Versi berpaginasi dari getDaftarAset — filter (pencarian & kondisi) dan
+ * pemotongan halaman dilakukan di query Supabase (bukan di JS) supaya
+ * total & jumlah baris yang dikirim ke client tetap kecil walau data
+ * aset sudah ribuan baris.
+ */
+export async function getDaftarAsetPaginated(
+  params: DaftarAsetParams = {}
+): Promise<DaftarAsetResult> {
+  const { page = 1, pageSize = 15, search = "", kondisi = "semua" } = params;
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id ( id, nama ), ruangan:ruangan_id ( id, nama )`,
+      { count: "exact" }
+    );
+
+  const kataKunci = search.trim();
+  if (kataKunci) {
+    // Escape karakter khusus filter PostgREST (% , ) supaya pencarian
+    // dengan simbol tersebut tidak merusak sintaks query .or()
+    const aman = kataKunci.replace(/[%,]/g, "");
+    query = query.or(`nama.ilike.%${aman}%,kode_aset.ilike.%${aman}%`);
+  }
+  if (kondisi !== "semua") {
+    query = query.eq("kondisi", kondisi);
+  }
+
+  const dari = (Math.max(1, page) - 1) * pageSize;
+  const sampai = dari + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order("created_at", { ascending: false })
+    .range(dari, sampai);
+
+  if (error) {
+    console.error("Gagal mengambil data aset:", error.message);
+    return { data: [], count: 0 };
+  }
+
+  return { data: data as unknown as AsetWithRelasi[], count: count ?? 0 };
+}
+
+/** Jumlah total aset tanpa filter — dipakai untuk membedakan "belum ada
+ * data sama sekali" (tampilkan EmptyState) vs "ada data tapi hasil
+ * pencarian kosong" (tampilkan pesan di dalam tabel). */
+export async function getTotalAset(): Promise<number> {
+  const supabase = await createClient();
+  const { count, error } = await supabase
+    .from("aset")
+    .select("*", { count: "exact", head: true });
+
+  if (error) {
+    console.error("Gagal menghitung total aset:", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+export interface DaftarMutasiParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  tahun?: number | "semua";
+}
+
+export interface DaftarMutasiResult {
+  data: MutasiWithRelasi[];
+  count: number;
+}
+
+/**
+ * Pencarian nama/kode aset difilter lewat tabel relasi `aset` (embedded
+ * resource). Join dibuat `!inner` HANYA saat pencarian aktif, supaya
+ * PostgREST benar-benar membatasi baris mutasi_aset yang dikembalikan
+ * (join biasa cuma mengisi/mengosongkan data relasi, tidak memfilter baris
+ * induk). Saat tidak ada pencarian, tetap pakai left join biasa supaya
+ * baris dengan aset yang sudah terhapus (aset_id null) tetap tampil.
+ */
+export async function getDaftarMutasiPaginated(
+  params: DaftarMutasiParams = {}
+): Promise<DaftarMutasiResult> {
+  const { page = 1, pageSize = 15, search = "", tahun = "semua" } = params;
+  const supabase = await createClient();
+
+  const kataKunci = search.trim();
+  const selectKlausa = kataKunci
+    ? `*, aset:aset_id!inner ( id, kode_aset, nama ), ruangan_asal:ruangan_asal_id ( id, nama ), ruangan_tujuan:ruangan_tujuan_id ( id, nama )`
+    : `*, aset:aset_id ( id, kode_aset, nama ), ruangan_asal:ruangan_asal_id ( id, nama ), ruangan_tujuan:ruangan_tujuan_id ( id, nama )`;
+
+  let query = supabase
+    .from("mutasi_aset")
+    .select(selectKlausa, { count: "exact" });
+
+  if (kataKunci) {
+    const aman = kataKunci.replace(/[%,]/g, "");
+    query = query.or(`nama.ilike.%${aman}%,kode_aset.ilike.%${aman}%`, {
+      foreignTable: "aset",
+    });
+  }
+  if (tahun !== "semua") {
+    query = query.gte("tanggal", `${tahun}-01-01`).lte("tanggal", `${tahun}-12-31`);
+  }
+
+  const dari = (Math.max(1, page) - 1) * pageSize;
+  const sampai = dari + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order("tanggal", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(dari, sampai);
+
+  if (error) {
+    console.error("Gagal mengambil data mutasi:", error.message);
+    return { data: [], count: 0 };
+  }
+
+  return { data: data as unknown as MutasiWithRelasi[], count: count ?? 0 };
+}
+
+export interface DaftarPemeliharaanParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  tahun?: number | "semua";
+  jenis?: "rutin" | "perbaikan" | "semua";
+}
+
+export interface DaftarPemeliharaanResult {
+  data: PemeliharaanWithRelasi[];
+  count: number;
+}
+
+/** Sama seperti getDaftarMutasiPaginated: join `aset` dibuat `!inner`
+ * hanya saat pencarian nama/kode aset aktif, supaya baris dengan aset
+ * yang sudah terhapus tetap tampil ketika tidak sedang mencari. */
+export async function getDaftarPemeliharaanPaginated(
+  params: DaftarPemeliharaanParams = {}
+): Promise<DaftarPemeliharaanResult> {
+  const {
+    page = 1,
+    pageSize = 15,
+    search = "",
+    tahun = "semua",
+    jenis = "semua",
+  } = params;
+  const supabase = await createClient();
+
+  const kataKunci = search.trim();
+  const selectKlausa = kataKunci
+    ? `*, aset:aset_id!inner ( id, kode_aset, nama )`
+    : `*, aset:aset_id ( id, kode_aset, nama )`;
+
+  let query = supabase
+    .from("pemeliharaan_aset")
+    .select(selectKlausa, { count: "exact" });
+
+  if (kataKunci) {
+    const aman = kataKunci.replace(/[%,]/g, "");
+    query = query.or(`nama.ilike.%${aman}%,kode_aset.ilike.%${aman}%`, {
+      foreignTable: "aset",
+    });
+  }
+  if (tahun !== "semua") {
+    query = query.gte("tanggal", `${tahun}-01-01`).lte("tanggal", `${tahun}-12-31`);
+  }
+  if (jenis !== "semua") {
+    query = query.eq("jenis", jenis);
+  }
+
+  const dari = (Math.max(1, page) - 1) * pageSize;
+  const sampai = dari + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order("tanggal", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(dari, sampai);
+
+  if (error) {
+    console.error("Gagal mengambil data pemeliharaan:", error.message);
+    return { data: [], count: 0 };
+  }
+
+  return {
+    data: data as unknown as PemeliharaanWithRelasi[],
+    count: count ?? 0,
+  };
+}
+
+export async function getKategoriList(): Promise<KategoriAset[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("kategori_aset")
+    .select("*")
+    .order("nama");
+
+  if (error) {
+    console.error("Gagal mengambil kategori:", error.message);
+    return [];
+  }
+  return data;
+}
+
+export async function getRuanganList(): Promise<Ruangan[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("ruangan")
+    .select("*")
+    .order("nama");
+
+  if (error) {
+    console.error("Gagal mengambil ruangan:", error.message);
+    return [];
+  }
+  return data;
+}
+
+// ============================================================
+// Dashboard — agregasi data real, bukan mock
+// ============================================================
+
+export interface KondisiBreakdownItem {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface TrenBulananItem {
+  bulan: string;
+  jumlah: number;
+}
+
+export interface AktivitasItem {
+  id: string;
+  teks: string;
+  waktu: string; // sudah diformat relatif, mis. "10 menit lalu"
+}
+
+export interface DashboardData {
+  totalAset: number;
+  nilaiTotalAset: number;
+  rusakBerat: number;
+  totalRuangan: number;
+  kondisiBreakdown: KondisiBreakdownItem[];
+  trenBulanan: TrenBulananItem[];
+  aktivitas: AktivitasItem[];
+}
+
+const WARNA_KONDISI: Record<KondisiAset, string> = {
+  baik: "var(--color-sage)",
+  rusak_ringan: "var(--color-brass)",
+  rusak_berat: "var(--color-brick)",
+};
+
+const LABEL_KONDISI: Record<KondisiAset, string> = {
+  baik: "Baik",
+  rusak_ringan: "Rusak Ringan",
+  rusak_berat: "Rusak Berat",
+};
+
+const NAMA_BULAN = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
+
+type AsetRingkas = Pick<Aset, "kondisi" | "harga_perolehan" | "created_at">;
+type AsetBaru = Pick<Aset, "id" | "kode_aset" | "nama" | "created_at">;
+type AsetDiubah = Pick<
+  Aset,
+  "id" | "kode_aset" | "nama" | "created_at" | "updated_at"
+>;
+type MutasiRingkas = {
+  id: string;
+  created_at: string;
+  disetujui_oleh: string | null;
+  aset: Pick<Aset, "nama"> | null;
+  ruangan_asal: Pick<Ruangan, "nama"> | null;
+  ruangan_tujuan: Pick<Ruangan, "nama"> | null;
+};
+type PemeliharaanRingkas = {
+  id: string;
+  jenis: string;
+  created_at: string;
+  aset: Pick<Aset, "nama"> | null;
+};
+
+export async function getDashboardData(): Promise<DashboardData> {
+  const supabase = await createClient();
+
+  const enamBulanLalu = new Date();
+  enamBulanLalu.setMonth(enamBulanLalu.getMonth() - 5);
+  enamBulanLalu.setDate(1);
+  enamBulanLalu.setHours(0, 0, 0, 0);
+
+  const [
+    asetRingkasRes,
+    totalRuanganRes,
+    asetBaruRes,
+    asetDiubahRes,
+    mutasiRes,
+    pemeliharaanRes,
+  ] = await Promise.all([
+    supabase.from("aset").select("kondisi, harga_perolehan, created_at"),
+    supabase.from("ruangan").select("id", { count: "exact", head: true }),
+    supabase
+      .from("aset")
+      .select("id, kode_aset, nama, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("aset")
+      .select("id, kode_aset, nama, created_at, updated_at")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("mutasi_aset")
+      .select(
+        `id, created_at, disetujui_oleh, aset:aset_id ( nama ), ruangan_asal:ruangan_asal_id ( nama ), ruangan_tujuan:ruangan_tujuan_id ( nama )`
+      )
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("pemeliharaan_aset")
+      .select(`id, jenis, created_at, aset:aset_id ( nama )`)
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const aset = (asetRingkasRes.data ?? []) as unknown as AsetRingkas[];
+  const asetBaru = (asetBaruRes.data ?? []) as unknown as AsetBaru[];
+  const asetDiubah = (asetDiubahRes.data ?? []) as unknown as AsetDiubah[];
+  const mutasi = (mutasiRes.data ?? []) as unknown as MutasiRingkas[];
+  const pemeliharaan = (pemeliharaanRes.data ?? []) as unknown as PemeliharaanRingkas[];
+
+  const totalAset = aset.length;
+  const nilaiTotalAset = aset.reduce((sum, a) => sum + (a.harga_perolehan ?? 0), 0);
+  const rusakBerat = aset.filter((a) => a.kondisi === "rusak_berat").length;
+
+  const kondisiCount: Record<KondisiAset, number> = {
+    baik: 0,
+    rusak_ringan: 0,
+    rusak_berat: 0,
+  };
+  for (const a of aset) {
+    if (a.kondisi in kondisiCount) kondisiCount[a.kondisi] += 1;
+  }
+  const kondisiBreakdown = (Object.keys(kondisiCount) as KondisiAset[]).map(
+    (k) => ({
+      name: LABEL_KONDISI[k],
+      value: kondisiCount[k],
+      color: WARNA_KONDISI[k],
+    })
+  );
+
+  const bulanBuckets: { key: string; bulan: string; jumlah: number }[] = [];
+  const kursor = new Date(enamBulanLalu);
+  for (let i = 0; i < 6; i++) {
+    bulanBuckets.push({
+      key: `${kursor.getFullYear()}-${kursor.getMonth()}`,
+      bulan: NAMA_BULAN[kursor.getMonth()],
+      jumlah: 0,
+    });
+    kursor.setMonth(kursor.getMonth() + 1);
+  }
+  for (const a of aset) {
+    if (!a.created_at) continue;
+    const d = new Date(a.created_at);
+    if (d < enamBulanLalu) continue;
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    const bucket = bulanBuckets.find((b) => b.key === key);
+    if (bucket) bucket.jumlah += 1;
+  }
+  const trenBulanan = bulanBuckets.map(({ bulan, jumlah }) => ({ bulan, jumlah }));
+
+  const aktivitasMentah: { id: string; teks: string; waktuRaw: string }[] = [];
+
+  for (const a of asetBaru) {
+    aktivitasMentah.push({
+      id: `aset-baru-${a.id}`,
+      teks: `Aset baru ditambahkan — ${a.kode_aset} · ${a.nama}`,
+      waktuRaw: a.created_at,
+    });
+  }
+
+  for (const a of asetDiubah) {
+    // hanya masuk kalau memang pernah diedit setelah dibuat
+    if (a.updated_at && a.created_at && a.updated_at !== a.created_at) {
+      aktivitasMentah.push({
+        id: `aset-ubah-${a.id}`,
+        teks: `Data aset diperbarui — ${a.kode_aset} · ${a.nama}`,
+        waktuRaw: a.updated_at,
+      });
+    }
+  }
+
+  for (const m of mutasi) {
+    aktivitasMentah.push({
+      id: `mutasi-${m.id}`,
+      teks: `Mutasi dicatat — ${m.aset?.nama ?? "Aset"}: ${
+        m.ruangan_asal?.nama ?? "?"
+      } → ${m.ruangan_tujuan?.nama ?? "?"}${
+        m.disetujui_oleh ? ` (disetujui ${m.disetujui_oleh})` : ""
+      }`,
+      waktuRaw: m.created_at,
+    });
+  }
+
+  for (const p of pemeliharaan) {
+    const jenisLabel = p.jenis === "perbaikan" ? "Perbaikan" : "Rutin";
+    aktivitasMentah.push({
+      id: `pemeliharaan-${p.id}`,
+      teks: `Pemeliharaan (${jenisLabel}) dicatat — ${p.aset?.nama ?? "Aset"}`,
+      waktuRaw: p.created_at,
+    });
+  }
+
+  aktivitasMentah.sort(
+    (a, b) => new Date(b.waktuRaw).getTime() - new Date(a.waktuRaw).getTime()
+  );
+
+  return {
+    totalAset,
+    nilaiTotalAset,
+    rusakBerat,
+    totalRuangan: totalRuanganRes.count ?? 0,
+    kondisiBreakdown,
+    trenBulanan,
+    aktivitas: aktivitasMentah.slice(0, 6).map((a) => ({
+      id: a.id,
+      teks: a.teks,
+      waktu: formatWaktuRelatif(a.waktuRaw),
+    })),
+  };
+}
