@@ -67,7 +67,10 @@ export default async function AsetPage({
             actionHref={bisaTambah ? "/aset/tambah" : undefined}
           />
         ) : (
-          <TabelAset initialData={daftarAsetHalamanIni} />
+          <TabelAset
+            initialData={daftarAsetHalamanIni}
+            profil={profil ? { id: profil.id, role: profil.role } : null}
+          />
         )}
       </main>
     </>

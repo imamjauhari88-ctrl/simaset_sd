@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { login } from "./actions";
+import { LogoMark } from "@/components/layout/sidebar";
 
 const initialState: { error?: string } = {};
 
@@ -18,10 +19,7 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center bg-paper px-4">
       <div className="tag-card w-full max-w-sm p-8">
         <div className="flex items-center gap-3 mb-6">
-          <svg width="28" height="28" viewBox="0 0 26 26" fill="none">
-            <path d="M3 3H14L23 12L14 21L3 21V3Z" fill="var(--color-pine)" />
-            <circle cx="8" cy="9" r="2" fill="var(--color-paper)" />
-          </svg>
+          <LogoMark size={28} />
           <div>
             <p className="font-display font-semibold text-ink">SIMASET SD</p>
             <p className="text-[11px] text-ink-soft">Inventaris Aset Sekolah</p>

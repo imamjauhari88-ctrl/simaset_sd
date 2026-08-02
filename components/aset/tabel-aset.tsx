@@ -9,14 +9,34 @@ import type { AsetWithRelasi, DaftarAsetResult } from "@/lib/supabase/queries";
 import type { KondisiAset } from "@/types/database";
 import { useDaftarAsetPaginated } from "@/lib/queries/aset";
 import { useDebounce } from "@/lib/hooks/use-debounce";
-import { Search } from "lucide-react";
+import { Search, Pencil } from "lucide-react";
+import type { RolePengguna } from "@/types/database";
 
 const PAGE_SIZE = 15;
+
+type ProfilRingkas = { id: string; role: RolePengguna } | null;
+
+/**
+ * Aturan boleh-edit: admin bebas ubah semua aset, guru cuma boleh ubah
+ * aset yang dia sendiri tambahkan, kepsek selalu read-only (cuma lihat).
+ */
+function bisaEdit(profil: ProfilRingkas, dibuatOleh: string | null) {
+  if (!profil) return false;
+  if (profil.role === "admin") return true;
+  if (profil.role === "guru") return dibuatOleh === profil.id;
+  return false;
+}
 
 const rupiah = (n: number) =>
   new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
 
-export function TabelAset({ initialData }: { initialData: DaftarAsetResult }) {
+export function TabelAset({
+  initialData,
+  profil = null,
+}: {
+  initialData: DaftarAsetResult;
+  profil?: ProfilRingkas;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -112,6 +132,7 @@ export function TabelAset({ initialData }: { initialData: DaftarAsetResult }) {
               <th className="font-medium px-4 py-3">Tahun</th>
               <th className="font-medium px-4 py-3">Harga Perolehan</th>
               <th className="font-medium px-4 py-3">Kondisi</th>
+              <th className="font-medium px-4 py-3 text-right">Aksi</th>
             </tr>
           </thead>
           <tbody>
@@ -144,12 +165,24 @@ export function TabelAset({ initialData }: { initialData: DaftarAsetResult }) {
                 <td className="px-4 py-3">
                   <KondisiBadge kondisi={a.kondisi} />
                 </td>
+                <td className="px-4 py-3 text-right">
+                  {bisaEdit(profil, a.dibuat_oleh) && (
+                    <Link
+                      href={`/aset/${a.id}`}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-ink-soft hover:text-pine hover:bg-pine-soft transition-colors"
+                      title="Ubah aset"
+                      aria-label={`Ubah ${a.nama}`}
+                    >
+                      <Pencil size={15} />
+                    </Link>
+                  )}
+                </td>
               </tr>
             ))}
             {daftar.length === 0 && (
               <tr>
                 <td
-                  colSpan={7}
+                  colSpan={8}
                   className="px-4 py-14 text-center text-ink-soft text-[13px]"
                 >
                   <Search size={20} className="mx-auto mb-2 text-line" />

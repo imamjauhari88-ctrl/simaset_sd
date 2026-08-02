@@ -30,11 +30,15 @@ const menu = [
   { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];
 
-function LogoMark() {
+export function LogoMark({ size = 26 }: { size?: number }) {
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" className="shrink-0">
-      <path d="M3 3H14L23 12L14 21L3 21V3Z" fill="var(--color-pine)" />
-      <circle cx="8" cy="9" r="2" fill="var(--color-paper)" />
+    <svg width={size} height={size} viewBox="0 0 26 26" fill="none" className="shrink-0">
+      {/* Kotak inventaris isometrik — merepresentasikan aset & barang sekolah */}
+      <path d="M13 1.5L23.5 7.25V18.75L13 24.5L2.5 18.75V7.25L13 1.5Z" fill="var(--color-pine-soft)" />
+      <path d="M13 1.5L23.5 7.25L13 13L2.5 7.25L13 1.5Z" fill="var(--color-pine)" />
+      <path d="M13 13L23.5 7.25V18.75L13 24.5V13Z" fill="var(--color-pine-dark)" />
+      <path d="M13 13L2.5 7.25V18.75L13 24.5V13Z" fill="var(--color-pine)" fillOpacity="0.8" />
+      <path d="M8 4.6L18.5 10.35" stroke="var(--color-paper)" strokeWidth="1" strokeOpacity="0.55" strokeLinecap="round" />
     </svg>
   );
 }
