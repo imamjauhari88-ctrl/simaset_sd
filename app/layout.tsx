@@ -39,7 +39,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <head>
         {/* Set tema SEBELUM paint pertama supaya nggak ada flash putih
             sebelum berubah ke gelap (FOUC). Baca localStorage; kalau
