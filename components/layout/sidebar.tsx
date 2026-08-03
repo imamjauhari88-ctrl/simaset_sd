@@ -9,6 +9,7 @@ import {
   Tags,
   DoorOpen,
   ArrowLeftRight,
+  HandCoins,
   Wrench,
   ClipboardCheck,
   FileBarChart,
@@ -24,6 +25,7 @@ const menu = [
   { href: "/kategori", label: "Kategori Barang", icon: Tags },
   { href: "/ruangan", label: "Ruangan / Lokasi", icon: DoorOpen },
   { href: "/mutasi", label: "Mutasi Aset", icon: ArrowLeftRight },
+  { href: "/peminjaman", label: "Peminjaman", icon: HandCoins },
   { href: "/pemeliharaan", label: "Pemeliharaan", icon: Wrench },
   { href: "/opname", label: "Opname Fisik", icon: ClipboardCheck },
   { href: "/laporan", label: "Laporan", icon: FileBarChart },
@@ -72,36 +74,46 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function Sidebar() {
-  const { isOpen, close } = useSidebar();
+  const { isMobileOpen, isDesktopOpen, closeMobile } = useSidebar();
 
   return (
     <>
-      {/* Desktop: statis, selalu tampil */}
-      <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-line bg-surface">
-        <div
-          className="flex items-center gap-3 px-5 h-16 border-b border-line"
-          style={{ height: "4rem", minHeight: "4rem" }}
-        >
-          <LogoMark />
-          <div className="leading-tight">
-            <p className="font-display font-semibold text-ink text-[15px]">
-              SIMASET SD
-            </p>
-            <p className="text-[11px] text-ink-soft">Inventaris Aset Sekolah</p>
+      {/* Desktop: bisa ditutup/dibuka lewat tombol burger di Topbar.
+          Lebar aside luar dianimasikan 0 <-> 16rem (overflow-hidden),
+          sedangkan konten di dalamnya tetap w-64 tetap supaya nggak
+          ikut menyempit/reflow pas transisi, cuma "terpotong". */}
+      <aside
+        className={clsx(
+          "hidden md:flex shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out bg-surface",
+          isDesktopOpen ? "w-64 border-r border-line" : "w-0 border-r-0"
+        )}
+      >
+        <div className="flex w-64 shrink-0 flex-col h-full">
+          <div
+            className="flex items-center gap-3 px-5 h-16 border-b border-line"
+            style={{ height: "4rem", minHeight: "4rem" }}
+          >
+            <LogoMark />
+            <div className="leading-tight">
+              <p className="font-display font-semibold text-ink text-[15px]">
+                SIMASET SD
+              </p>
+              <p className="text-[11px] text-ink-soft">Inventaris Aset Sekolah</p>
+            </div>
           </div>
-        </div>
-        <NavLinks />
-        <div className="p-3 border-t border-line tag-dashed-top">
-          <TombolKeluarSidebar />
+          <NavLinks />
+          <div className="p-3 border-t border-line tag-dashed-top">
+            <TombolKeluarSidebar />
+          </div>
         </div>
       </aside>
 
       {/* Mobile: drawer + backdrop, cuma render saat dibuka */}
-      {isOpen && (
+      {isMobileOpen && (
         <div className="md:hidden fixed inset-0 z-50">
           <div
             className="absolute inset-0 bg-black/40 animate-fade-in"
-            onClick={close}
+            onClick={closeMobile}
           />
           <aside className="absolute inset-y-0 left-0 w-72 bg-surface flex flex-col shadow-xl animate-slide-in-left">
             <div
@@ -120,14 +132,14 @@ export function Sidebar() {
                 </div>
               </div>
               <button
-                onClick={close}
+                onClick={closeMobile}
                 className="text-ink-soft hover:text-ink p-1"
                 aria-label="Tutup menu"
               >
                 <X size={20} />
               </button>
             </div>
-            <NavLinks onNavigate={close} />
+            <NavLinks onNavigate={closeMobile} />
             <div className="p-3 border-t border-line tag-dashed-top">
               <TombolKeluarSidebar />
             </div>

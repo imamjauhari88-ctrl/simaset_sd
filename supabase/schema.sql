@@ -490,3 +490,358 @@ drop trigger if exists trg_aset_updated_at on aset;
 create trigger trg_aset_updated_at
   before update on aset
   for each row execute function set_updated_at();
+
+-- ============================================================
+-- 5. PEMINJAMAN ASET (role-based approval)
+--
+-- assetId (aset_id) sebagai referensi utama, bukan nama aset.
+-- Aturan approval:
+--   - peminjam admin/kepsek -> auto-approve/reject saat request
+--   - peminjam guru         -> status MENUNGGU, nunggu admin/kepsek
+-- Semua perubahan stok (approve/return) wajib lewat fungsi
+-- SECURITY DEFINER di bawah (bukan UPDATE langsung dari client),
+-- dan wajib mengunci baris terkait (FOR UPDATE) supaya aman dari
+-- race condition kalau ada 2 approve/return nembak bersamaan.
+-- ============================================================
+
+alter table aset add column if not exists stok int not null default 1 check (stok >= 0);
+
+create table if not exists peminjaman (
+  borrow_id uuid primary key default gen_random_uuid(),
+  sekolah_id uuid not null default current_sekolah_id() references sekolah(id) on delete cascade,
+  aset_id uuid not null references aset(id),
+  -- peminjam_id & peminjam_role di-default dari sesi login, BUKAN dari
+  -- payload client — supaya tidak ada celah orang lain "meminjamkan atas
+  -- nama" user lain atau ngaku role yang bukan miliknya.
+  peminjam_id uuid not null default auth.uid() references profil(id),
+  peminjam_role text not null default current_role_app()
+    check (peminjam_role in ('admin','guru','kepsek')),
+  qty int not null check (qty > 0),
+  tanggal_pinjam date not null default current_date,
+  tanggal_kembali_rencana date not null,
+  tanggal_kembali_aktual date,
+  status text not null default 'MENUNGGU'
+    check (status in ('MENUNGGU','DIPINJAM','DITOLAK','DIKEMBALIKAN')),
+  approver_id uuid references profil(id),
+  catatan text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists idx_peminjaman_status on peminjaman(sekolah_id, status);
+create index if not exists idx_peminjaman_aset on peminjaman(aset_id);
+create index if not exists idx_peminjaman_jatuh_tempo on peminjaman(status, tanggal_kembali_rencana);
+
+-- atas_nama: nama peminjam yang SEBENARNYA, dipakai kalau berbeda dari
+-- pemilik akun yang mengajukan (mis. admin mengajukan atas permintaan
+-- guru yang belum/tidak punya akun sendiri). Kalau kosong, yang
+-- ditampilkan di UI adalah nama pemilik akun (peminjam_id). Sengaja bukan
+-- kolom wajib dan bukan pengganti peminjam_id — peminjam_id tetap jadi
+-- pihak yang "bertanggung jawab" secara akun/akses, atas_nama cuma info
+-- tambahan siapa fisik yang pegang barangnya.
+alter table peminjaman add column if not exists atas_nama text;
+
+-- catatan_pengajuan / alasan_tolak: pisahan dari kolom `catatan` lama yang
+-- dual-purpose — diisi peminjam saat ngajuin ("mis. keperluan rapat wali
+-- murid"), TAPI ditimpa fn_reject_peminjaman dengan alasan tolak begitu
+-- admin/kepsek nolak. Efeknya catatan pengajuan guru hilang, ketiban
+-- alasan tolak. catatan_pengajuan cuma ditulis sekali saat insert (tidak
+-- pernah disentuh lagi oleh fungsi manapun); alasan_tolak cuma ditulis
+-- fn_reject_peminjaman saat reject. Keduanya independen, tidak saling timpa.
+alter table peminjaman add column if not exists catatan_pengajuan text;
+alter table peminjaman add column if not exists alasan_tolak text;
+
+-- Migrasi satu-kali dari kolom `catatan` lama, guarded supaya aman di-
+-- rerun (blok ini no-op begitu kolom `catatan` sudah tidak ada):
+--   - status DITOLAK -> nilai `catatan` sekarang sudah ketiban alasan
+--     tolak (bekas fn_reject_peminjaman lama), pindah ke alasan_tolak.
+--     Catatan pengajuan ASLI guru untuk baris ini sudah keburu hilang di
+--     desain lama sebelum migrasi ini ada — tidak bisa direcover, jadi
+--     catatan_pengajuan-nya tetap null.
+--   - status selain DITOLAK -> `catatan` belum pernah ditimpa, masih murni
+--     catatan pengajuan, pindah apa adanya ke catatan_pengajuan.
+do $$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema = 'public' and table_name = 'peminjaman' and column_name = 'catatan'
+  ) then
+    update peminjaman set alasan_tolak = catatan
+      where status = 'DITOLAK' and catatan is not null and alasan_tolak is null;
+    update peminjaman set catatan_pengajuan = catatan
+      where status <> 'DITOLAK' and catatan is not null and catatan_pengajuan is null;
+    -- peminjaman_dengan_status masih pakai p.* dari run schema.sql
+    -- sebelumnya, jadi masih "nempel" ke kolom catatan lama sampai view
+    -- itu di-drop+create ulang di bawah nanti. Drop dulu di sini supaya
+    -- alter table drop column tidak diblokir dependency-nya (2BP01);
+    -- create view-nya menyusul di section "View: status terlambat" di
+    -- bawah, jadi aman, view tidak pernah hilang permanen.
+    drop view if exists peminjaman_dengan_status;
+    alter table peminjaman drop column catatan;
+  end if;
+end $$;
+
+create table if not exists transaksi_log (
+  id uuid primary key default gen_random_uuid(),
+  sekolah_id uuid not null default current_sekolah_id() references sekolah(id) on delete cascade,
+  "timestamp" timestamptz not null default now(),
+  type text not null check (type in ('APPROVE','REJECT','RETURN')),
+  borrow_id uuid not null references peminjaman(borrow_id),
+  aset_id uuid not null references aset(id),
+  qty int not null,
+  before_stock int not null,
+  after_stock int not null,
+  actor_id uuid not null default auth.uid() references profil(id),
+  note text
+);
+
+create index if not exists idx_transaksi_log_borrow on transaksi_log(borrow_id);
+
+drop trigger if exists trg_peminjaman_updated_at on peminjaman;
+create trigger trg_peminjaman_updated_at
+  before update on peminjaman
+  for each row execute function set_updated_at();
+
+-- --- RLS peminjaman ---
+-- SELECT: semua role satu sekolah boleh lihat (guru perlu liat status
+-- pengajuannya sendiri, admin/kepsek perlu liat semua buat approve).
+-- INSERT: user cuma boleh insert dgn identitasnya sendiri & status awal
+-- MENUNGGU (auto-approve tetap lewat fungsi SECURITY DEFINER, bukan
+-- insert langsung status DIPINJAM).
+-- UPDATE/DELETE: TIDAK ADA policy untuk role biasa sama sekali — satu-
+-- satunya jalan ubah status adalah fn_approve/reject/return_peminjaman
+-- di bawah (SECURITY DEFINER, jalan sebagai owner tabel, bypass RLS).
+alter table peminjaman enable row level security;
+
+drop policy if exists peminjaman_select on peminjaman;
+create policy peminjaman_select on peminjaman
+  for select using (sekolah_id = current_sekolah_id());
+
+drop policy if exists peminjaman_insert on peminjaman;
+create policy peminjaman_insert on peminjaman
+  for insert with check (
+    sekolah_id = current_sekolah_id()
+    and peminjam_id = auth.uid()
+    and peminjam_role = current_role_app()
+    and status = 'MENUNGGU'
+    -- aset_id wajib milik sekolah yang sama (foreign key saja tidak
+    -- menjamin ini — bisa saja mengarah ke aset sekolah lain)
+    and aset_id in (select id from aset where sekolah_id = current_sekolah_id())
+  );
+
+revoke update, delete on peminjaman from authenticated;
+
+-- --- RLS transaksi_log ---
+-- Read-only dari client, sama kayak log_aktivitas: audit trail tidak
+-- boleh bisa diubah/dihapus lewat client, dan insert cuma lewat fungsi.
+alter table transaksi_log enable row level security;
+
+drop policy if exists transaksi_log_select on transaksi_log;
+create policy transaksi_log_select on transaksi_log
+  for select using (sekolah_id = current_sekolah_id());
+
+revoke insert, update, delete on transaksi_log from authenticated;
+
+-- --- View: status "terlambat" dihitung, BUKAN kolom yang disimpan ---
+-- Kenapa dihitung: kalau disimpan sebagai kolom biasa, butuh cron/job
+-- buat nyocokin tiap hari begitu tanggal_kembali_rencana lewat, dan
+-- gampang basi/nggak sinkron. Dihitung on-the-fly di view selalu akurat
+-- tanpa job tambahan. security_invoker=true supaya view tetap tunduk ke
+-- RLS tabel peminjaman (bukan bypass sebagai owner).
+--
+-- terlambat punya 2 kasus:
+--   - status DIPINJAM   -> dibandingkan ke HARI INI (belum dikembalikan,
+--                          masih berjalan, jadi patokannya "sekarang")
+--   - status DIKEMBALIKAN -> dibandingkan ke tanggal_kembali_aktual (SUDAH
+--                          dikembalikan, jadi patokannya tanggal kembali
+--                          yang sebenarnya, bukan hari ini — supaya
+--                          histori "dulu telat berapa hari" tetap akurat
+--                          walau dilihat bertahun-tahun kemudian)
+--   - status MENUNGGU/DITOLAK -> selalu false, belum relevan
+--
+-- Sengaja DROP + CREATE (bukan CREATE OR REPLACE) karena view ini pakai
+-- p.* — begitu ada kolom baru ditambahkan ke tabel peminjaman (mis.
+-- atas_nama belakangan), posisi kolom "terlambat" di akhir ikut geser,
+-- dan CREATE OR REPLACE VIEW menolak perubahan posisi/nama kolom. DROP
+-- lalu CREATE lagi selalu aman dari masalah ini, jadi schema.sql tetap
+-- bisa di-run ulang kapan pun ada kolom baru di peminjaman.
+drop view if exists peminjaman_dengan_status;
+create view peminjaman_dengan_status
+with (security_invoker = true) as
+select
+  p.*,
+  case
+    when p.status = 'DIPINJAM' then p.tanggal_kembali_rencana < current_date
+    when p.status = 'DIKEMBALIKAN' then p.tanggal_kembali_aktual > p.tanggal_kembali_rencana
+    else false
+  end as terlambat
+from peminjaman p;
+
+grant select on peminjaman_dengan_status to authenticated;
+
+-- --- Fungsi: approve (manual oleh admin/kepsek ATAU auto saat admin/
+--     kepsek jadi peminjam sendiri) ---
+--
+-- p_actor_id SENGAJA DIHAPUS dari parameter (bekas kesalahan desain: kalau
+-- diterima sebagai argumen, siapa pun yang punya akses `execute` bisa
+-- mengklaim jadi user lain dengan ngirim ID orang lain). Identitas aktor
+-- SELALU diambil dari auth.uid() milik sesi yang benar-benar memanggil
+-- fungsi ini, tidak bisa dipalsukan dari luar.
+--
+-- Cek sekolah aktor == sekolah peminjaman WAJIB di sini karena fungsi ini
+-- SECURITY DEFINER (bypass RLS sepenuhnya) — tanpa cek ini, admin/kepsek
+-- sekolah A yang tahu borrow_id sekolah B bisa approve/reject/return
+-- punya sekolah lain.
+create or replace function fn_approve_peminjaman(
+  p_borrow_id uuid
+) returns peminjaman
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row peminjaman%rowtype;
+  v_stok_sekarang int;
+  v_before int;
+  v_after int;
+  v_actor_id uuid := auth.uid();
+  v_actor_role text;
+  v_actor_sekolah_id uuid;
+begin
+  -- Lock baris peminjaman: cegah approve dobel diklik/dipanggil bersamaan
+  select * into v_row from peminjaman where borrow_id = p_borrow_id for update;
+  if not found then
+    raise exception 'PEMINJAMAN_NOT_FOUND';
+  end if;
+
+  if v_row.status <> 'MENUNGGU' then
+    raise exception 'INVALID_STATUS: hanya status MENUNGGU yang bisa di-approve (status sekarang: %)', v_row.status;
+  end if;
+
+  select role, sekolah_id into v_actor_role, v_actor_sekolah_id from profil where id = v_actor_id;
+  if v_actor_role not in ('admin','kepsek') then
+    raise exception 'FORBIDDEN: hanya admin/kepsek yang boleh approve';
+  end if;
+  if v_actor_sekolah_id is distinct from v_row.sekolah_id then
+    raise exception 'FORBIDDEN: beda sekolah';
+  end if;
+  -- CATATAN: sengaja TIDAK ada larangan "approve pengajuan sendiri" di sini.
+  -- Approve pengajuan sendiri justru valid untuk 1 skenario: auto-approve
+  -- saat admin/kepsek meminjam atas nama mereka sendiri (lihat requestBorrow
+  -- di actions.ts, yang manggil fungsi ini persis dengan actor = peminjam).
+  -- Guru sama sekali tidak bisa lolos guard role di atas, jadi tidak ada
+  -- celah guru approve pengajuannya sendiri.
+
+  -- Lock baris aset: baca stok versi terbaru, tahan sampai transaksi ini selesai
+  select stok into v_stok_sekarang from aset where id = v_row.aset_id for update;
+  if v_stok_sekarang is null then
+    raise exception 'ASET_NOT_FOUND';
+  end if;
+  v_before := v_stok_sekarang;
+
+  if v_stok_sekarang < v_row.qty then
+    update peminjaman set status = 'DITOLAK', approver_id = v_actor_id, updated_at = now()
+      where borrow_id = p_borrow_id returning * into v_row;
+    insert into transaksi_log(sekolah_id, type, borrow_id, aset_id, qty, before_stock, after_stock, actor_id, note)
+      values (v_row.sekolah_id, 'REJECT', p_borrow_id, v_row.aset_id, v_row.qty, v_before, v_before, v_actor_id, 'Stok tidak cukup');
+    return v_row;
+  end if;
+
+  v_after := v_stok_sekarang - v_row.qty;
+  update aset set stok = v_after where id = v_row.aset_id;
+  update peminjaman set status = 'DIPINJAM', approver_id = v_actor_id, updated_at = now()
+    where borrow_id = p_borrow_id returning * into v_row;
+  insert into transaksi_log(sekolah_id, type, borrow_id, aset_id, qty, before_stock, after_stock, actor_id, note)
+    values (v_row.sekolah_id, 'APPROVE', p_borrow_id, v_row.aset_id, v_row.qty, v_before, v_after, v_actor_id, null);
+
+  return v_row;
+end;
+$$;
+
+-- --- Fungsi: reject (stok tidak berubah, data tidak dihapus) ---
+create or replace function fn_reject_peminjaman(
+  p_borrow_id uuid,
+  p_note text default null
+) returns peminjaman
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row peminjaman%rowtype;
+  v_stok_sekarang int;
+  v_actor_id uuid := auth.uid();
+  v_actor_role text;
+  v_actor_sekolah_id uuid;
+begin
+  select * into v_row from peminjaman where borrow_id = p_borrow_id for update;
+  if not found then
+    raise exception 'PEMINJAMAN_NOT_FOUND';
+  end if;
+  if v_row.status <> 'MENUNGGU' then
+    raise exception 'INVALID_STATUS: hanya status MENUNGGU yang bisa ditolak (status sekarang: %)', v_row.status;
+  end if;
+
+  select role, sekolah_id into v_actor_role, v_actor_sekolah_id from profil where id = v_actor_id;
+  if v_actor_role not in ('admin','kepsek') then
+    raise exception 'FORBIDDEN: hanya admin/kepsek yang boleh reject';
+  end if;
+  if v_actor_sekolah_id is distinct from v_row.sekolah_id then
+    raise exception 'FORBIDDEN: beda sekolah';
+  end if;
+
+  select stok into v_stok_sekarang from aset where id = v_row.aset_id;
+
+  update peminjaman set status = 'DITOLAK', approver_id = v_actor_id, alasan_tolak = p_note, updated_at = now()
+    where borrow_id = p_borrow_id returning * into v_row;
+  insert into transaksi_log(sekolah_id, type, borrow_id, aset_id, qty, before_stock, after_stock, actor_id, note)
+    values (v_row.sekolah_id, 'REJECT', p_borrow_id, v_row.aset_id, v_row.qty, v_stok_sekarang, v_stok_sekarang, v_actor_id, p_note);
+
+  return v_row;
+end;
+$$;
+
+-- --- Fungsi: return (hanya dari status DIPINJAM, cegah return dobel) ---
+create or replace function fn_return_peminjaman(
+  p_borrow_id uuid
+) returns peminjaman
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_row peminjaman%rowtype;
+  v_before int;
+  v_after int;
+  v_actor_id uuid := auth.uid();
+  v_actor_sekolah_id uuid;
+begin
+  select * into v_row from peminjaman where borrow_id = p_borrow_id for update;
+  if not found then
+    raise exception 'PEMINJAMAN_NOT_FOUND';
+  end if;
+  if v_row.status <> 'DIPINJAM' then
+    raise exception 'INVALID_STATUS: hanya status DIPINJAM yang bisa dikembalikan (status sekarang: %)', v_row.status;
+  end if;
+
+  select sekolah_id into v_actor_sekolah_id from profil where id = v_actor_id;
+  if v_actor_sekolah_id is distinct from v_row.sekolah_id then
+    raise exception 'FORBIDDEN: beda sekolah';
+  end if;
+
+  select stok into v_before from aset where id = v_row.aset_id for update;
+  v_after := v_before + v_row.qty;
+
+  update aset set stok = v_after where id = v_row.aset_id;
+  update peminjaman set status = 'DIKEMBALIKAN', tanggal_kembali_aktual = current_date, updated_at = now()
+    where borrow_id = p_borrow_id returning * into v_row;
+  insert into transaksi_log(sekolah_id, type, borrow_id, aset_id, qty, before_stock, after_stock, actor_id, note)
+    values (v_row.sekolah_id, 'RETURN', p_borrow_id, v_row.aset_id, v_row.qty, v_before, v_after, v_actor_id, null);
+
+  return v_row;
+end;
+$$;
+
+grant execute on function fn_approve_peminjaman(uuid) to authenticated;
+grant execute on function fn_reject_peminjaman(uuid, text) to authenticated;
+grant execute on function fn_return_peminjaman(uuid) to authenticated;

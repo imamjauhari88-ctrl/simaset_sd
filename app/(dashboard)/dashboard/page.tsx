@@ -1,4 +1,5 @@
 import { Topbar } from "@/components/layout/topbar";
+import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { KondisiChart } from "@/components/dashboard/kondisi-chart";
 import { TrenChart } from "@/components/dashboard/tren-chart";
@@ -17,6 +18,8 @@ export default async function DashboardPage() {
       <Topbar title="Dashboard" />
 
       <main className="flex-1 p-6 space-y-6">
+        <WelcomeBanner />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
             label="Total Aset"

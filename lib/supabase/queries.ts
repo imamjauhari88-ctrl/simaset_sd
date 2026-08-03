@@ -6,6 +6,8 @@ import type {
   KondisiAset,
   MutasiAset,
   PemeliharaanAset,
+  Peminjaman,
+  Profil,
   Ruangan,
 } from "@/types/database";
 
@@ -22,6 +24,17 @@ export type MutasiWithRelasi = MutasiAset & {
 
 export type PemeliharaanWithRelasi = PemeliharaanAset & {
   aset: Pick<Aset, "id" | "kode_aset" | "nama"> | null;
+};
+
+// Dibaca dari VIEW peminjaman_dengan_status (bukan tabel peminjaman
+// langsung) supaya dapat kolom `terlambat` yang dihitung on-the-fly
+// (status DIPINJAM + tanggal_kembali_rencana sudah lewat), tanpa perlu
+// job/cron buat nyocokin kolom status secara berkala.
+export type PeminjamanWithRelasi = Peminjaman & {
+  terlambat: boolean;
+  aset: Pick<Aset, "id" | "kode_aset" | "nama"> | null;
+  peminjam: Pick<Profil, "id" | "nama"> | null;
+  approver: Pick<Profil, "id" | "nama"> | null;
 };
 
 export async function getDaftarAset(): Promise<AsetWithRelasi[]> {
@@ -489,4 +502,72 @@ export async function getDashboardData(): Promise<DashboardData> {
       waktu: formatWaktuRelatif(a.waktuRaw),
     })),
   };
+}
+
+export interface DaftarPeminjamanParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  status?: Peminjaman["status"] | "semua";
+  hanyaTerlambat?: boolean;
+}
+
+export interface DaftarPeminjamanResult {
+  data: PeminjamanWithRelasi[];
+  count: number;
+}
+
+/**
+ * Baca dari VIEW peminjaman_dengan_status (bukan tabel peminjaman langsung)
+ * supaya kolom `terlambat` selalu akurat (dihitung saat query, bukan
+ * kolom tersimpan yang bisa basi). View sudah security_invoker=true jadi
+ * tetap tunduk RLS tabel peminjaman aslinya — aman dipakai lintas role.
+ */
+export async function getDaftarPeminjamanPaginated(
+  params: DaftarPeminjamanParams = {}
+): Promise<DaftarPeminjamanResult> {
+  const {
+    page = 1,
+    pageSize = 15,
+    search = "",
+    status = "semua",
+    hanyaTerlambat = false,
+  } = params;
+  const supabase = await createClient();
+
+  const kataKunci = search.trim();
+  const selectKlausa = kataKunci
+    ? `*, aset:aset_id!inner ( id, kode_aset, nama ), peminjam:peminjam_id ( id, nama ), approver:approver_id ( id, nama )`
+    : `*, aset:aset_id ( id, kode_aset, nama ), peminjam:peminjam_id ( id, nama ), approver:approver_id ( id, nama )`;
+
+  let query = supabase
+    .from("peminjaman_dengan_status")
+    .select(selectKlausa, { count: "exact" });
+
+  if (kataKunci) {
+    const aman = kataKunci.replace(/[%,]/g, "");
+    query = query.or(`nama.ilike.%${aman}%,kode_aset.ilike.%${aman}%`, {
+      foreignTable: "aset",
+    });
+  }
+  if (status !== "semua") {
+    query = query.eq("status", status);
+  }
+  if (hanyaTerlambat) {
+    query = query.eq("terlambat", true);
+  }
+
+  const dari = (Math.max(1, page) - 1) * pageSize;
+  const sampai = dari + pageSize - 1;
+
+  const { data, error, count } = await query
+    .order("created_at", { ascending: false })
+    .range(dari, sampai);
+
+  if (error) {
+    console.error("Gagal mengambil data peminjaman:", error.message);
+    return { data: [], count: 0 };
+  }
+
+  return { data: data as unknown as PeminjamanWithRelasi[], count: count ?? 0 };
 }

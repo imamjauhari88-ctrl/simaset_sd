@@ -60,6 +60,7 @@ export interface Aset {
   sumber_dana: SumberDana;
   harga_perolehan: number;
   kondisi: KondisiAset;
+  stok: number;
   foto_url: string | null;
   foto_public_id: string | null;
   catatan: string | null;
@@ -88,6 +89,48 @@ export interface PemeliharaanAset {
   keterangan: string | null;
   disetujui_oleh: string | null;
   created_at: string;
+}
+
+export type StatusPeminjaman = "MENUNGGU" | "DIPINJAM" | "DITOLAK" | "DIKEMBALIKAN";
+export type TipeTransaksiLog = "APPROVE" | "REJECT" | "RETURN";
+
+export interface Peminjaman {
+  borrow_id: string;
+  sekolah_id: string;
+  aset_id: string;
+  peminjam_id: string;
+  peminjam_role: RolePengguna;
+  qty: number;
+  tanggal_pinjam: string;
+  tanggal_kembali_rencana: string;
+  tanggal_kembali_aktual: string | null;
+  status: StatusPeminjaman;
+  approver_id: string | null;
+  // Catatan peminjam saat mengajukan (mis. "keperluan rapat wali murid").
+  // Ditulis sekali saat insert, tidak pernah ditimpa lagi.
+  catatan_pengajuan: string | null;
+  // Alasan admin/kepsek menolak. Cuma diisi fn_reject_peminjaman saat
+  // status jadi DITOLAK — terpisah dari catatan_pengajuan di atas.
+  alasan_tolak: string | null;
+  // Nama peminjam SEBENARNYA kalau beda dari pemilik akun (mis. diajukan
+  // admin atas nama guru yang tidak punya akun). null = pakai nama akun.
+  atas_nama: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TransaksiLog {
+  id: string;
+  sekolah_id: string;
+  timestamp: string;
+  type: TipeTransaksiLog;
+  borrow_id: string;
+  aset_id: string;
+  qty: number;
+  before_stock: number;
+  after_stock: number;
+  actor_id: string;
+  note: string | null;
 }
 
 export type StatusOpname = "berlangsung" | "selesai";
