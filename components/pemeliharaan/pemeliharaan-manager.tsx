@@ -206,6 +206,7 @@ export function PemeliharaanManager({
             </div>
           </div>
 
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-ink-soft border-b border-line">
@@ -287,6 +288,7 @@ export function PemeliharaanManager({
               ))}
             </tbody>
           </table>
+          </div>
           <Pagination
             page={page}
             pageSize={PAGE_SIZE}

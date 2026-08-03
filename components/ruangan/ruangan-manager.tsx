@@ -62,6 +62,7 @@ export function RuanganManager({
         />
       ) : (
         <div className="tag-card overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-ink-soft border-b border-line">
@@ -106,6 +107,7 @@ export function RuanganManager({
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
