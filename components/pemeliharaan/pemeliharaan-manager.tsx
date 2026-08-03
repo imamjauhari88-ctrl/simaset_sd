@@ -146,6 +146,8 @@ export function PemeliharaanManager({
     }
   }
 
+  const adaAsetRusak = asetList.some((a) => a.kondisi !== "baik");
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -153,8 +155,8 @@ export function PemeliharaanManager({
         {bisaKelola && (
           <button
             onClick={() => setModalTambah(true)}
-            disabled={asetList.length === 0}
-            title={asetList.length === 0 ? "Belum ada data aset" : undefined}
+            disabled={!adaAsetRusak}
+            title={!adaAsetRusak ? "Belum ada aset dengan kondisi rusak" : undefined}
             className="inline-flex items-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Plus size={16} />

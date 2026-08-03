@@ -40,6 +40,9 @@ export function PemeliharaanForm({
 
   const asetIdDipilih = watch("aset_id");
   const asetDipilih = asetList.find((a) => a.id === asetIdDipilih);
+  // Cuma aset yang kondisinya rusak (ringan/berat) yang relevan buat
+  // dicatat pemeliharaan-nya — aset kondisi "baik" gak perlu diperbaiki.
+  const asetPerluDipelihara = asetList.filter((a) => a.kondisi !== "baik");
 
   async function onSubmit(values: PemeliharaanFormValues) {
     try {
@@ -57,13 +60,20 @@ export function PemeliharaanForm({
         <label className={labelClass}>Aset</label>
         <select {...register("aset_id")} className={inputClass} autoFocus>
           <option value="">Pilih aset</option>
-          {asetList.map((a) => (
+          {asetPerluDipelihara.map((a) => (
             <option key={a.id} value={a.id}>
-              {a.kode_aset} — {a.nama}
+              {a.kode_aset} — {a.nama} (
+              {a.kondisi === "rusak_berat" ? "Rusak Berat" : "Rusak Ringan"})
             </option>
           ))}
         </select>
         {errors.aset_id && <p className={errorClass}>{errors.aset_id.message}</p>}
+        {asetPerluDipelihara.length === 0 && (
+          <p className="text-[12px] text-ink-soft mt-1">
+            Semua aset kondisinya masih Baik — belum ada yang perlu
+            dipelihara.
+          </p>
+        )}
       </div>
 
       {asetDipilih && (
