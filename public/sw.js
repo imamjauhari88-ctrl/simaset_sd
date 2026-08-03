@@ -51,7 +51,27 @@ self.addEventListener("fetch", (event) => {
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request).then((res) => res || caches.match("/dashboard")))
+        .catch(() =>
+          caches
+            .match(request)
+            .then((res) => res || caches.match("/dashboard"))
+            // Kalau /pengaturan (atau halaman apapun yang belum pernah
+            // dikunjungi) DAN "/dashboard" dua-duanya cache-miss, baris di
+            // atas resolve ke `undefined`. event.respondWith(undefined)
+            // itu yang bikin browser lempar persis error yang dilaporkan:
+            // "resulted in a network error response: the promise was
+            // rejected" — bukan promise-nya beneran reject, tapi
+            // respondWith nerima non-Response. Selalu kasih Response asli
+            // di ujung sebagai jaring pengaman terakhir.
+            .then(
+              (res) =>
+                res ||
+                new Response(
+                  "<h1>Kamu sedang offline</h1><p>Halaman ini belum pernah dibuka sebelumnya, jadi belum tersimpan di cache.</p>",
+                  { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } }
+                )
+            )
+        )
     );
     return;
   }
@@ -61,11 +81,21 @@ self.addEventListener("fetch", (event) => {
     caches.match(request).then(
       (cached) =>
         cached ||
-        fetch(request).then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
-          return response;
-        })
+        fetch(request)
+          .then((response) => {
+            const clone = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
+            return response;
+          })
+          // Sebelumnya TIDAK ADA .catch() di sini. Begitu fetch aset
+          // statis gagal (offline, koneksi putus sesaat, atau navigasi
+          // dibatalkan user di tengah jalan), promise ini reject tanpa
+          // ada yang nangkep -> persis "Uncaught (in promise) TypeError:
+          // Failed to fetch" yang dilaporkan. Fallback Response kosong di
+          // sini bukan solusi sempurna (asetnya tetap gak kebuka), tapi
+          // minimal gak bikin unhandled rejection nyampah di console dan
+          // gak bikin request nge-hang.
+          .catch(() => new Response("", { status: 504 }))
     )
   );
 });
