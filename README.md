@@ -200,3 +200,4 @@ KIB/KIR ke PDF/Excel).
 - Sesi opname (`opname_sesi` + `opname_detail`) satu sekolah cuma boleh
   punya satu sesi `berlangsung` dalam satu waktu — ditegakkan di kode
   app (`OpnameManager`), bukan constraint database.
+update
