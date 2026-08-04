@@ -14,6 +14,12 @@ const envSchema = z.object({
   // preset-nya sendiri di Cloudinary Dashboard, bukan lewat secret key.
   NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: z.string().min(1),
   NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: z.string().min(1),
+
+  // Server-only — dipakai buat signed request HAPUS foto lama (upload
+  // tetap lewat unsigned preset di atas; destroy Cloudinary WAJIB signed,
+  // nggak ada mode unsigned buatnya). JANGAN pernah prefix NEXT_PUBLIC_.
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
 });
 
 // Hanya divalidasi di server (route handler/server component/action).
