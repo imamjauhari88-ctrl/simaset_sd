@@ -41,6 +41,7 @@ export default async function DashboardPage() {
             hint="Kondisi rusak berat"
             icon={TriangleAlert}
             tone="brick"
+            href="/aset?kondisi=rusak_berat"
           />
           <StatCard
             label="Ruangan Terpantau"

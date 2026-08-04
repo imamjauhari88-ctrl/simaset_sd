@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { asetSchema, asetDefaultValues, type AsetFormValues } from "@/lib/validasi/aset";
 import { useSimpanAset } from "@/lib/queries/aset";
+import { hapusFotoLamaAset } from "@/lib/aset/actions";
 import { FotoAsetInput } from "@/components/aset/foto-aset-input";
 import { TombolScanQr } from "@/components/ui/tombol-scan-qr";
 import type { KategoriAset, Ruangan, Aset } from "@/types/database";
@@ -28,6 +29,11 @@ export function FormAset({
 }) {
   const router = useRouter();
   const { mutateAsync, isPending } = useSimpanAset();
+  // Snapshot publicId foto SAAT form dibuka — dibandingkan ke publicId
+  // baru pas submit sukses buat tahu apa fotonya diganti/dihapus. Sengaja
+  // bukan baca dari `watch()` (itu berubah live tiap user pilih file
+  // baru), harus tetap nilai ASLI sebelum form disentuh.
+  const fotoPublicIdAwal = asetAwal?.foto_public_id ?? null;
 
   const {
     register,
@@ -59,6 +65,23 @@ export function FormAset({
     try {
       await mutateAsync({ id: asetAwal?.id, values });
       toast.success(asetAwal ? "Perubahan disimpan" : "Aset berhasil ditambahkan");
+
+      // Baris `aset` sudah tersimpan dengan foto BARU (atau kosong kalau
+      // dihapus) di atas — sekarang aman hapus foto LAMA di Cloudinary,
+      // tapi cuma kalau publicId-nya beneran berubah (diganti/dihapus),
+      // bukan tiap kali form disubmit tanpa foto disentuh sama sekali.
+      const fotoBerubah = fotoPublicIdAwal && fotoPublicIdAwal !== values.foto_public_id;
+      if (fotoBerubah) {
+        // Sengaja tidak di-await/tidak memblokir navigasi: kalaupun
+        // gagal, ini cuma foto Cloudinary jadi orphan (buang-buang
+        // storage), bukan data aset yang salah — baris aset sendiri
+        // sudah benar tersimpan di atas. Cukup log, jangan ganggu UX
+        // dengan toast error untuk hal yang bukan tanggung jawab user.
+        hapusFotoLamaAset(fotoPublicIdAwal).catch((err) =>
+          console.error("Gagal menghapus foto lama di Cloudinary:", err)
+        );
+      }
+
       router.push("/aset");
       router.refresh();
     } catch (e) {

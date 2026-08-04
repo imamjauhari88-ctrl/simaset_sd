@@ -282,7 +282,7 @@ export function PeminjamanManager({
                           <span className="text-ink">{p.atas_nama}</span>
                           {p.catatan_pengajuan && (
                             <span className="block text-[11px] text-ink-soft/70 mt-0.5">
-                              "{p.catatan_pengajuan}"
+                              &quot;{p.catatan_pengajuan}&quot;
                             </span>
                           )}
                           <span className="block text-[11px] text-ink-soft/70 mt-0.5">
@@ -298,7 +298,7 @@ export function PeminjamanManager({
                           </span>
                           {p.catatan_pengajuan && (
                             <span className="block text-[11px] text-ink-soft/70 mt-0.5">
-                              "{p.catatan_pengajuan}"
+                              &quot;{p.catatan_pengajuan}&quot;
                             </span>
                           )}
                         </>

@@ -38,6 +38,16 @@ export function formatRupiah(n: number): string {
   }).format(n);
 }
 
+/** Format tanggal singkat "dd/mm/yyyy", dipakai di tabel laporan cetak
+ * (KIB/KIR/Mutasi) — beda dari formatWaktuRelatif yang buat activity feed. */
+export function formatTanggalSingkat(iso: string): string {
+  return new Date(iso).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}
+
 /**
  * Daftar tahun untuk opsi filter (tahun berjalan mundur beberapa tahun),
  * dipakai di filter tahun Mutasi & Pemeliharaan. Cukup dihitung dari tahun

@@ -45,8 +45,42 @@ export function LogoMark({ size = 26 }: { size?: number }) {
   );
 }
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks({
+  onNavigate,
+  collapsed = false,
+}: {
+  onNavigate?: () => void;
+  collapsed?: boolean;
+}) {
   const pathname = usePathname();
+
+  if (collapsed) {
+    // Rail icon-only: tiap item jadi kotak 44x44 ditengah, tooltip native
+    // (title) gantiin label yang disembunyikan biar tetap jelas fungsinya.
+    return (
+      <nav className="flex-1 overflow-y-auto py-4 px-2.5 flex flex-col items-center gap-1">
+        {menu.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || pathname?.startsWith(href + "/");
+          return (
+            <Link
+              key={href}
+              href={href}
+              title={label}
+              aria-label={label}
+              className={clsx(
+                "flex items-center justify-center w-11 h-11 rounded-xl transition-colors",
+                active
+                  ? "bg-pine-soft text-pine-dark"
+                  : "text-ink-soft hover:bg-paper hover:text-ink"
+              )}
+            >
+              <Icon size={19} strokeWidth={active ? 2.25 : 1.75} />
+            </Link>
+          );
+        })}
+      </nav>
+    );
+  }
 
   return (
     <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
@@ -79,32 +113,40 @@ export function Sidebar() {
   return (
     <>
       {/* Desktop: bisa ditutup/dibuka lewat tombol burger di Topbar.
-          Lebar aside luar dianimasikan 0 <-> 16rem (overflow-hidden),
-          sedangkan konten di dalamnya tetap w-64 tetap supaya nggak
-          ikut menyempit/reflow pas transisi, cuma "terpotong". */}
+          "Tertutup" di desktop BUKAN hilang total (beda dari mobile) —
+          tetap tampil sebagai rail sempit isi ikon aja (72px), biar
+          navigasi & tombol keluar tetap kejangkau tanpa buka sidebar. */}
       <aside
         className={clsx(
-          "hidden md:flex shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out bg-surface",
-          isDesktopOpen ? "w-64 border-r border-line" : "w-0 border-r-0"
+          "hidden md:flex shrink-0 flex-col h-full border-r border-line bg-surface transition-[width] duration-200 ease-in-out overflow-hidden",
+          isDesktopOpen ? "w-64" : "w-[72px]"
         )}
       >
-        <div className="flex w-64 shrink-0 flex-col h-full">
-          <div
-            className="flex items-center gap-3 px-5 h-16 border-b border-line"
-            style={{ height: "4rem", minHeight: "4rem" }}
-          >
-            <LogoMark />
+        <div
+          className={clsx(
+            "flex items-center h-16 border-b border-line",
+            isDesktopOpen ? "gap-3 px-5" : "justify-center px-2"
+          )}
+          style={{ height: "4rem", minHeight: "4rem" }}
+        >
+          <LogoMark />
+          {isDesktopOpen && (
             <div className="leading-tight">
               <p className="font-display font-semibold text-ink text-[15px]">
                 SIMASET SD
               </p>
               <p className="text-[11px] text-ink-soft">Inventaris Aset Sekolah</p>
             </div>
-          </div>
-          <NavLinks />
-          <div className="p-3 border-t border-line tag-dashed-top">
-            <TombolKeluarSidebar />
-          </div>
+          )}
+        </div>
+        <NavLinks collapsed={!isDesktopOpen} />
+        <div
+          className={clsx(
+            "border-t border-line tag-dashed-top",
+            isDesktopOpen ? "p-3" : "p-2.5 flex justify-center"
+          )}
+        >
+          <TombolKeluarSidebar collapsed={!isDesktopOpen} />
         </div>
       </aside>
 

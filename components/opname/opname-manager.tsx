@@ -137,7 +137,7 @@ function SesiAktif({ sesi }: { sesi: OpnameSesi }) {
         <div className="flex items-center gap-2 mb-1">
           <CheckCircle2 size={18} className="text-sage" />
           <p className="font-display font-semibold text-ink">
-            Opname "{sesi.judul}" Selesai
+            Opname &quot;{sesi.judul}&quot; Selesai
           </p>
         </div>
 

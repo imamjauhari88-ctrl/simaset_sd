@@ -2,10 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { LogOut } from "lucide-react";
+import clsx from "clsx";
 import { Modal } from "@/components/ui/modal";
 import { logout } from "@/lib/auth/actions";
 
-export function TombolKeluarSidebar() {
+export function TombolKeluarSidebar({
+  collapsed = false,
+}: {
+  collapsed?: boolean;
+}) {
   const [buka, setBuka] = useState(false);
   const [sedangKeluar, startTransition] = useTransition();
 
@@ -20,10 +25,15 @@ export function TombolKeluarSidebar() {
       <button
         type="button"
         onClick={() => setBuka(true)}
-        className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-ink-soft hover:bg-brick-soft hover:text-brick transition-colors"
+        title={collapsed ? "Keluar" : undefined}
+        aria-label="Keluar"
+        className={clsx(
+          "flex items-center gap-3 rounded-lg text-[13px] text-ink-soft hover:bg-brick-soft hover:text-brick transition-colors",
+          collapsed ? "w-11 h-11 justify-center" : "w-full px-3 py-2"
+        )}
       >
         <LogOut size={16} strokeWidth={1.75} />
-        Keluar
+        {!collapsed && "Keluar"}
       </button>
 
       {buka && (

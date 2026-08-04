@@ -28,6 +28,7 @@ ulang file ini, nggak perlu khawatir ada yang tabrakan atau ketinggalan.
 | `SESSION_SECRET` | generate sendiri, min. 32 karakter (`openssl rand -base64 32`) | Menandatangani token link undangan pengguna |
 | `NEXT_PUBLIC_APP_URL` | URL deploy kamu | Base URL link undangan + metadata PWA |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Cloudinary Dashboard | Unsigned upload foto aset langsung dari browser — lihat "Setup Cloudinary" di bawah |
+| `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary Dashboard → halaman utama Dashboard (bukan Upload preset) | **Server-only.** Signed request untuk hapus foto lama saat foto aset diganti/dihapus — destroy Cloudinary wajib signed, beda dari upload di atas yang unsigned |
 
 ## Setup Cloudinary (unsigned upload)
 
@@ -144,9 +145,11 @@ Awalnya dicoba pakai Serwist, tapi **belum kompatibel dengan Turbopack**
 (builder default Next.js 16) — build-nya gagal. Solusinya `public/sw.js`
 ditulis manual (cache-first untuk asset statis, network-first untuk
 halaman) tanpa bergantung ke plugin build apa pun. `app/manifest.ts` pakai
-Web App Manifest native Next.js. Icon masih SVG placeholder
-(`public/icon.svg`) — ganti dengan PNG 192/512px asli sebelum production
-kalau mau dukungan penuh di semua browser.
+Web App Manifest native Next.js, dengan `public/icon-192.png` &
+`public/icon-512.png` (di-generate dari `public/icon.svg` pakai
+`rsvg-convert`, desain sama) untuk `purpose: "any"` maupun `"maskable"` —
+`icon.svg` tetap dipertahankan sebagai entri tambahan `sizes: "any"` biar
+browser yang dukung SVG icon bisa pakai versi vektornya.
 
 ## Catatan keamanan
 
@@ -185,9 +188,16 @@ KIB/KIR ke PDF/Excel).
 - **Scan opname**: `components/opname/qr-scanner.tsx` pakai `jsqr` +
   `getUserMedia` langsung (tanpa library scanner pihak ketiga yang berat).
   Kode yang discan dicocokkan ke tabel `aset` — otomatis cuma nemu aset
-  sekolah sendiri karena RLS. Field `foto_public_id` tersimpan dari
-  Cloudinary tapi belum ada fitur hapus foto lama; itu next step yang
-  masih nunggu.
+  sekolah sendiri karena RLS.
+- **Hapus foto lama otomatis**: begitu foto aset diganti (atau dihapus
+  tanpa foto baru), `foto_public_id` versi LAMA dihapus dari Cloudinary
+  lewat signed request (`lib/cloudinary-server.ts` +
+  `lib/aset/actions.ts`), dipanggil dari `FormAset` SETELAH baris `aset`
+  sukses ter-update — supaya kalau update-nya gagal, foto lama yang masih
+  dipakai baris itu tidak ikut terhapus. Non-blocking: gagal hapus foto
+  lama cuma jadi orphan file di Cloudinary (buang-buang storage), bukan
+  data aset yang salah, jadi tidak mengganggu alur simpan aset.
 - Sesi opname (`opname_sesi` + `opname_detail`) satu sekolah cuma boleh
   punya satu sesi `berlangsung` dalam satu waktu — ditegakkan di kode
   app (`OpnameManager`), bukan constraint database.
+update

@@ -3,8 +3,19 @@
 // Serwist/Workbox yang saat ini belum kompatibel dengan Turbopack di
 // Next.js 16. Cukup untuk syarat "installable" PWA + cache dasar.
 
-const CACHE_VERSION = "simaset-v1";
-const APP_SHELL = ["/", "/dashboard", "/icon.svg", "/manifest.webmanifest"];
+// v2: nambah icon-192.png & icon-512.png ke app shell (menggantikan
+// placeholder SVG-only di manifest). Versi dibump supaya klien yang sudah
+// install versi lama otomatis dapat cache baru, bukan nyangkut di app
+// shell lama yang belum punya kedua file ini.
+const CACHE_VERSION = "simaset-v2";
+const APP_SHELL = [
+  "/",
+  "/dashboard",
+  "/icon.svg",
+  "/icon-192.png",
+  "/icon-512.png",
+  "/manifest.webmanifest",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

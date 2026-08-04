@@ -9,13 +9,29 @@ export function ThemeToggle() {
   // `mounted` mencegah mismatch SSR/klien: server nggak tahu preferensi
   // tema tersimpan di localStorage, jadi render awal ikon di-skip dulu
   // sampai komponen ini hydrate di klien.
-  const [mounted, setMounted] = useState(false);
-  const [gelap, setGelap] = useState(false);
+  // Digabung jadi satu state object (bukan dua useState terpisah) supaya
+  // effect di bawah cuma nge-trigger SATU render ekstra saat hydrate,
+  // bukan dua render berantai (react-hooks/set-state-in-effect).
+  const [state, setState] = useState({ mounted: false, gelap: false });
 
   useEffect(() => {
-    setMounted(true);
-    setGelap(document.documentElement.classList.contains("dark"));
+    // Pola "mounted" ini sengaja baca document di dalam effect: satu-satunya
+    // cara aman baca preferensi tema tersimpan (DOM/localStorage) tanpa bikin
+    // mismatch SSR-vs-klien. Bukan anti-pattern "effect nyalin state" biasa
+    // yang react-hooks/set-state-in-effect coba cegah, jadi rule-nya
+    // di-disable khusus baris ini.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setState({
+      mounted: true,
+      gelap: document.documentElement.classList.contains("dark"),
+    });
   }, []);
+
+  const { mounted, gelap } = state;
+
+  function setGelap(nilai: boolean) {
+    setState((s) => ({ ...s, gelap: nilai }));
+  }
 
   function toggle() {
     const nilaiBaru = !gelap;
