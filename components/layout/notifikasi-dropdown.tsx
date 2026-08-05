@@ -1,13 +1,17 @@
 "use client";
 
-import Link from "next/link";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Bell, Loader2 } from "lucide-react";
 import { useClickOutside } from "@/lib/hooks/use-click-outside";
 import { useAktivitasTerbaru } from "@/lib/queries/aktivitas";
 
+const KEY_TERAKHIR_DILIHAT = "simaset-notif-terakhir-dilihat";
+
 export function NotifikasiDropdown() {
+  const router = useRouter();
+  const pathname = usePathname();
   const [buka, setBuka] = useState(false);
   const [posisi, setPosisi] = useState<{ top: number; right: number } | null>(
     null
@@ -17,7 +21,32 @@ export function NotifikasiDropdown() {
 
   useClickOutside(dropdownRef, () => setBuka(false), buka);
 
-  const { data, isLoading } = useAktivitasTerbaru(buka);
+  // Sengaja selalu aktif (bukan cuma pas buka) — badge butuh tahu ada
+  // aktivitas baru walau dropdown belum pernah dibuka.
+  const { data, isLoading } = useAktivitasTerbaru();
+
+  // Bandingin aktivitas terbaru sama timestamp "terakhir dilihat" yang
+  // disimpan di localStorage per-browser. Belum pernah dibuka sama
+  // sekali -> anggap semua yang ada belum dibaca (wajar, itu memang
+  // belum pernah dilihat user ini).
+  const [terakhirDilihat, setTerakhirDilihat] = useState<number>(0);
+  useEffect(() => {
+    // localStorage cuma ada di klien — gak bisa dibaca saat render awal
+    // (SSR), jadi ini SATU-SATUNYA cara baca nilai "terakhir dilihat"
+    // tanpa mismatch hydration. Sama kayak pola mount-detection di
+    // theme-toggle.tsx, bukan anti-pattern "nyalin state" yang rule ini
+    // coba cegah.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTerakhirDilihat(
+      Number(localStorage.getItem(KEY_TERAKHIR_DILIHAT) ?? 0)
+    );
+  }, []);
+
+  const adaYangBelumDibaca =
+    !!data &&
+    data.some(
+      (item) => item.waktuRaw && new Date(item.waktuRaw).getTime() > terakhirDilihat
+    );
 
   // Portal-kan dropdown ke <body>, jadi posisinya dihitung manual (fixed)
   // dari posisi tombol bell — tidak lagi bergantung pada `absolute` relatif
@@ -42,16 +71,29 @@ export function NotifikasiDropdown() {
     };
   }, [buka]);
 
+  function bukaDropdown() {
+    setBuka((v) => !v);
+    // Ditandai "sudah dilihat" begitu dropdown dibuka (bukan nunggu
+    // ditutup) — begitu user lihat isinya, badge boleh langsung ilang.
+    const sekarang = Date.now();
+    localStorage.setItem(KEY_TERAKHIR_DILIHAT, String(sekarang));
+    setTerakhirDilihat(sekarang);
+  }
+
   return (
     <>
       <button
         ref={tombolRef}
-        onClick={() => setBuka((v) => !v)}
+        onClick={bukaDropdown}
         className="relative text-ink-soft hover:text-ink transition-colors"
-        aria-label="Notifikasi"
+        aria-label={
+          adaYangBelumDibaca ? "Notifikasi (ada aktivitas baru)" : "Notifikasi"
+        }
       >
         <Bell size={19} />
-        <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-brick ring-2 ring-surface" />
+        {adaYangBelumDibaca && (
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-brick ring-2 ring-surface" />
+        )}
       </button>
 
       {buka &&
@@ -94,13 +136,31 @@ export function NotifikasiDropdown() {
               )}
             </div>
 
-            <Link
-              href="/dashboard#aktivitas-terbaru"
-              onClick={() => setBuka(false)}
-              className="block text-center text-[12px] text-pine font-medium px-4 py-2.5 border-t border-line hover:bg-paper transition-colors"
+            <button
+              type="button"
+              onClick={() => {
+                setBuka(false);
+                if (pathname === "/dashboard") {
+                  // Sudah di halaman ini — Next gak akan "navigasi" sama
+                  // sekali kalau cuma hash yang beda dari path yang sama,
+                  // jadi scroll manual di sini, gak nunggu apa pun.
+                  document
+                    .getElementById("aktivitas-terbaru")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                } else {
+                  // Dari halaman lain: navigasi penuh, biar #hash-nya
+                  // tersimpan di URL — <ScrollToHash /> di halaman Dashboard
+                  // yang urus scroll begitu section-nya beneran ke-render
+                  // (halaman ini pakai loading.tsx/Suspense, jadi elemen
+                  // id="aktivitas-terbaru" belum tentu ada pas Next coba
+                  // scroll otomatis pertama kali).
+                  router.push("/dashboard#aktivitas-terbaru");
+                }
+              }}
+              className="block w-full text-center text-[12px] text-pine font-medium px-4 py-2.5 border-t border-line hover:bg-paper transition-colors"
             >
               Lihat semua di Dashboard
-            </Link>
+            </button>
           </div>,
           document.body
         )}

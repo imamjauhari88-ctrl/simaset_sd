@@ -3,8 +3,9 @@ import { QrCode } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Topbar } from "@/components/layout/topbar";
 import { FormAset } from "@/components/aset/form-aset";
+import { RiwayatAset } from "@/components/aset/riwayat-aset";
 import { createClient } from "@/lib/supabase/server";
-import { getKategoriList, getRuanganList } from "@/lib/supabase/queries";
+import { getKategoriList, getRuanganList, getRiwayatAset } from "@/lib/supabase/queries";
 import { getProfilSaya } from "@/lib/tenant/context";
 
 export default async function DetailAsetPage({
@@ -15,12 +16,13 @@ export default async function DetailAsetPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: aset }, kategoriList, ruanganList, profil] =
+  const [{ data: aset }, kategoriList, ruanganList, profil, riwayat] =
     await Promise.all([
       supabase.from("aset").select("*").eq("id", id).single(),
       getKategoriList(),
       getRuanganList(),
       getProfilSaya(),
+      getRiwayatAset(id),
     ]);
 
   if (!aset) notFound();
@@ -41,12 +43,20 @@ export default async function DetailAsetPage({
           <QrCode size={16} />
           Cetak Label QR
         </Link>
-        <FormAset
-          kategoriList={kategoriList}
-          ruanganList={ruanganList}
-          asetAwal={aset}
-          bisaSimpan={bisaSimpan}
-        />
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+          <div className="xl:col-span-2">
+            <FormAset
+              kategoriList={kategoriList}
+              ruanganList={ruanganList}
+              asetAwal={aset}
+              bisaSimpan={bisaSimpan}
+            />
+          </div>
+          <div className="xl:col-span-1">
+            <RiwayatAset data={riwayat} />
+          </div>
+        </div>
       </main>
     </>
   );

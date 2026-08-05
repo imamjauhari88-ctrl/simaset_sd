@@ -12,6 +12,10 @@ const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
 export function useUploadFotoCloudinary() {
   const [uploading, setUploading] = useState(false);
+  // Persentase asli (0-100) dari event xhr.upload.onprogress — BUKAN
+  // animasi kira-kira. `fetch` gak punya cara baca progress upload body,
+  // makanya di sini sengaja pakai XMLHttpRequest walau lebih verbose.
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   async function upload(file: File): Promise<HasilUploadFoto | null> {
@@ -23,6 +27,7 @@ export function useUploadFotoCloudinary() {
     }
 
     setUploading(true);
+    setProgress(0);
     setError(null);
 
     try {
@@ -31,25 +36,46 @@ export function useUploadFotoCloudinary() {
       form.append("upload_preset", UPLOAD_PRESET);
       form.append("folder", "simaset/aset"); // lihat catatan folder per-sekolah di README
 
-      const resUpload = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-        { method: "POST", body: form }
+      const data = await new Promise<{ secure_url: string; public_id: string }>(
+        (resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open(
+            "POST",
+            `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`
+          );
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              setProgress(Math.round((e.loaded / e.total) * 100));
+            }
+          };
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(JSON.parse(xhr.responseText));
+            } else {
+              let pesan = "Upload ke Cloudinary gagal.";
+              try {
+                pesan = JSON.parse(xhr.responseText)?.error?.message ?? pesan;
+              } catch {
+                // respons bukan JSON — pakai pesan default di atas
+              }
+              reject(new Error(pesan));
+            }
+          };
+          xhr.onerror = () =>
+            reject(new Error("Upload ke Cloudinary gagal (masalah jaringan)."));
+          xhr.send(form);
+        }
       );
 
-      if (!resUpload.ok) {
-        const body = await resUpload.json().catch(() => null);
-        throw new Error(body?.error?.message ?? "Upload ke Cloudinary gagal.");
-      }
-      const data = await resUpload.json();
-
-      return { url: data.secure_url as string, publicId: data.public_id as string };
+      return { url: data.secure_url, publicId: data.public_id };
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload foto gagal.");
       return null;
     } finally {
       setUploading(false);
+      setProgress(0);
     }
   }
 
-  return { upload, uploading, error };
+  return { upload, uploading, progress, error };
 }

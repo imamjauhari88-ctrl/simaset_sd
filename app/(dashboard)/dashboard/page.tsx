@@ -3,7 +3,9 @@ import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { KondisiChart } from "@/components/dashboard/kondisi-chart";
 import { TrenChart } from "@/components/dashboard/tren-chart";
+import { NilaiKategoriChart } from "@/components/dashboard/nilai-kategori-chart";
 import { ActivityLog } from "@/components/dashboard/activity-log";
+import { ScrollToHash } from "@/components/ui/scroll-to-hash";
 import { getDashboardData } from "@/lib/supabase/queries";
 import { formatRupiah } from "@/lib/format";
 import { Boxes, Wallet, TriangleAlert, DoorOpen } from "lucide-react";
@@ -16,6 +18,7 @@ export default async function DashboardPage() {
   return (
     <>
       <Topbar title="Dashboard" />
+      <ScrollToHash />
 
       <main className="flex-1 p-6 space-y-6">
         <WelcomeBanner />
@@ -60,6 +63,8 @@ export default async function DashboardPage() {
             <TrenChart data={data.trenBulanan} />
           </div>
         </div>
+
+        <NilaiKategoriChart data={data.nilaiPerKategori} />
 
         <ActivityLog data={data.aktivitas} />
       </main>

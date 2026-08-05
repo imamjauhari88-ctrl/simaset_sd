@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { ImagePlus, Loader2, X } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
 import { useUploadFotoCloudinary } from "@/lib/cloudinary-upload";
 
 export function FotoAsetInput({
@@ -14,7 +14,7 @@ export function FotoAsetInput({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(fotoUrlAwal ?? null);
-  const { upload, uploading, error } = useUploadFotoCloudinary();
+  const { upload, uploading, progress, error } = useUploadFotoCloudinary();
 
   async function handleFile(file: File | undefined) {
     if (!file) return;
@@ -48,9 +48,38 @@ export function FotoAsetInput({
             unoptimized={preview.startsWith("blob:")}
           />
           {uploading && (
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-              <Loader2 size={20} className="text-white animate-spin" />
-            </div>
+            <>
+              {/* Foto tetap kelihatan jelas (gak digelapin) — cuma
+                  bingkainya yang keisi warna, ngikutin progress upload
+                  ASLI (dari xhr.upload.onprogress), bukan animasi kira-kira
+                  yang muter terus. pathLength=100 dipakai supaya
+                  dasharray/dashoffset gampang dihitung dalam skala 0-100
+                  tanpa perlu ngukur keliling rounded-rect manual. */}
+              <svg
+                className="absolute inset-0 w-full h-full pointer-events-none"
+                viewBox="0 0 160 160"
+                aria-hidden="true"
+              >
+                <rect
+                  x="1.5"
+                  y="1.5"
+                  width="157"
+                  height="157"
+                  rx="7"
+                  fill="none"
+                  stroke="var(--color-pine)"
+                  strokeWidth="3"
+                  pathLength={100}
+                  strokeDasharray={100}
+                  strokeDashoffset={100 - progress}
+                  strokeLinecap="round"
+                  style={{ transition: "stroke-dashoffset 0.15s linear" }}
+                />
+              </svg>
+              <div className="absolute bottom-1.5 right-1.5 bg-ink/80 text-white text-[10px] font-medium rounded px-1.5 py-0.5 tabular-nums">
+                {progress}%
+              </div>
+            </>
           )}
           <button
             type="button"

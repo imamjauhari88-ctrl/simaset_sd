@@ -1,9 +1,9 @@
-import { Search } from "lucide-react";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { SidebarToggleButton } from "./sidebar-toggle-button";
 import { NotifikasiDropdown } from "./notifikasi-dropdown";
 import { UserMenu } from "./user-menu";
 import { ThemeToggle } from "./theme-toggle";
+import { TopbarSearch } from "./topbar-search";
 
 export async function Topbar({ title }: { title: string }) {
   const [profil, sekolah] = await Promise.all([
@@ -31,13 +31,7 @@ export async function Topbar({ title }: { title: string }) {
       </div>
 
       <div className="flex items-center gap-2 sm:gap-4 shrink-0">
-        <div className="hidden lg:flex items-center gap-2 bg-paper border border-line rounded-lg px-3 py-1.5 text-sm text-ink-soft w-64 focus-within:border-pine transition-colors">
-          <Search size={16} />
-          <input
-            placeholder="Cari kode / nama aset..."
-            className="bg-transparent outline-none w-full placeholder:text-ink-soft"
-          />
-        </div>
+        <TopbarSearch />
 
         <NotifikasiDropdown />
         <ThemeToggle />

@@ -23,6 +23,8 @@ export default function DashboardLoading() {
           </div>
         </div>
 
+        <ChartSkeleton />
+
         <div className="tag-card p-5 space-y-4">
           <Skeleton className="h-4 w-36" />
           {Array.from({ length: 4 }).map((_, i) => (
