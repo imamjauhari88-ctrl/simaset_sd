@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifikasiTokenUndangan } from "@/lib/tenant/undangan";
 import { terimaUndangan } from "./actions";
+import { Footer } from "@/components/layout/footer";
 
 const roleLabel: Record<string, string> = {
   admin: "Admin",
@@ -19,7 +20,7 @@ export default async function UndanganPage({
 
   if (!payload) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-paper px-4">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
         <div className="tag-card w-full max-w-md p-8 text-center">
           <p className="font-display font-semibold text-ink text-lg">
             Link Tidak Valid
@@ -29,6 +30,7 @@ export default async function UndanganPage({
             sekolahmu kirim ulang undangan baru.
           </p>
         </div>
+        <Footer />
       </main>
     );
   }
@@ -55,7 +57,7 @@ export default async function UndanganPage({
 
   if (sudahDipakaiAtauKedaluwarsa) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-paper px-4">
+      <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
         <div className="tag-card w-full max-w-md p-8 text-center">
           <p className="font-display font-semibold text-ink text-lg">
             Link Sudah Tidak Berlaku
@@ -66,6 +68,7 @@ export default async function UndanganPage({
             sekolahmu kirim ulang undangan baru.
           </p>
         </div>
+        <Footer />
       </main>
     );
   }
@@ -73,7 +76,7 @@ export default async function UndanganPage({
   const submitDenganToken = terimaUndangan.bind(null, token);
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper px-4">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
       <div className="tag-card w-full max-w-md p-8">
         <p className="font-display font-semibold text-ink text-lg">
           Gabung ke {sekolah.nama}
@@ -129,6 +132,7 @@ export default async function UndanganPage({
           </button>
         </form>
       </div>
+      <Footer />
     </main>
   );
 }

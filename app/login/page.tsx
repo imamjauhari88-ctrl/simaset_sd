@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Loader2 } from "lucide-react";
 import { login } from "./actions";
 import { LogoMark } from "@/components/layout/sidebar";
+import { Footer } from "@/components/layout/footer";
 
 const initialState: { error?: string } = {};
 
@@ -17,7 +18,7 @@ export default function LoginPage() {
   );
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper px-4">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
       <div className="tag-card w-full max-w-sm p-8">
         <div className="flex items-center gap-3 mb-6">
           <LogoMark size={28} />
@@ -86,6 +87,7 @@ export default function LoginPage() {
           .
         </p>
       </div>
+      <Footer />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { OnboardingForm } from "@/components/onboarding/onboarding-form";
+import { Footer } from "@/components/layout/footer";
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -8,7 +9,7 @@ export default async function OnboardingPage() {
   } = await supabase.auth.getUser();
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-paper px-4">
+    <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
       <div className="tag-card w-full max-w-md p-8">
         <p className="font-display font-semibold text-ink text-lg">
           Daftarkan Sekolah
@@ -31,6 +32,7 @@ export default async function OnboardingPage() {
           </p>
         )}
       </div>
+      <Footer />
     </main>
   );
 }
