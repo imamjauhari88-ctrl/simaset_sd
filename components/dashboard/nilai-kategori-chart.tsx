@@ -23,17 +23,22 @@ function formatSingkat(n: number): string {
 
 export function NilaiKategoriChart({ data }: { data: NilaiPerKategoriItem[] }) {
   const kosong = data.length === 0;
-  // Tinggi mengikuti jumlah kategori biar tiap bar dapat ruang yang layak,
-  // bukan diperas jadi satu tinggi tetap kayak chart lain.
-  const tinggi = Math.max(180, data.length * 40);
+  // Tinggi per baris dipas-in sama ukuran batang (barSize 20 + jarak
+  // antar-batang 12px) — bukan tebakan longgar kayak sebelumnya (40px
+  // buat batang 18px), yang bikin banyak ruang kosong kalau kategorinya
+  // dikit. barCategoryGap dikunci eksplisit (bukan persentase default
+  // recharts) biar jaraknya konsisten walau container-nya ikut menyempit
+  // di layar kecil.
+  const TINGGI_BARIS = 32;
+  const tinggi = Math.max(120, data.length * TINGGI_BARIS + 24);
 
   return (
-    <div className="tag-card p-5 h-full">
+    <div className="tag-card p-5">
       <p className="font-display font-semibold text-ink mb-4">
         Nilai Aset per Kategori
       </p>
       {kosong ? (
-        <div className="h-[180px] flex items-center justify-center text-[13px] text-ink-soft">
+        <div className="h-[120px] flex items-center justify-center text-[13px] text-ink-soft">
           Belum ada data aset
         </div>
       ) : (
@@ -42,6 +47,7 @@ export function NilaiKategoriChart({ data }: { data: NilaiPerKategoriItem[] }) {
             data={data}
             layout="vertical"
             margin={{ left: 8, right: 24 }}
+            barCategoryGap={12}
           >
             <CartesianGrid horizontal={false} stroke="var(--color-line)" />
             <XAxis
@@ -67,7 +73,7 @@ export function NilaiKategoriChart({ data }: { data: NilaiPerKategoriItem[] }) {
               dataKey="nilai"
               fill="var(--color-brass)"
               radius={[0, 4, 4, 0]}
-              barSize={18}
+              barSize={20}
             />
           </BarChart>
         </ResponsiveContainer>
