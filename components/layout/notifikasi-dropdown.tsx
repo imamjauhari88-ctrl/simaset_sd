@@ -95,7 +95,7 @@ export function NotifikasiDropdown() {
             </div>
 
             <Link
-              href="/dashboard#aktivitas-terbaru"
+              href="/dashboard"
               onClick={() => setBuka(false)}
               className="block text-center text-[12px] text-pine font-medium px-4 py-2.5 border-t border-line hover:bg-paper transition-colors"
             >
