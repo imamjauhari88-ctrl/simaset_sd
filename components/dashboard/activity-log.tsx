@@ -2,7 +2,7 @@ import type { AktivitasItem } from "@/lib/supabase/queries";
 
 export function ActivityLog({ data }: { data: AktivitasItem[] }) {
   return (
-    <div className="tag-card p-5">
+    <div id="aktivitas-terbaru" className="tag-card p-5 scroll-mt-20">
       <p className="font-display font-semibold text-ink mb-4">
         Aktivitas Terbaru
       </p>
