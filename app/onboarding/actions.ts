@@ -4,7 +4,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export async function buatSekolahBaru(formData: FormData) {
+export async function buatSekolahBaru(
+  _prevState: { error?: string },
+  formData: FormData
+): Promise<{ error?: string }> {
   const supabase = await createClient();
   let {
     data: { user },
@@ -16,7 +19,7 @@ export async function buatSekolahBaru(formData: FormData) {
   const namaAdmin = String(formData.get("nama_admin") ?? "").trim();
 
   if (!nama || !namaAdmin) {
-    throw new Error("Nama sekolah dan nama kamu wajib diisi.");
+    return { error: "Nama sekolah dan nama kamu wajib diisi." };
   }
 
   // Belum login sama sekali (kunjungan pertama ke /onboarding) →
@@ -26,7 +29,7 @@ export async function buatSekolahBaru(formData: FormData) {
     const password = String(formData.get("password") ?? "");
 
     if (!email || !password) {
-      throw new Error("Email dan kata sandi wajib diisi untuk bikin akun baru.");
+      return { error: "Email dan kata sandi wajib diisi untuk bikin akun baru." };
     }
 
     const { data: signUpData, error: errSignUp } = await supabase.auth.signUp({
@@ -35,7 +38,7 @@ export async function buatSekolahBaru(formData: FormData) {
     });
 
     if (errSignUp || !signUpData.user) {
-      throw new Error(errSignUp?.message ?? "Gagal membuat akun.");
+      return { error: errSignUp?.message ?? "Gagal membuat akun." };
     }
 
     user = signUpData.user;
@@ -52,7 +55,7 @@ export async function buatSekolahBaru(formData: FormData) {
     .single();
 
   if (errSekolah || !sekolah) {
-    throw new Error(errSekolah?.message ?? "Gagal membuat data sekolah.");
+    return { error: errSekolah?.message ?? "Gagal membuat data sekolah." };
   }
 
   const { error: errProfil } = await service.from("profil").insert({
@@ -63,7 +66,7 @@ export async function buatSekolahBaru(formData: FormData) {
   });
 
   if (errProfil) {
-    throw new Error(errProfil.message);
+    return { error: errProfil.message };
   }
 
   redirect("/dashboard");

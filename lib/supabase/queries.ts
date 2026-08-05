@@ -523,6 +523,102 @@ export interface DaftarPeminjamanResult {
  * kolom tersimpan yang bisa basi). View sudah security_invoker=true jadi
  * tetap tunduk RLS tabel peminjaman aslinya — aman dipakai lintas role.
  */
+// ---------------------------------------------------------------------
+// Query khusus halaman Laporan (KIB / KIR / Mutasi) — semua tanpa
+// paginasi karena hasilnya langsung dirender penuh di halaman cetak
+// (app/cetak/laporan/...), bukan tabel dengan Pagination seperti manager
+// lain. Diurutkan `kode_aset` (bukan created_at) supaya laporan tercetak
+// urut rapi, konsisten tiap kali dicetak ulang.
+// ---------------------------------------------------------------------
+
+/**
+ * KIB (Kartu Inventaris Barang) dikelompokkan per kategori. Kalau
+ * `kategoriId` diisi, cuma ambil aset kategori itu; kalau tidak, ambil
+ * semua aset (dipakai saat kategori dipilih "Semua Kategori").
+ */
+export async function getLaporanAsetPerKategori(
+  kategoriId?: string
+): Promise<AsetWithRelasi[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id ( id, nama ), ruangan:ruangan_id ( id, nama )`
+    );
+
+  if (kategoriId) {
+    query = query.eq("kategori_id", kategoriId);
+  }
+
+  const { data, error } = await query.order("kode_aset", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil data laporan KIB:", error.message);
+    return [];
+  }
+
+  return data as unknown as AsetWithRelasi[];
+}
+
+/**
+ * KIR (Kartu Inventaris Ruangan) dikelompokkan per ruangan. Sama seperti
+ * KIB, `ruanganId` kosong berarti semua ruangan.
+ */
+export async function getLaporanAsetPerRuangan(
+  ruanganId?: string
+): Promise<AsetWithRelasi[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id ( id, nama ), ruangan:ruangan_id ( id, nama )`
+    );
+
+  if (ruanganId) {
+    query = query.eq("ruangan_id", ruanganId);
+  }
+
+  const { data, error } = await query.order("kode_aset", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil data laporan KIR:", error.message);
+    return [];
+  }
+
+  return data as unknown as AsetWithRelasi[];
+}
+
+/** Laporan Mutasi — semua baris mutasi (opsional difilter per tahun),
+ * tanpa paginasi, buat dicetak. */
+export async function getLaporanMutasi(
+  tahun?: number
+): Promise<MutasiWithRelasi[]> {
+  const supabase = await createClient();
+
+  let query = supabase
+    .from("mutasi_aset")
+    .select(
+      `*, aset:aset_id ( id, kode_aset, nama ), ruangan_asal:ruangan_asal_id ( id, nama ), ruangan_tujuan:ruangan_tujuan_id ( id, nama )`
+    );
+
+  if (tahun) {
+    query = query.gte("tanggal", `${tahun}-01-01`).lte("tanggal", `${tahun}-12-31`);
+  }
+
+  const { data, error } = await query
+    .order("tanggal", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil data laporan mutasi:", error.message);
+    return [];
+  }
+
+  return data as unknown as MutasiWithRelasi[];
+}
+
 export async function getDaftarPeminjamanPaginated(
   params: DaftarPeminjamanParams = {}
 ): Promise<DaftarPeminjamanResult> {

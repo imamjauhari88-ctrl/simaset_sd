@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { Loader2 } from "lucide-react";
 import { login } from "./actions";
 import { LogoMark } from "@/components/layout/sidebar";
 
@@ -26,9 +27,15 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <form action={formAction} className="space-y-4">
+        <form action={formAction} className="space-y-4" aria-busy={pending}>
+          {/* role="alert" + aria-live: pesan error langsung diumumkan screen
+              reader begitu muncul, gak perlu user cari sendiri di halaman. */}
           {state?.error && (
-            <p className="bg-brick-soft text-brick text-[13px] rounded-lg px-3 py-2">
+            <p
+              role="alert"
+              aria-live="assertive"
+              className="bg-brick-soft text-brick text-[13px] rounded-lg px-3 py-2"
+            >
               {state.error}
             </p>
           )}
@@ -40,8 +47,11 @@ export default function LoginPage() {
               name="email"
               type="email"
               required
+              autoFocus
+              autoComplete="email"
+              disabled={pending}
               placeholder="admin@sekolah.sch.id"
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
+              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
             />
           </div>
           <div>
@@ -52,16 +62,19 @@ export default function LoginPage() {
               name="password"
               type="password"
               required
+              autoComplete="current-password"
+              disabled={pending}
               placeholder="••••••••"
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
+              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
             />
           </div>
           <button
             type="submit"
             disabled={pending}
-            className="w-full bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors disabled:opacity-60"
+            className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {pending ? "Masuk..." : "Masuk"}
+            {pending && <Loader2 size={16} className="animate-spin" />}
+            {pending ? "Memproses..." : "Masuk"}
           </button>
         </form>
 
