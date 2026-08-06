@@ -7,13 +7,17 @@ import { NilaiKategoriChart } from "@/components/dashboard/nilai-kategori-chart"
 import { ActivityLog } from "@/components/dashboard/activity-log";
 import { ScrollToHash } from "@/components/ui/scroll-to-hash";
 import { getDashboardData } from "@/lib/supabase/queries";
+import { getProfilSaya } from "@/lib/tenant/context";
 import { formatRupiah } from "@/lib/format";
 import { Boxes, Wallet, TriangleAlert, DoorOpen } from "lucide-react";
 
 const formatAngka = (n: number) => new Intl.NumberFormat("id-ID").format(n);
 
 export default async function DashboardPage() {
-  const data = await getDashboardData();
+  const [data, profil] = await Promise.all([
+    getDashboardData(),
+    getProfilSaya(),
+  ]);
 
   return (
     <>
@@ -21,7 +25,7 @@ export default async function DashboardPage() {
       <ScrollToHash />
 
       <main className="flex-1 p-6 space-y-6">
-        <WelcomeBanner />
+        <WelcomeBanner nama={profil?.nama} />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <StatCard
