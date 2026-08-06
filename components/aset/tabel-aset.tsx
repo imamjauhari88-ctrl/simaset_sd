@@ -284,8 +284,25 @@ export function TabelAset({
                   colSpan={10}
                   className="px-4 py-14 text-center text-ink-soft text-[13px]"
                 >
-                  <Search size={20} className="mx-auto mb-2 text-line" />
-                  Tidak ada aset yang cocok dengan pencarian.
+                  {qUrl || kondisi !== "semua" ? (
+                    <>
+                      <Search size={20} className="mx-auto mb-2 text-line" />
+                      Tidak ada aset yang cocok dengan pencarian/filter ini.
+                    </>
+                  ) : (
+                    <>
+                      <ImageOff size={20} className="mx-auto mb-2 text-line" />
+                      Belum ada aset yang tercatat.
+                      <br />
+                      <Link
+                        href="/aset/tambah"
+                        className="text-pine hover:underline font-medium"
+                      >
+                        Tambah aset pertama
+                      </Link>{" "}
+                      buat mulai.
+                    </>
+                  )}
                 </td>
               </tr>
             )}
@@ -298,6 +315,7 @@ export function TabelAset({
         pageSize={PAGE_SIZE}
         total={total}
         onPageChange={(p) => perbaruiUrl({ page: p === 1 ? null : p })}
+        label="aset"
       />
     </div>
   );

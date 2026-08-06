@@ -1,13 +1,14 @@
 export function Footer() {
   return (
-    <footer className="py-4 px-4 text-center">
+    <footer className="py-4 text-center text-[12px] text-ink-soft">
+      Developed by{" "}
       <a
         href="https://wa.me/6285257796187"
         target="_blank"
         rel="noopener noreferrer"
-        className="text-[12px] text-ink-soft hover:text-pine transition-colors"
+        className="text-pine hover:underline font-medium"
       >
-        Developed by @jeweller85
+        @jeweller85
       </a>
     </footer>
   );

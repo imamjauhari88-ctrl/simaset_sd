@@ -412,6 +412,7 @@ export function PeminjamanManager({
             pageSize={PAGE_SIZE}
             total={total}
             onPageChange={gantiHalaman}
+            label="pengajuan peminjaman"
           />
         </div>
       )}

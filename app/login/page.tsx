@@ -18,8 +18,9 @@ export default function LoginPage() {
   );
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
-      <div className="tag-card w-full max-w-sm p-8">
+    <div className="min-h-screen flex flex-col bg-paper">
+      <main className="flex-1 flex items-center justify-center px-4">
+        <div className="tag-card w-full max-w-sm p-8">
         <div className="flex items-center gap-3 mb-6">
           <LogoMark size={28} />
           <div>
@@ -86,8 +87,9 @@ export default function LoginPage() {
           </a>
           .
         </p>
-      </div>
+        </div>
+      </main>
       <Footer />
-    </main>
+    </div>
   );
 }

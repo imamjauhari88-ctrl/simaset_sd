@@ -20,18 +20,20 @@ export default async function UndanganPage({
 
   if (!payload) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
-        <div className="tag-card w-full max-w-md p-8 text-center">
-          <p className="font-display font-semibold text-ink text-lg">
-            Link Tidak Valid
-          </p>
-          <p className="text-[13px] text-ink-soft mt-1">
-            Undangan ini sudah kedaluwarsa atau salah. Minta admin
-            sekolahmu kirim ulang undangan baru.
-          </p>
-        </div>
+      <div className="min-h-screen flex flex-col bg-paper">
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="tag-card w-full max-w-md p-8 text-center">
+            <p className="font-display font-semibold text-ink text-lg">
+              Link Tidak Valid
+            </p>
+            <p className="text-[13px] text-ink-soft mt-1">
+              Undangan ini sudah kedaluwarsa atau salah. Minta admin
+              sekolahmu kirim ulang undangan baru.
+            </p>
+          </div>
+        </main>
         <Footer />
-      </main>
+      </div>
     );
   }
 
@@ -57,82 +59,86 @@ export default async function UndanganPage({
 
   if (sudahDipakaiAtauKedaluwarsa) {
     return (
-      <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
-        <div className="tag-card w-full max-w-md p-8 text-center">
-          <p className="font-display font-semibold text-ink text-lg">
-            Link Sudah Tidak Berlaku
-          </p>
-          <p className="text-[13px] text-ink-soft mt-1">
-            Undangan ini sudah pernah dipakai untuk mendaftar (satu link
-            cuma bisa dipakai sekali) atau sudah kedaluwarsa. Minta admin
-            sekolahmu kirim ulang undangan baru.
-          </p>
-        </div>
+      <div className="min-h-screen flex flex-col bg-paper">
+        <main className="flex-1 flex items-center justify-center px-4">
+          <div className="tag-card w-full max-w-md p-8 text-center">
+            <p className="font-display font-semibold text-ink text-lg">
+              Link Sudah Tidak Berlaku
+            </p>
+            <p className="text-[13px] text-ink-soft mt-1">
+              Undangan ini sudah pernah dipakai untuk mendaftar (satu link
+              cuma bisa dipakai sekali) atau sudah kedaluwarsa. Minta admin
+              sekolahmu kirim ulang undangan baru.
+            </p>
+          </div>
+        </main>
         <Footer />
-      </main>
+      </div>
     );
   }
 
   const submitDenganToken = terimaUndangan.bind(null, token);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-paper px-4 py-8">
-      <div className="tag-card w-full max-w-md p-8">
-        <p className="font-display font-semibold text-ink text-lg">
-          Gabung ke {sekolah.nama}
-        </p>
-        <p className="text-[13px] text-ink-soft mt-1 mb-6">
-          Kamu diundang sebagai{" "}
-          <span className="font-medium text-pine">
-            {roleLabel[payload.role] ?? payload.role}
-          </span>
-          . Buat akun untuk mulai.
-        </p>
+    <div className="min-h-screen flex flex-col bg-paper">
+      <main className="flex-1 flex items-center justify-center px-4">
+        <div className="tag-card w-full max-w-md p-8">
+          <p className="font-display font-semibold text-ink text-lg">
+            Gabung ke {sekolah.nama}
+          </p>
+          <p className="text-[13px] text-ink-soft mt-1 mb-6">
+            Kamu diundang sebagai{" "}
+            <span className="font-medium text-pine">
+              {roleLabel[payload.role] ?? payload.role}
+            </span>
+            . Buat akun untuk mulai.
+          </p>
 
-        <form action={submitDenganToken} className="space-y-4">
-          <div>
-            <label className="text-[13px] text-ink-soft block mb-1">
-              Nama Lengkap
-            </label>
-            <input
-              name="nama"
-              required
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
-            />
-          </div>
-          <div>
-            <label className="text-[13px] text-ink-soft block mb-1">
-              Email
-            </label>
-            <input
-              name="email"
-              type="email"
-              required
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
-            />
-          </div>
-          <div>
-            <label className="text-[13px] text-ink-soft block mb-1">
-              Kata Sandi
-            </label>
-            <input
-              name="password"
-              type="password"
-              required
-              minLength={6}
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
-            />
-          </div>
+          <form action={submitDenganToken} className="space-y-4">
+            <div>
+              <label className="text-[13px] text-ink-soft block mb-1">
+                Nama Lengkap
+              </label>
+              <input
+                name="nama"
+                required
+                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
+              />
+            </div>
+            <div>
+              <label className="text-[13px] text-ink-soft block mb-1">
+                Email
+              </label>
+              <input
+                name="email"
+                type="email"
+                required
+                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
+              />
+            </div>
+            <div>
+              <label className="text-[13px] text-ink-soft block mb-1">
+                Kata Sandi
+              </label>
+              <input
+                name="password"
+                type="password"
+                required
+                minLength={6}
+                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
+              />
+            </div>
 
-          <button
-            type="submit"
-            className="w-full bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors"
-          >
-            Buat Akun & Gabung
-          </button>
-        </form>
-      </div>
+            <button
+              type="submit"
+              className="w-full bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors"
+            >
+              Buat Akun & Gabung
+            </button>
+          </form>
+        </div>
+      </main>
       <Footer />
-    </main>
+    </div>
   );
 }
