@@ -806,6 +806,23 @@ export async function getRiwayatAset(asetId: string): Promise<RiwayatAsetItem[]>
   return hasil;
 }
 
+/** Semua pengguna (profil) di sekolah yang sama — RLS profil_select_satu_sekolah
+ * udah ngizinin ini secara default, gak perlu service role. Dipakai di
+ * halaman Pengaturan > Manajemen Pengguna. */
+export async function getDaftarPengguna(): Promise<Profil[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profil")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil daftar pengguna:", error.message);
+    return [];
+  }
+  return data;
+}
+
 export async function getDaftarPeminjamanPaginated(
   params: DaftarPeminjamanParams = {}
 ): Promise<DaftarPeminjamanResult> {

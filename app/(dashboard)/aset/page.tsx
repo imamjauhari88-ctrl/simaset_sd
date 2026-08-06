@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, QrCode } from "lucide-react";
+import { Plus, QrCode, Layers } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { TabelAset } from "@/components/aset/tabel-aset";
@@ -44,6 +44,15 @@ export default async function AsetPage({
               >
                 <QrCode size={16} />
                 Cetak Semua Label
+              </Link>
+            )}
+            {bisaTambah && (
+              <Link
+                href="/aset/tambah-massal"
+                className="inline-flex items-center gap-1.5 text-ink-soft text-sm font-medium px-4 py-2 rounded-lg border border-line hover:bg-paper transition-colors"
+              >
+                <Layers size={16} />
+                Tambah Massal
               </Link>
             )}
             {bisaTambah && (
