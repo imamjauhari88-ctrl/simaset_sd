@@ -13,6 +13,10 @@ import type {
   DaftarAsetResult,
 } from "@/lib/supabase/queries";
 import type { AsetFormValues } from "@/lib/validasi/aset";
+import {
+  buatKodeAsetMassal,
+  type AsetMassalFormValues,
+} from "@/lib/validasi/aset-massal";
 
 const ASET_KEY = ["aset"] as const;
 
@@ -119,6 +123,73 @@ export function useSimpanAset() {
         : await supabase.from("aset").insert(payload);
 
       if (error) throw new Error(error.message);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ASET_KEY });
+    },
+  });
+}
+
+export interface HasilSimpanAsetMassal {
+  jumlah: number;
+  kodeAwal: string;
+  kodeAkhir: string;
+}
+
+/**
+ * Insert banyak aset identik sekaligus (mis. 40 kursi siswa) dalam SATU
+ * kali panggilan .insert([...]) — bukan loop insert satu-satu, biar cuma
+ * satu round-trip ke Supabase walau jumlahnya sampai ratusan. kode_aset
+ * tiap baris digenerate dari prefix+nomor urut (lihat buatKodeAsetMassal).
+ */
+export function useSimpanAsetMassal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      values: AsetMassalFormValues
+    ): Promise<HasilSimpanAsetMassal> => {
+      const supabase = createClient();
+      const kodeList = buatKodeAsetMassal(
+        values.kode_prefix,
+        values.nomor_mulai,
+        values.jumlah
+      );
+
+      const rows = kodeList.map((kode_aset) => ({
+        kode_aset,
+        nama: values.nama,
+        kategori_id: values.kategori_id,
+        ruangan_id: values.ruangan_id,
+        merk_tipe: values.merk_tipe || null,
+        tahun_perolehan: values.tahun_perolehan,
+        sumber_dana: values.sumber_dana,
+        harga_perolehan: values.harga_perolehan,
+        kondisi: values.kondisi,
+        catatan: values.catatan || null,
+      }));
+
+      const { error } = await supabase.from("aset").insert(rows);
+
+      if (error) {
+        // 23505 = unique_violation Postgres, kena constraint
+        // unique(sekolah_id, kode_aset) — berarti sebagian kode di
+        // rentang ini udah kepakai aset lain.
+        if (error.code === "23505") {
+          throw new Error(
+            `Sebagian kode aset di rentang ${kodeList[0]}–${
+              kodeList[kodeList.length - 1]
+            } sudah dipakai. Coba ganti awalan kode atau nomor mulai.`
+          );
+        }
+        throw new Error(error.message);
+      }
+
+      return {
+        jumlah: values.jumlah,
+        kodeAwal: kodeList[0],
+        kodeAkhir: kodeList[kodeList.length - 1],
+      };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ASET_KEY });

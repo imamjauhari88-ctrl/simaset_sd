@@ -91,14 +91,24 @@ async function fetchAktivitasTerbaru(): Promise<AktivitasItem[]> {
     id: a.id,
     teks: a.teks,
     waktu: formatWaktuRelatif(a.waktuRaw),
+    waktuRaw: a.waktuRaw,
   }));
 }
 
-export function useAktivitasTerbaru(enabled: boolean) {
+/**
+ * Sengaja SELALU aktif (bukan cuma pas dropdown dibuka) — badge titik
+ * merah di ikon lonceng butuh tahu ada-tidaknya aktivitas baru walau
+ * dropdown-nya belum pernah dibuka user. Query-nya ringan (3 select
+ * dibatasi limit 4) dan React Query sudah dedupe otomatis kalau
+ * beberapa <Topbar> nge-mount hook yang sama. Refetch tiap 2 menit
+ * biar badge kerasa "hidup" tanpa perlu reload manual.
+ */
+export function useAktivitasTerbaru(enabled = true) {
   return useQuery({
     queryKey: AKTIVITAS_KEY,
     queryFn: fetchAktivitasTerbaru,
     enabled,
     staleTime: 30_000,
+    refetchInterval: 120_000,
   });
 }

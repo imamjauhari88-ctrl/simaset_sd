@@ -285,6 +285,7 @@ export function MutasiManager({
             pageSize={PAGE_SIZE}
             total={total}
             onPageChange={gantiHalaman}
+            label="mutasi"
           />
         </div>
       )}

@@ -7,6 +7,10 @@ interface PaginationProps {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  /** Kata benda buat teks "Menampilkan X–Y dari Z <label>" — beda tiap
+   * halaman (aset/mutasi/peminjaman/catatan pemeliharaan). Default "aset"
+   * biar konsisten sama teks lama, tapi harusnya selalu diisi eksplisit. */
+  label?: string;
 }
 
 /** Bikin daftar nomor halaman dengan "..." kalau halamannya banyak,
@@ -29,7 +33,7 @@ function buatNomorHalaman(page: number, totalHalaman: number): (number | "...")[
   return hasil;
 }
 
-export function Pagination({ page, pageSize, total, onPageChange }: PaginationProps) {
+export function Pagination({ page, pageSize, total, onPageChange, label = "aset" }: PaginationProps) {
   const totalHalaman = Math.max(1, Math.ceil(total / pageSize));
   if (total === 0) return null;
 
@@ -41,7 +45,7 @@ export function Pagination({ page, pageSize, total, onPageChange }: PaginationPr
     <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-line">
       <p className="text-[13px] text-ink-soft">
         Menampilkan <span className="text-ink font-medium">{dari}–{sampai}</span> dari{" "}
-        <span className="text-ink font-medium">{total}</span> aset
+        <span className="text-ink font-medium">{total}</span> {label}
       </p>
 
       <div className="flex items-center gap-1">

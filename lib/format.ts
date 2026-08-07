@@ -38,6 +38,21 @@ export function formatRupiah(n: number): string {
   }).format(n);
 }
 
+import type { KondisiAset } from "@/types/database";
+
+const LABEL_KONDISI: Record<KondisiAset, string> = {
+  baik: "Baik",
+  rusak_ringan: "Rusak Ringan",
+  rusak_berat: "Rusak Berat",
+};
+
+/** Label teks polos buat kondisi aset — dipakai di tempat yang butuh
+ * string biasa (mis. sel Excel), beda dari <KondisiBadge> yang berupa
+ * komponen visual dgn warna. */
+export function labelKondisi(kondisi: KondisiAset): string {
+  return LABEL_KONDISI[kondisi];
+}
+
 /** Format tanggal singkat "dd/mm/yyyy", dipakai di tabel laporan cetak
  * (KIB/KIR/Mutasi) — beda dari formatWaktuRelatif yang buat activity feed. */
 export function formatTanggalSingkat(iso: string): string {

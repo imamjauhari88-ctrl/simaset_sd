@@ -1,6 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { getProfilSaya } from "@/lib/tenant/context";
 import { buatTokenUndangan } from "@/lib/tenant/undangan";
 import { env } from "@/lib/env";
@@ -47,4 +49,87 @@ export async function generateLinkUndangan(
   });
 
   return `${env.NEXT_PUBLIC_APP_URL}/undangan/${token}`;
+}
+
+/**
+ * Ganti role pengguna lain (guru <-> kepsek). SENGAJA gak lewat client
+ * RLS biasa (policy profil_update_diri_sendiri cuma izinin update baris
+ * sendiri) — ini operasi lintas-user yang cuma boleh admin, jadi pakai
+ * service client + validasi manual di sini (sama pola kayak generate
+ * undangan & onboarding).
+ */
+export async function ubahRolePengguna(
+  targetId: string,
+  roleBaru: RolePengguna
+) {
+  const profil = await getProfilSaya();
+  if (!profil) throw new Error("Kamu belum terhubung ke sekolah mana pun.");
+  if (profil.role !== "admin") {
+    throw new Error("Hanya admin yang bisa mengubah role pengguna.");
+  }
+  if (targetId === profil.id) {
+    throw new Error("Gak bisa ubah role sendiri lewat sini.");
+  }
+  if (roleBaru === "admin") {
+    throw new Error("Role admin nggak bisa dipindahkan — cuma ada satu per sekolah.");
+  }
+
+  const service = createServiceClient();
+
+  // Pastikan target beneran satu sekolah sama admin ini — jangan percaya
+  // targetId mentah-mentah dari client walau sudah admin-gated di atas.
+  const { data: target } = await service
+    .from("profil")
+    .select("sekolah_id")
+    .eq("id", targetId)
+    .single();
+
+  if (!target || target.sekolah_id !== profil.sekolah_id) {
+    throw new Error("Pengguna tidak ditemukan di sekolahmu.");
+  }
+
+  const { error } = await service
+    .from("profil")
+    .update({ role: roleBaru })
+    .eq("id", targetId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/pengaturan");
+}
+
+/**
+ * Cabut akses pengguna dari sekolah ini — hapus baris `profil`-nya
+ * (bukan hapus akun auth-nya). Efeknya: RLS langsung nolak semua akses
+ * data sekolah buat orang itu (current_sekolah_id() jadi null), tapi dia
+ * masih bisa login & lewat /onboarding kalau mau gabung/bikin sekolah
+ * baru lagi nanti — bukan ke-blokir permanen dari sistem.
+ */
+export async function cabutAksesPengguna(targetId: string) {
+  const profil = await getProfilSaya();
+  if (!profil) throw new Error("Kamu belum terhubung ke sekolah mana pun.");
+  if (profil.role !== "admin") {
+    throw new Error("Hanya admin yang bisa mencabut akses pengguna.");
+  }
+  if (targetId === profil.id) {
+    throw new Error("Gak bisa cabut akses akun sendiri lewat sini.");
+  }
+
+  const service = createServiceClient();
+
+  const { data: target } = await service
+    .from("profil")
+    .select("sekolah_id")
+    .eq("id", targetId)
+    .single();
+
+  if (!target || target.sekolah_id !== profil.sekolah_id) {
+    throw new Error("Pengguna tidak ditemukan di sekolahmu.");
+  }
+
+  const { error } = await service.from("profil").delete().eq("id", targetId);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/pengaturan");
 }

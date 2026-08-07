@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileBarChart, ArrowLeftRight, Printer } from "lucide-react";
+import { FileBarChart, ArrowLeftRight, Printer, FileSpreadsheet } from "lucide-react";
 import type { KategoriAset, Ruangan } from "@/types/database";
 import { daftarTahunOpsi } from "@/lib/format";
 
@@ -54,17 +54,26 @@ export function LaporanManager({
           </select>
         </div>
 
-        <button
-          onClick={() =>
-            bukaCetak(
-              `/cetak/laporan/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
-            )
-          }
-          className="mt-auto inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
-        >
-          <Printer size={15} />
-          Cetak KIB
-        </button>
+        <div className="mt-auto flex gap-2">
+          <button
+            onClick={() =>
+              bukaCetak(
+                `/cetak/laporan/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
+              )
+            }
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
+          >
+            <Printer size={15} />
+            Cetak
+          </button>
+          <a
+            href={`/api/laporan/export/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`}
+            className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
+            title="Export ke Excel"
+          >
+            <FileSpreadsheet size={15} />
+          </a>
+        </div>
       </div>
 
       {/* KIR — Kartu Inventaris Ruangan, per ruangan */}
@@ -97,17 +106,26 @@ export function LaporanManager({
           </select>
         </div>
 
-        <button
-          onClick={() =>
-            bukaCetak(
-              `/cetak/laporan/kir${ruanganId ? `?ruangan=${ruanganId}` : ""}`
-            )
-          }
-          className="mt-auto inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
-        >
-          <Printer size={15} />
-          Cetak KIR
-        </button>
+        <div className="mt-auto flex gap-2">
+          <button
+            onClick={() =>
+              bukaCetak(
+                `/cetak/laporan/kir${ruanganId ? `?ruangan=${ruanganId}` : ""}`
+              )
+            }
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
+          >
+            <Printer size={15} />
+            Cetak
+          </button>
+          <a
+            href={`/api/laporan/export/kir${ruanganId ? `?ruangan=${ruanganId}` : ""}`}
+            className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
+            title="Export ke Excel"
+          >
+            <FileSpreadsheet size={15} />
+          </a>
+        </div>
       </div>
 
       {/* Laporan Mutasi, per tahun */}
@@ -142,17 +160,26 @@ export function LaporanManager({
           </select>
         </div>
 
-        <button
-          onClick={() =>
-            bukaCetak(
-              `/cetak/laporan/mutasi${tahunMutasi ? `?tahun=${tahunMutasi}` : ""}`
-            )
-          }
-          className="mt-auto inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
-        >
-          <Printer size={15} />
-          Cetak Laporan Mutasi
-        </button>
+        <div className="mt-auto flex gap-2">
+          <button
+            onClick={() =>
+              bukaCetak(
+                `/cetak/laporan/mutasi${tahunMutasi ? `?tahun=${tahunMutasi}` : ""}`
+              )
+            }
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
+          >
+            <Printer size={15} />
+            Cetak
+          </button>
+          <a
+            href={`/api/laporan/export/mutasi${tahunMutasi ? `?tahun=${tahunMutasi}` : ""}`}
+            className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
+            title="Export ke Excel"
+          >
+            <FileSpreadsheet size={15} />
+          </a>
+        </div>
       </div>
     </div>
   );

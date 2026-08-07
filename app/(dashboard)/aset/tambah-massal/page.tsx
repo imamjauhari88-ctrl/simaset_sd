@@ -2,11 +2,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Topbar } from "@/components/layout/topbar";
-import { FormAset } from "@/components/aset/form-aset";
+import { FormAsetMassal } from "@/components/aset/form-aset-massal";
 import { getKategoriList, getRuanganList } from "@/lib/supabase/queries";
 import { getProfilSaya } from "@/lib/tenant/context";
 
-export default async function TambahAsetPage() {
+export default async function TambahAsetMassalPage() {
   const profil = await getProfilSaya();
   if (profil && profil.role === "kepsek") {
     redirect("/aset");
@@ -19,7 +19,7 @@ export default async function TambahAsetPage() {
 
   return (
     <>
-      <Topbar title="Tambah Aset" />
+      <Topbar title="Tambah Aset Massal" />
       <main className="flex-1 p-6 space-y-4">
         <Link
           href="/aset"
@@ -28,7 +28,7 @@ export default async function TambahAsetPage() {
           <ArrowLeft size={16} />
           Kembali ke Data Aset
         </Link>
-        <FormAset kategoriList={kategoriList} ruanganList={ruanganList} />
+        <FormAsetMassal kategoriList={kategoriList} ruanganList={ruanganList} />
       </main>
     </>
   );

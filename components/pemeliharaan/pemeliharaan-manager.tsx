@@ -296,6 +296,7 @@ export function PemeliharaanManager({
             pageSize={PAGE_SIZE}
             total={total}
             onPageChange={gantiHalaman}
+            label="catatan pemeliharaan"
           />
         </div>
       )}

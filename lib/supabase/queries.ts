@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { formatWaktuRelatif } from "@/lib/format";
+import { formatWaktuRelatif, formatRupiah } from "@/lib/format";
 import type {
   Aset,
   KategoriAset,
@@ -49,6 +49,29 @@ export async function getDaftarAset(): Promise<AsetWithRelasi[]> {
 
   if (error) {
     console.error("Gagal mengambil data aset:", error.message);
+    return [];
+  }
+
+  return data as unknown as AsetWithRelasi[];
+}
+
+/** Ambil aset spesifik berdasarkan daftar id — dipakai halaman cetak label
+ * QR "terpilih" (bulk select di tabel Data Aset), beda dari getDaftarAset
+ * yang ambil semua. */
+export async function getAsetByIds(ids: string[]): Promise<AsetWithRelasi[]> {
+  if (ids.length === 0) return [];
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id ( id, nama ), ruangan:ruangan_id ( id, nama )`
+    )
+    .in("id", ids)
+    .order("kode_aset", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil aset terpilih:", error.message);
     return [];
   }
 
@@ -305,6 +328,15 @@ export interface AktivitasItem {
   id: string;
   teks: string;
   waktu: string; // sudah diformat relatif, mis. "10 menit lalu"
+  /** ISO timestamp asli (opsional) — dipakai NotifikasiDropdown buat
+   * bandingin sama "terakhir dilihat" nentuin badge merah, bukan buat
+   * ditampilin. ActivityLog di Dashboard gak butuh ini, cuma `waktu`. */
+  waktuRaw?: string;
+}
+
+export interface NilaiPerKategoriItem {
+  kategori: string;
+  nilai: number;
 }
 
 export interface DashboardData {
@@ -314,6 +346,7 @@ export interface DashboardData {
   totalRuangan: number;
   kondisiBreakdown: KondisiBreakdownItem[];
   trenBulanan: TrenBulananItem[];
+  nilaiPerKategori: NilaiPerKategoriItem[];
   aktivitas: AktivitasItem[];
 }
 
@@ -334,7 +367,9 @@ const NAMA_BULAN = [
   "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
 ];
 
-type AsetRingkas = Pick<Aset, "kondisi" | "harga_perolehan" | "created_at">;
+type AsetRingkas = Pick<Aset, "kondisi" | "harga_perolehan" | "created_at"> & {
+  kategori_aset: { nama: string } | null;
+};
 type AsetBaru = Pick<Aset, "id" | "kode_aset" | "nama" | "created_at">;
 type AsetDiubah = Pick<
   Aset,
@@ -354,6 +389,14 @@ type PemeliharaanRingkas = {
   created_at: string;
   aset: Pick<Aset, "nama"> | null;
 };
+type PeminjamanRingkasDashboard = {
+  borrow_id: string;
+  status: string;
+  updated_at: string;
+  atas_nama: string | null;
+  aset: Pick<Aset, "nama"> | null;
+  peminjam: Pick<Profil, "nama"> | null;
+};
 
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createClient();
@@ -370,8 +413,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     asetDiubahRes,
     mutasiRes,
     pemeliharaanRes,
+    peminjamanRes,
   ] = await Promise.all([
-    supabase.from("aset").select("kondisi, harga_perolehan, created_at"),
+    supabase
+      .from("aset")
+      .select("kondisi, harga_perolehan, created_at, kategori_aset:kategori_id ( nama )"),
     supabase.from("ruangan").select("id", { count: "exact", head: true }),
     supabase
       .from("aset")
@@ -395,6 +441,13 @@ export async function getDashboardData(): Promise<DashboardData> {
       .select(`id, jenis, created_at, aset:aset_id ( nama )`)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase
+      .from("peminjaman_dengan_status")
+      .select(
+        `borrow_id, status, updated_at, atas_nama, aset:aset_id ( nama ), peminjam:peminjam_id ( nama )`
+      )
+      .order("updated_at", { ascending: false })
+      .limit(5),
   ]);
 
   const aset = (asetRingkasRes.data ?? []) as unknown as AsetRingkas[];
@@ -402,6 +455,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   const asetDiubah = (asetDiubahRes.data ?? []) as unknown as AsetDiubah[];
   const mutasi = (mutasiRes.data ?? []) as unknown as MutasiRingkas[];
   const pemeliharaan = (pemeliharaanRes.data ?? []) as unknown as PemeliharaanRingkas[];
+  const peminjaman = (peminjamanRes.data ?? []) as unknown as PeminjamanRingkasDashboard[];
 
   const totalAset = aset.length;
   const nilaiTotalAset = aset.reduce((sum, a) => sum + (a.harga_perolehan ?? 0), 0);
@@ -442,6 +496,37 @@ export async function getDashboardData(): Promise<DashboardData> {
     if (bucket) bucket.jumlah += 1;
   }
   const trenBulanan = bulanBuckets.map(({ bulan, jumlah }) => ({ bulan, jumlah }));
+
+  // Nilai aset per kategori — dijumlah dari harga_perolehan, diurut
+  // terbesar dulu. Kategori ke-9 dst digabung "Lainnya" biar chart gak
+  // penuh sesak kalau sekolahnya punya puluhan kategori barang.
+  const nilaiPerKategoriMap = new Map<string, number>();
+  for (const a of aset) {
+    const nama = a.kategori_aset?.nama ?? "Tanpa Kategori";
+    nilaiPerKategoriMap.set(
+      nama,
+      (nilaiPerKategoriMap.get(nama) ?? 0) + (a.harga_perolehan ?? 0)
+    );
+  }
+  const nilaiPerKategoriUrut = Array.from(
+    nilaiPerKategoriMap,
+    ([kategori, nilai]) => ({ kategori, nilai })
+  )
+    .filter((k) => k.nilai > 0)
+    .sort((a, b) => b.nilai - a.nilai);
+
+  const nilaiPerKategori =
+    nilaiPerKategoriUrut.length > 8
+      ? [
+          ...nilaiPerKategoriUrut.slice(0, 8),
+          {
+            kategori: "Lainnya",
+            nilai: nilaiPerKategoriUrut
+              .slice(8)
+              .reduce((sum, k) => sum + k.nilai, 0),
+          },
+        ]
+      : nilaiPerKategoriUrut;
 
   const aktivitasMentah: { id: string; teks: string; waktuRaw: string }[] = [];
 
@@ -485,6 +570,22 @@ export async function getDashboardData(): Promise<DashboardData> {
     });
   }
 
+  const LABEL_AKTIVITAS_PINJAM: Record<string, string> = {
+    MENUNGGU: "Pengajuan peminjaman",
+    DIPINJAM: "Peminjaman disetujui",
+    DITOLAK: "Peminjaman ditolak",
+    DIKEMBALIKAN: "Aset dikembalikan",
+  };
+  for (const p of peminjaman) {
+    const namaPeminjam = p.atas_nama || p.peminjam?.nama || "Seseorang";
+    const label = LABEL_AKTIVITAS_PINJAM[p.status] ?? "Peminjaman diperbarui";
+    aktivitasMentah.push({
+      id: `peminjaman-${p.borrow_id}`,
+      teks: `${label} — ${p.aset?.nama ?? "Aset"} (${namaPeminjam})`,
+      waktuRaw: p.updated_at,
+    });
+  }
+
   aktivitasMentah.sort(
     (a, b) => new Date(b.waktuRaw).getTime() - new Date(a.waktuRaw).getTime()
   );
@@ -496,10 +597,12 @@ export async function getDashboardData(): Promise<DashboardData> {
     totalRuangan: totalRuanganRes.count ?? 0,
     kondisiBreakdown,
     trenBulanan,
+    nilaiPerKategori,
     aktivitas: aktivitasMentah.slice(0, 6).map((a) => ({
       id: a.id,
       teks: a.teks,
       waktu: formatWaktuRelatif(a.waktuRaw),
+      waktuRaw: a.waktuRaw,
     })),
   };
 }
@@ -617,6 +720,140 @@ export async function getLaporanMutasi(
   }
 
   return data as unknown as MutasiWithRelasi[];
+}
+
+export interface RiwayatAsetItem {
+  id: string;
+  jenis: "mutasi" | "pemeliharaan" | "peminjaman";
+  teks: string;
+  keterangan?: string | null;
+  tanggal: string; // ISO date, dipakai sort & format tampilan
+}
+
+const LABEL_STATUS_PINJAM: Record<string, string> = {
+  MENUNGGU: "menunggu persetujuan",
+  DIPINJAM: "sedang dipinjam",
+  DITOLAK: "ditolak",
+  DIKEMBALIKAN: "sudah dikembalikan",
+};
+
+/**
+ * Riwayat satu aset spesifik — gabungan mutasi, pemeliharaan, dan
+ * peminjaman yang pernah tercatat buat aset ini, diurut terbaru dulu.
+ * Dipakai di halaman Detail Aset (/aset/[id]) sebagai timeline, beda
+ * dari getLaporanMutasi yang buat laporan lintas-aset.
+ */
+export async function getRiwayatAset(asetId: string): Promise<RiwayatAsetItem[]> {
+  const supabase = await createClient();
+
+  const [mutasiRes, pemeliharaanRes, peminjamanRes] = await Promise.all([
+    supabase
+      .from("mutasi_aset")
+      .select(
+        `id, tanggal, disetujui_oleh, keterangan, ruangan_asal:ruangan_asal_id ( nama ), ruangan_tujuan:ruangan_tujuan_id ( nama )`
+      )
+      .eq("aset_id", asetId)
+      .order("tanggal", { ascending: false }),
+    supabase
+      .from("pemeliharaan_aset")
+      .select("id, tanggal, jenis, biaya, keterangan, disetujui_oleh")
+      .eq("aset_id", asetId)
+      .order("tanggal", { ascending: false }),
+    supabase
+      .from("peminjaman_dengan_status")
+      .select(
+        `borrow_id, tanggal_pinjam, tanggal_kembali_rencana, tanggal_kembali_aktual, status, atas_nama, catatan_pengajuan, peminjam:peminjam_id ( nama )`
+      )
+      .eq("aset_id", asetId)
+      .order("tanggal_pinjam", { ascending: false }),
+  ]);
+
+  const hasil: RiwayatAsetItem[] = [];
+
+  type MutasiRingkas = {
+    id: string;
+    tanggal: string;
+    disetujui_oleh: string | null;
+    keterangan: string | null;
+    ruangan_asal: { nama: string } | null;
+    ruangan_tujuan: { nama: string } | null;
+  };
+  for (const m of (mutasiRes.data ?? []) as unknown as MutasiRingkas[]) {
+    hasil.push({
+      id: `mutasi-${m.id}`,
+      jenis: "mutasi",
+      teks: `Dipindah dari ${m.ruangan_asal?.nama ?? "?"} ke ${
+        m.ruangan_tujuan?.nama ?? "?"
+      }${m.disetujui_oleh ? ` — disetujui ${m.disetujui_oleh}` : ""}`,
+      keterangan: m.keterangan,
+      tanggal: m.tanggal,
+    });
+  }
+
+  type PemeliharaanRingkas = {
+    id: string;
+    tanggal: string;
+    jenis: string;
+    biaya: number | null;
+    keterangan: string | null;
+    disetujui_oleh: string | null;
+  };
+  for (const p of (pemeliharaanRes.data ?? []) as unknown as PemeliharaanRingkas[]) {
+    const jenisLabel = p.jenis === "perbaikan" ? "Perbaikan" : "Pemeliharaan rutin";
+    hasil.push({
+      id: `pemeliharaan-${p.id}`,
+      jenis: "pemeliharaan",
+      teks: `${jenisLabel}${p.biaya ? ` — ${formatRupiah(p.biaya)}` : ""}${
+        p.disetujui_oleh ? ` (disetujui ${p.disetujui_oleh})` : ""
+      }`,
+      keterangan: p.keterangan,
+      tanggal: p.tanggal,
+    });
+  }
+
+  type PeminjamanRingkas = {
+    borrow_id: string;
+    tanggal_pinjam: string;
+    tanggal_kembali_rencana: string;
+    tanggal_kembali_aktual: string | null;
+    status: string;
+    atas_nama: string | null;
+    catatan_pengajuan: string | null;
+    peminjam: { nama: string } | null;
+  };
+  for (const p of (peminjamanRes.data ?? []) as unknown as PeminjamanRingkas[]) {
+    const namaPeminjam = p.atas_nama || p.peminjam?.nama || "Seseorang";
+    hasil.push({
+      id: `peminjaman-${p.borrow_id}`,
+      jenis: "peminjaman",
+      teks: `Dipinjam ${namaPeminjam} — ${
+        LABEL_STATUS_PINJAM[p.status] ?? p.status.toLowerCase()
+      }`,
+      keterangan: p.catatan_pengajuan,
+      tanggal: p.tanggal_kembali_aktual ?? p.tanggal_pinjam,
+    });
+  }
+
+  hasil.sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
+
+  return hasil;
+}
+
+/** Semua pengguna (profil) di sekolah yang sama — RLS profil_select_satu_sekolah
+ * udah ngizinin ini secara default, gak perlu service role. Dipakai di
+ * halaman Pengaturan > Manajemen Pengguna. */
+export async function getDaftarPengguna(): Promise<Profil[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profil")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil daftar pengguna:", error.message);
+    return [];
+  }
+  return data;
 }
 
 export async function getDaftarPeminjamanPaginated(
