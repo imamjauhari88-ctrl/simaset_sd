@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  BarChart,
-  Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   ResponsiveContainer,
@@ -18,8 +18,14 @@ export function TrenChart({ data }: { data: TrenBulananItem[] }) {
         Penambahan Aset — 6 Bulan Terakhir
       </p>
       <ResponsiveContainer width="100%" height={220}>
-        <BarChart data={data}>
-          <CartesianGrid vertical={false} stroke="var(--color-line)" />
+        <AreaChart data={data} margin={{ left: -8, right: 8, top: 8 }}>
+          <defs>
+            <linearGradient id="trenFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--color-pine)" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="var(--color-pine)" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid horizontal vertical={false} strokeDasharray="3 3" stroke="var(--color-line)" />
           <XAxis
             dataKey="bulan"
             tickLine={false}
@@ -31,11 +37,19 @@ export function TrenChart({ data }: { data: TrenBulananItem[] }) {
             tickLine={false}
             axisLine={false}
             tick={{ fontSize: 12, fill: "var(--color-ink-soft)" }}
-            width={28}
+            width={32}
           />
           <Tooltip />
-          <Bar dataKey="jumlah" fill="var(--color-pine)" radius={[4, 4, 0, 0]} />
-        </BarChart>
+          <Area
+            type="monotone"
+            dataKey="jumlah"
+            stroke="var(--color-pine)"
+            strokeWidth={2.5}
+            fill="url(#trenFill)"
+            dot={false}
+            activeDot={{ r: 4 }}
+          />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

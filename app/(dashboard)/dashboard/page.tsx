@@ -4,6 +4,7 @@ import { StatCard } from "@/components/dashboard/stat-card";
 import { KondisiChart } from "@/components/dashboard/kondisi-chart";
 import { TrenChart } from "@/components/dashboard/tren-chart";
 import { NilaiKategoriChart } from "@/components/dashboard/nilai-kategori-chart";
+import { JumlahKategoriChart } from "@/components/dashboard/jumlah-kategori-chart";
 import { ActivityLog } from "@/components/dashboard/activity-log";
 import { ScrollToHash } from "@/components/ui/scroll-to-hash";
 import { getDashboardData } from "@/lib/supabase/queries";
@@ -68,7 +69,10 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <NilaiKategoriChart data={data.nilaiPerKategori} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <JumlahKategoriChart data={data.jumlahPerKategori} />
+          <NilaiKategoriChart data={data.nilaiPerKategori} />
+        </div>
 
         <ActivityLog data={data.aktivitas} />
       </main>

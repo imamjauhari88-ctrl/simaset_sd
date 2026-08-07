@@ -339,6 +339,12 @@ export interface NilaiPerKategoriItem {
   nilai: number;
 }
 
+export interface JumlahPerKategoriItem {
+  kategori: string;
+  jumlah: number;
+  color: string;
+}
+
 export interface DashboardData {
   totalAset: number;
   nilaiTotalAset: number;
@@ -347,8 +353,23 @@ export interface DashboardData {
   kondisiBreakdown: KondisiBreakdownItem[];
   trenBulanan: TrenBulananItem[];
   nilaiPerKategori: NilaiPerKategoriItem[];
+  jumlahPerKategori: JumlahPerKategoriItem[];
   aktivitas: AktivitasItem[];
 }
+
+/** Palet warna donut "Jumlah per Kategori" — cocok sama tone earthy
+ * yang sudah dipakai di tempat lain (pine/brass/sage/brick), ditambah
+ * beberapa varian biar kategori ke-5 dst tetap kebeda. */
+const WARNA_KATEGORI = [
+  "var(--color-pine)",
+  "var(--color-brass)",
+  "var(--color-sage)",
+  "var(--color-brick)",
+  "var(--color-pine-dark)",
+  "#8a6fb3",
+  "#4f7ea8",
+  "#c97f3c",
+];
 
 const WARNA_KONDISI: Record<KondisiAset, string> = {
   baik: "var(--color-sage)",
@@ -528,6 +549,38 @@ export async function getDashboardData(): Promise<DashboardData> {
         ]
       : nilaiPerKategoriUrut;
 
+  // Jumlah aset per kategori — hitung banyaknya barang, bukan nilainya.
+  // Kategori ke-7 dst digabung "Lainnya" biar donutnya gak kepenuhan
+  // irisan tipis-tipis.
+  const jumlahPerKategoriMap = new Map<string, number>();
+  for (const a of aset) {
+    const nama = a.kategori_aset?.nama ?? "Tanpa Kategori";
+    jumlahPerKategoriMap.set(nama, (jumlahPerKategoriMap.get(nama) ?? 0) + 1);
+  }
+  const jumlahPerKategoriUrut = Array.from(
+    jumlahPerKategoriMap,
+    ([kategori, jumlah]) => ({ kategori, jumlah })
+  ).sort((a, b) => b.jumlah - a.jumlah);
+
+  const BATAS_KATEGORI = WARNA_KATEGORI.length - 1;
+  const jumlahPerKategoriRingkas =
+    jumlahPerKategoriUrut.length > WARNA_KATEGORI.length
+      ? [
+          ...jumlahPerKategoriUrut.slice(0, BATAS_KATEGORI),
+          {
+            kategori: "Lainnya",
+            jumlah: jumlahPerKategoriUrut
+              .slice(BATAS_KATEGORI)
+              .reduce((sum, k) => sum + k.jumlah, 0),
+          },
+        ]
+      : jumlahPerKategoriUrut;
+
+  const jumlahPerKategori = jumlahPerKategoriRingkas.map((k, i) => ({
+    ...k,
+    color: WARNA_KATEGORI[i % WARNA_KATEGORI.length],
+  }));
+
   const aktivitasMentah: { id: string; teks: string; waktuRaw: string }[] = [];
 
   for (const a of asetBaru) {
@@ -598,6 +651,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     kondisiBreakdown,
     trenBulanan,
     nilaiPerKategori,
+    jumlahPerKategori,
     aktivitas: aktivitasMentah.slice(0, 6).map((a) => ({
       id: a.id,
       teks: a.teks,
