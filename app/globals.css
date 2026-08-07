@@ -150,4 +150,15 @@ body {
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
+
+  /* Laporan KIB B (16 kolom) kepanjangan buat potrait — cetak dalam
+   * orientasi landscape lewat named page (didukung Chrome/Edge), gak
+   * ganggu laporan lain yang tetap potrait default. */
+  @page kib-landscape {
+    size: landscape;
+    margin: 1cm;
+  }
+  .cetak-landscape {
+    page: kib-landscape;
+  }
 }

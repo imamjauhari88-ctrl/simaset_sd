@@ -1,9 +1,15 @@
 import { getLaporanAsetPerKategori, getKategoriList } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
-import { KondisiBadge } from "@/components/ui/kondisi-badge";
-import { formatRupiah } from "@/lib/format";
+import { formatAngka, labelAsalUsul } from "@/lib/format";
 
+/** Sel kolom "NOMOR" (Pabrik/Rangka/Mesin/Polisi/BPKB) belum ada field-
+ * nya di data aset (isian khusus kendaraan bermotor, jarang dipakai
+ * sekolah) — sengaja ditampilkan kosong dulu di kolom cetak, bukan
+ * dihapus, biar formatnya tetap 16 kolom persis format dinas dan bisa
+ * ditulis manual di kertas kalau memang ada. Sama buat Nomor
+ * Registrasi/Ukuran/Bahan.
+ */
 export default async function CetakKibPage({
   searchParams,
 }: {
@@ -21,30 +27,31 @@ export default async function CetakKibPage({
     ? kategoriList.find((k) => k.id === kategoriId)?.nama ?? "—"
     : "Semua Kategori";
 
-  const totalNilai = daftarAset.reduce(
-    (jumlah, a) => jumlah + (a.harga_perolehan ?? 0),
-    0
-  );
-
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="cetak-landscape max-w-[1400px] mx-auto">
       <TombolCetak />
 
-      <div className="text-center mb-6">
-        <p className="font-display font-semibold text-ink text-lg">
-          KARTU INVENTARIS BARANG (KIB)
+      <div className="text-center mb-1">
+        <p className="font-display font-bold text-ink text-base uppercase">
+          Kartu Inventaris Barang (KIB) B
         </p>
-        <p className="text-sm text-ink-soft">{sekolah?.nama ?? ""}</p>
-        {sekolah?.alamat && (
-          <p className="text-[12px] text-ink-soft">{sekolah.alamat}</p>
-        )}
-        {sekolah?.npsn && (
-          <p className="text-[12px] text-ink-soft">NPSN: {sekolah.npsn}</p>
-        )}
-        <p className="text-[13px] text-ink mt-2 font-medium">
-          Kategori: {namaKategori}
+        <p className="font-display font-bold text-ink text-base uppercase">
+          Peralatan dan Mesin
         </p>
       </div>
+
+      <div className="text-center text-[12px] text-ink-soft mb-3">
+        <p>{sekolah?.nama ?? ""}</p>
+        {sekolah?.alamat && <p>{sekolah.alamat}</p>}
+        {kategoriId && (
+          <p className="text-ink font-medium mt-1">Kategori: {namaKategori}</p>
+        )}
+      </div>
+
+      <p className="text-[12px] text-ink font-medium mb-3">
+        NO. KODE LOKASI :{" "}
+        <span className="font-mono">{sekolah?.kode_lokasi || "—"}</span>
+      </p>
 
       {daftarAset.length === 0 ? (
         <p className="text-ink-soft text-sm text-center">
@@ -52,58 +59,65 @@ export default async function CetakKibPage({
         </p>
       ) : (
         <>
-          <table className="w-full text-[12px] border-collapse">
+          <table className="w-full text-[10px] border-collapse border border-ink/40">
             <thead>
-              <tr className="border-b-2 border-ink/30 text-left">
-                <th className="py-2 pr-2 w-8">No</th>
-                <th className="py-2 pr-2">Kode Aset</th>
-                <th className="py-2 pr-2">Nama Barang</th>
-                <th className="py-2 pr-2">Merk/Tipe</th>
-                <th className="py-2 pr-2">Ruangan</th>
-                <th className="py-2 pr-2">Tahun</th>
-                <th className="py-2 pr-2">Sumber Dana</th>
-                <th className="py-2 pr-2 text-right">Harga Perolehan</th>
-                <th className="py-2 pr-2">Kondisi</th>
+              <tr className="text-center font-semibold">
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1 w-7">NO</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">KODE BARANG</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">NAMA BARANG/ JENIS BARANG</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">NOMOR REGISTRASI</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">MERK/ TYPE</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">UKURAN/ CC</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">BAHAN</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">TAHUN PEMBELIAN</th>
+                <th colSpan={5} className="border border-ink/40 px-1 py-1">NOMOR</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">ASAL USUL CARA PEROLEHAN</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">HARGA</th>
+                <th rowSpan={3} className="border border-ink/40 px-1 py-1">KET.</th>
+              </tr>
+              <tr className="text-center font-semibold">
+                <th className="border border-ink/40 px-1 py-1">PABRIK</th>
+                <th className="border border-ink/40 px-1 py-1">RANGKA</th>
+                <th className="border border-ink/40 px-1 py-1">MESIN</th>
+                <th className="border border-ink/40 px-1 py-1">POLISI</th>
+                <th className="border border-ink/40 px-1 py-1">BPKB</th>
+              </tr>
+              <tr className="text-center text-ink-soft">
+                {Array.from({ length: 16 }, (_, i) => i + 1).map((n) => (
+                  <th key={n} className="border border-ink/40 px-1 py-0.5 font-normal">
+                    {n}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {daftarAset.map((a, i) => (
-                <tr key={a.id} className="border-b border-line break-inside-avoid">
-                  <td className="py-1.5 pr-2 text-ink-soft">{i + 1}</td>
-                  <td className="py-1.5 pr-2 font-mono">{a.kode_aset}</td>
-                  <td className="py-1.5 pr-2">{a.nama}</td>
-                  <td className="py-1.5 pr-2 text-ink-soft">
-                    {a.merk_tipe || "—"}
+                <tr key={a.id} className="break-inside-avoid">
+                  <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.kode_aset}</td>
+                  <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1 text-center">
+                    {a.tahun_perolehan || ""}
                   </td>
-                  <td className="py-1.5 pr-2 text-ink-soft">
-                    {a.ruangan?.nama || "—"}
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">
+                    {labelAsalUsul(a.sumber_dana)}
                   </td>
-                  <td className="py-1.5 pr-2 text-ink-soft">
-                    {a.tahun_perolehan || "—"}
+                  <td className="border border-ink/40 px-1 py-1 text-right">
+                    {a.harga_perolehan ? formatAngka(a.harga_perolehan) : ""}
                   </td>
-                  <td className="py-1.5 pr-2 text-ink-soft uppercase">
-                    {a.sumber_dana || "—"}
-                  </td>
-                  <td className="py-1.5 pr-2 text-right">
-                    {formatRupiah(a.harga_perolehan ?? 0)}
-                  </td>
-                  <td className="py-1.5 pr-2">
-                    <KondisiBadge kondisi={a.kondisi} />
-                  </td>
+                  <td className="border border-ink/40 px-1 py-1">{a.catatan || ""}</td>
                 </tr>
               ))}
             </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-ink/30 font-medium">
-                <td colSpan={7} className="py-2 pr-2 text-right">
-                  Total Nilai Perolehan
-                </td>
-                <td className="py-2 pr-2 text-right">
-                  {formatRupiah(totalNilai)}
-                </td>
-                <td />
-              </tr>
-            </tfoot>
           </table>
 
           <p className="text-[11px] text-ink-soft mt-6 print:mt-10">

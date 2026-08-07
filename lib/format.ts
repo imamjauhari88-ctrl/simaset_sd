@@ -38,7 +38,29 @@ export function formatRupiah(n: number): string {
   }).format(n);
 }
 
-import type { KondisiAset } from "@/types/database";
+/** Angka biasa dengan pemisah ribuan ala Indonesia (mis. "250.000"),
+ * tanpa simbol mata uang — dipakai di kolom HARGA format KIB dinas
+ * yang polos angka aja, beda dari formatRupiah yang pakai "Rp". */
+export function formatAngka(n: number): string {
+  return new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(n);
+}
+
+import type { KondisiAset, SumberDana } from "@/types/database";
+
+const LABEL_ASAL_USUL: Record<SumberDana, string> = {
+  bos: "Pembelian (BOS)",
+  apbd: "Pembelian (APBD)",
+  hibah: "Bantuan/Hibah",
+  swadaya: "Pembelian (Swadaya)",
+  lainnya: "Lainnya",
+};
+
+/** Label "Asal Usul Cara Perolehan" ala format KIB dinas, diturunkan
+ * dari sumber_dana yang sudah ada — sengaja gak nambah kolom baru di
+ * tabel aset. */
+export function labelAsalUsul(sumberDana: SumberDana): string {
+  return LABEL_ASAL_USUL[sumberDana];
+}
 
 const LABEL_KONDISI: Record<KondisiAset, string> = {
   baik: "Baik",

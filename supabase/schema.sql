@@ -845,3 +845,10 @@ $$;
 grant execute on function fn_approve_peminjaman(uuid) to authenticated;
 grant execute on function fn_reject_peminjaman(uuid, text) to authenticated;
 grant execute on function fn_return_peminjaman(uuid) to authenticated;
+
+-- ============================================================
+-- kode_lokasi sekolah — dipakai di kop cetak Kartu Inventaris
+-- Barang (KIB) format dinas, mis. "12.13.28.08.07.03.49". Nullable
+-- karena sekolah lama belum tentu langsung isi pas migrasi jalan.
+-- ============================================================
+alter table sekolah add column if not exists kode_lokasi text;
