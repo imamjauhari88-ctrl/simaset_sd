@@ -131,6 +131,27 @@ body {
   animation: slide-in-left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Efek "buka buku" di halaman Login — dua sisi kartu (form & panel
+   brand) kebuka dari tengah/spine ke posisi akhirnya, kayak sampul
+   buku yang dibuka. Dipisah kiri/kanan biar arah gesernya berlawanan. */
+@keyframes book-open-left {
+  from { transform: translateX(28%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes book-open-right {
+  from { transform: translateX(-28%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.animate-book-open-left {
+  animation: book-open-left 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-book-open-right {
+  animation: book-open-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .animate-skeleton {
   animation: skeleton-pulse 1.4s ease-in-out infinite;
   background-color: var(--color-line);

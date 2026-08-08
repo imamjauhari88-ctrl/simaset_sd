@@ -21,11 +21,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
           {/* Form — di kiri saat Login, biar posisinya "ketuker" sama
               Onboarding (panel di kanan sana) — ngasih kesan dua halaman
-              ini sepasang/saling terhubung, senada video referensi. */}
-          <div className="order-2 md:order-1 p-8 sm:p-10 flex flex-col justify-center">
+              ini sepasang/saling terhubung, senada video referensi.
+              animate-book-open-* bikin dua sisi kartu ini "kebuka" dari
+              tengah pas halaman dimuat, kesan buka buku. */}
+          <div className="order-2 md:order-1 p-8 sm:p-10 flex flex-col justify-center animate-book-open-left">
             <div className="flex items-center gap-3 mb-8">
               <LogoMark size={28} />
               <div>
@@ -102,7 +104,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="order-1 md:order-2">
+          <div className="order-1 md:order-2 animate-book-open-right">
             <PanelBrand
               title="Selamat Datang Kembali!"
               description="Belum punya akun admin sekolah? Registrasi dulu sekolahmu di sini."

@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifikasiTokenUndangan } from "@/lib/tenant/undangan";
-import { terimaUndangan } from "./actions";
+import { LogoMark } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
+import { PanelBrand } from "@/components/ui/panel-brand";
+import { UndanganForm } from "@/components/undangan/undangan-form";
 
 const roleLabel: Record<string, string> = {
   admin: "Admin",
@@ -77,65 +79,43 @@ export default async function UndanganPage({
     );
   }
 
-  const submitDenganToken = terimaUndangan.bind(null, token);
+  const peran = roleLabel[payload.role] ?? payload.role;
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="tag-card w-full max-w-md p-8">
-          <p className="font-display font-semibold text-ink text-lg">
-            Gabung ke {sekolah.nama}
-          </p>
-          <p className="text-[13px] text-ink-soft mt-1 mb-6">
-            Kamu diundang sebagai{" "}
-            <span className="font-medium text-pine">
-              {roleLabel[payload.role] ?? payload.role}
-            </span>
-            . Buat akun untuk mulai.
-          </p>
-
-          <form action={submitDenganToken} className="space-y-4">
-            <div>
-              <label className="text-[13px] text-ink-soft block mb-1">
-                Nama Lengkap
-              </label>
-              <input
-                name="nama"
-                required
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
-              />
-            </div>
-            <div>
-              <label className="text-[13px] text-ink-soft block mb-1">
-                Email
-              </label>
-              <input
-                name="email"
-                type="email"
-                required
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
-              />
-            </div>
-            <div>
-              <label className="text-[13px] text-ink-soft block mb-1">
-                Kata Sandi
-              </label>
-              <input
-                name="password"
-                type="password"
-                required
-                minLength={6}
-                className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface"
-              />
+      <main className="flex-1 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
+          <div className="order-2 md:order-1 p-8 sm:p-10 flex flex-col justify-center animate-book-open-left">
+            <div className="flex items-center gap-3 mb-8">
+              <LogoMark size={28} />
+              <div>
+                <p className="font-display font-semibold text-ink">
+                  SIMASET SD
+                </p>
+                <p className="text-[11px] text-ink-soft">
+                  Inventaris Aset Sekolah
+                </p>
+              </div>
             </div>
 
-            <button
-              type="submit"
-              className="w-full bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors"
-            >
-              Buat Akun & Gabung
-            </button>
-          </form>
+            <p className="font-display font-semibold text-ink text-lg">
+              Gabung ke {sekolah.nama}
+            </p>
+            <p className="text-[13px] text-ink-soft mt-1 mb-6">
+              Kamu diundang sebagai{" "}
+              <span className="font-medium text-pine">{peran}</span>. Buat
+              akun untuk mulai.
+            </p>
+
+            <UndanganForm token={token} />
+          </div>
+
+          <div className="order-1 md:order-2 animate-book-open-right">
+            <PanelBrand
+              title="Selamat Bergabung!"
+              description={`Kamu diundang jadi ${peran} di ${sekolah.nama}. Lengkapi datamu di samping buat langsung mulai.`}
+            />
+          </div>
         </div>
       </main>
       <Footer />

@@ -12,7 +12,7 @@ export default async function OnboardingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-4xl rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
           {/* Panel di KIRI (posisinya sengaja ketuker dari Login yang
               panel-nya di kanan) — biar dua halaman ini kerasa sepasang,
               kayak efek "flip" di video referensi. */}
@@ -29,7 +29,11 @@ export default async function OnboardingPage() {
             />
           </div>
 
-          <div className="order-2 p-8 sm:p-10">
+          {/* Kartu ini disamain tingginya sama Login (md:h-[560px]) biar
+              ukurannya konsisten & gak "loncat" pas pindah halaman. Karena
+              formnya lebih panjang, cuma area form ini yang di-scroll
+              (judul & deskripsi di atas tetap diam). */}
+          <div className="order-2 p-8 sm:p-10 flex flex-col md:h-full md:overflow-hidden">
             <p className="font-display font-semibold text-ink text-lg">
               Daftarkan Sekolah
             </p>
@@ -39,7 +43,9 @@ export default async function OnboardingPage() {
                 : "Bikin akun sekaligus daftarkan sekolahmu. Kamu akan jadi admin pertama."}
             </p>
 
-            <OnboardingForm sudahLogin={!!user} />
+            <div className="md:flex-1 md:overflow-y-auto md:pr-1 -mr-1">
+              <OnboardingForm sudahLogin={!!user} />
+            </div>
           </div>
         </div>
       </main>

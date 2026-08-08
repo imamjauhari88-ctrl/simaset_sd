@@ -5,10 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { verifikasiTokenUndangan } from "@/lib/tenant/undangan";
 
-export async function terimaUndangan(token: string, formData: FormData) {
+export async function terimaUndangan(
+  token: string,
+  _prevState: { error?: string },
+  formData: FormData
+): Promise<{ error?: string }> {
   const payload = await verifikasiTokenUndangan(token);
   if (!payload) {
-    throw new Error("Link undangan tidak valid atau sudah kedaluwarsa.");
+    return { error: "Link undangan tidak valid atau sudah kedaluwarsa." };
   }
 
   const email = String(formData.get("email") ?? "").trim();
@@ -16,7 +20,7 @@ export async function terimaUndangan(token: string, formData: FormData) {
   const nama = String(formData.get("nama") ?? "").trim();
 
   if (!email || !password || !nama) {
-    throw new Error("Semua kolom wajib diisi.");
+    return { error: "Semua kolom wajib diisi." };
   }
 
   // Service role: user yang menerima undangan belum punya `profil` sama
@@ -37,9 +41,10 @@ export async function terimaUndangan(token: string, formData: FormData) {
     .maybeSingle();
 
   if (errKlaim || !diklaim) {
-    throw new Error(
-      "Link undangan ini sudah pernah dipakai untuk mendaftar atau sudah kedaluwarsa. Minta admin sekolahmu kirim ulang undangan baru."
-    );
+    return {
+      error:
+        "Link undangan ini sudah pernah dipakai untuk mendaftar atau sudah kedaluwarsa. Minta admin sekolahmu kirim ulang undangan baru.",
+    };
   }
 
   const supabase = await createClient();
@@ -55,7 +60,7 @@ export async function terimaUndangan(token: string, formData: FormData) {
       .from("undangan")
       .update({ dipakai_at: null })
       .eq("id", payload.undanganId);
-    throw new Error(errSignUp?.message ?? "Gagal membuat akun.");
+    return { error: errSignUp?.message ?? "Gagal membuat akun." };
   }
 
   const { error: errProfil } = await service.from("profil").insert({
@@ -70,7 +75,7 @@ export async function terimaUndangan(token: string, formData: FormData) {
       .from("undangan")
       .update({ dipakai_at: null })
       .eq("id", payload.undanganId);
-    throw new Error(errProfil.message);
+    return { error: errProfil.message };
   }
 
   // Catat siapa yang memakai link ini (best-effort — dipakai_at di atas
