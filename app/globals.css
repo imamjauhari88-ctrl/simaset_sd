@@ -154,63 +154,25 @@ body {
 
 /* Transisi Login <-> Onboarding: dua elemen bernama "auth-form" &
    "auth-brand" (lihat app/login & app/onboarding) di-morph browser pakai
-   View Transitions API. Tiga lapis diatur di sini:
-   1. ::view-transition-group -> posisi/ukuran kotaknya digeser (ini yang
-      bikin form kerasa "pindah" dari kiri ke kanan pas Login->Onboarding).
-   2. ::view-transition-old/new -> KONTEN di dalam kotak itu. Default
-      browser nge-cross-fade (blend) dua snapshot piksel — kalau isinya
-      beda jauh (form Login cuma 2 field, form Onboarding banyak field),
-      hasil blend-nya kelihatan belepotan/gak jelas, bukan "buka buku"
-      yang rapi. Diganti fade+scale halus yang terpisah (lama memudar
-      keluar, baru muncul masuk), bukan dicampur/di-crossfade.
-   3. auth-brand dikasih sedikit translateX biar arah "geser"-nya kerasa,
-      bukan cuma muncul-hilang di tempat. */
+   View Transitions API.
+   Sengaja CUMA atur durasi & easing-nya, gak override cross-fade
+   konten (::view-transition-old/new) sama sekali — percobaan sebelumnya
+   nge-override `mix-blend-mode` browser jadi "normal" buat bikin
+   animasi custom, tapi itu malah bikin transisinya kerasa "kotor"/gak
+   bersih. Browser sendiri default-nya pakai `plus-lighter` khusus buat
+   nyegah efek numpuk pas dua lapisan (lama+baru) transparan bebarengan
+   di tengah animasi — jangan diutak-atik, biarin bawaan Chrome yang
+   emang udah dioptimasi buat ini. Yang di-custom cuma disamain
+   durasi/easing-nya biar geser posisi & cross-fade konten selesai
+   bebarengan (gak ada yang "nunggu" bagian lain kelar). */
 ::view-transition-group(auth-form),
-::view-transition-group(auth-brand) {
-  animation-duration: 450ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-}
-
+::view-transition-group(auth-brand),
 ::view-transition-old(auth-form),
 ::view-transition-new(auth-form),
 ::view-transition-old(auth-brand),
 ::view-transition-new(auth-brand) {
-  animation-duration: 320ms;
+  animation-duration: 420ms;
   animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
-  animation-fill-mode: both;
-  mix-blend-mode: normal; /* matikan efek cross-fade tumpuk-menumpuk bawaan browser */
-}
-
-::view-transition-old(auth-form) {
-  animation-name: auth-fade-out;
-}
-::view-transition-new(auth-form) {
-  animation-name: auth-fade-in;
-  animation-delay: 130ms; /* nunggu yang lama kelar mudar dulu, baru yang baru muncul — gak numpuk/blur */
-}
-::view-transition-old(auth-brand) {
-  animation-name: auth-brand-out;
-}
-::view-transition-new(auth-brand) {
-  animation-name: auth-brand-in;
-  animation-delay: 130ms;
-}
-
-@keyframes auth-fade-out {
-  from { opacity: 1; transform: scale(1); }
-  to { opacity: 0; transform: scale(0.97); }
-}
-@keyframes auth-fade-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes auth-brand-out {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(-4%); }
-}
-@keyframes auth-brand-in {
-  from { opacity: 0; transform: translateX(4%); }
-  to { opacity: 1; transform: translateX(0); }
 }
 
 /* Biar klik/scroll di halaman gak keblokir overlay transisi yang lagi jalan. */
