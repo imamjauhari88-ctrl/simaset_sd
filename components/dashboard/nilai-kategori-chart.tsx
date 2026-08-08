@@ -3,6 +3,7 @@
 import {
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   ResponsiveContainer,
@@ -69,12 +70,11 @@ export function NilaiKategoriChart({ data }: { data: NilaiPerKategoriItem[] }) {
               formatter={(value: number) => formatRupiah(value)}
               cursor={{ fill: "var(--color-paper)" }}
             />
-            <Bar
-              dataKey="nilai"
-              fill="var(--color-brass)"
-              radius={[0, 4, 4, 0]}
-              barSize={20}
-            />
+            <Bar dataKey="nilai" radius={[0, 4, 4, 0]} barSize={20}>
+              {data.map((entry) => (
+                <Cell key={entry.kategori} fill={entry.color} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       )}

@@ -337,6 +337,7 @@ export interface AktivitasItem {
 export interface NilaiPerKategoriItem {
   kategori: string;
   nilai: number;
+  color: string;
 }
 
 export interface JumlahPerKategoriItem {
@@ -518,6 +519,29 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
   const trenBulanan = bulanBuckets.map(({ bulan, jumlah }) => ({ bulan, jumlah }));
 
+  // Pemetaan warna PER NAMA kategori (bukan per posisi index di masing-
+  // masing chart) — dipakai bareng oleh nilaiPerKategori & jumlahPerKategori
+  // di bawah. Ini penting: nilaiPerKategori diurut dari nilai terbesar,
+  // jumlahPerKategori diurut dari jumlah terbanyak, jadi urutannya BISA
+  // beda antar dua chart (mis. "Elektronik" mahal tapi jumlahnya sedikit).
+  // Kalau warnanya ditentukan dari index array masing-masing (assign
+  // berurutan), "Elektronik" bisa jadi biru di satu chart tapi hijau di
+  // chart sebelahnya — bikin bingung padahal dua chart ini sengaja
+  // ditaruh sejajar biar gampang dikorelasikan. Warna "Lainnya" (bucket
+  // gabungan kategori kecil) dikunci abu-abu netral di kedua chart,
+  // BUKAN warna kategori asli, karena itu bukan kategori sungguhan.
+  const namaKategoriUnik = Array.from(
+    new Set(aset.map((a) => a.kategori_aset?.nama ?? "Tanpa Kategori"))
+  ).sort((a, b) => a.localeCompare(b, "id"));
+  const WARNA_LAINNYA = "var(--color-ink-soft)";
+  function warnaKategori(nama: string): string {
+    if (nama === "Lainnya") return WARNA_LAINNYA;
+    const idx = namaKategoriUnik.indexOf(nama);
+    return idx === -1
+      ? WARNA_LAINNYA
+      : WARNA_KATEGORI[idx % WARNA_KATEGORI.length];
+  }
+
   // Nilai aset per kategori — dijumlah dari harga_perolehan, diurut
   // terbesar dulu. Kategori ke-9 dst digabung "Lainnya" biar chart gak
   // penuh sesak kalau sekolahnya punya puluhan kategori barang.
@@ -536,7 +560,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     .filter((k) => k.nilai > 0)
     .sort((a, b) => b.nilai - a.nilai);
 
-  const nilaiPerKategori =
+  const nilaiPerKategoriRingkas =
     nilaiPerKategoriUrut.length > 8
       ? [
           ...nilaiPerKategoriUrut.slice(0, 8),
@@ -548,6 +572,11 @@ export async function getDashboardData(): Promise<DashboardData> {
           },
         ]
       : nilaiPerKategoriUrut;
+
+  const nilaiPerKategori = nilaiPerKategoriRingkas.map((k) => ({
+    ...k,
+    color: warnaKategori(k.kategori),
+  }));
 
   // Jumlah aset per kategori — hitung banyaknya barang, bukan nilainya.
   // Kategori ke-7 dst digabung "Lainnya" biar donutnya gak kepenuhan
@@ -576,9 +605,9 @@ export async function getDashboardData(): Promise<DashboardData> {
         ]
       : jumlahPerKategoriUrut;
 
-  const jumlahPerKategori = jumlahPerKategoriRingkas.map((k, i) => ({
+  const jumlahPerKategori = jumlahPerKategoriRingkas.map((k) => ({
     ...k,
-    color: WARNA_KATEGORI[i % WARNA_KATEGORI.length],
+    color: warnaKategori(k.kategori),
   }));
 
   const aktivitasMentah: { id: string; teks: string; waktuRaw: string }[] = [];
