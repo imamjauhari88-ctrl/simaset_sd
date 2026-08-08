@@ -67,7 +67,7 @@ export function OnboardingForm({ sudahLogin }: { sudahLogin: boolean }) {
           name="nama_admin"
           required
           disabled={pending}
-          placeholder="mis. Sri Wahyuni"
+          placeholder="mis. Imam Jauhari"
           className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
         />
       </div>
