@@ -19,6 +19,10 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+    // Dicatat di server biar kelihatan alasan pastinya pas debug lokal
+    // (link kedaluwarsa/sudah dipakai, redirect URL belum di-allowlist
+    // di Supabase Dashboard, atau cookie PKCE beda browser).
+    console.error("exchangeCodeForSession gagal:", error.message);
   }
 
   const url = new URL("/login", origin);

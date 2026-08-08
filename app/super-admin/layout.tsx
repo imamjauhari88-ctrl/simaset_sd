@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import { logout } from "@/lib/auth/actions";
+import { Footer } from "@/components/layout/footer";
 
 export default function SuperAdminLayout({
   children,
@@ -7,7 +8,7 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen flex flex-col bg-paper">
       <header className="border-b border-line bg-surface">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -33,7 +34,10 @@ export default function SuperAdminLayout({
           </form>
         </div>
       </header>
-      <main className="max-w-4xl mx-auto px-6 py-8">{children}</main>
+      <main className="flex-1 max-w-4xl mx-auto px-6 py-8 w-full">
+        {children}
+      </main>
+      <Footer />
     </div>
   );
 }

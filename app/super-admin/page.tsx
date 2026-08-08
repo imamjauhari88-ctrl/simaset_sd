@@ -1,6 +1,6 @@
 import { requireSuperAdmin } from "@/lib/super-admin-guard";
 import { getDaftarSekolahUntukSuperAdmin } from "@/lib/queries/super-admin";
-import { DaftarSekolahPending } from "@/components/super-admin/daftar-sekolah-pending";
+import { SuperAdminTabs } from "@/components/super-admin/super-admin-tabs";
 
 export default async function SuperAdminPage() {
   await requireSuperAdmin();
@@ -22,28 +22,7 @@ export default async function SuperAdminPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 max-w-md">
-        <div className="tag-card p-4 text-center">
-          <p className="font-display text-xl font-semibold text-brass">
-            {pending.length}
-          </p>
-          <p className="text-[11px] text-ink-soft mt-0.5">Menunggu</p>
-        </div>
-        <div className="tag-card p-4 text-center">
-          <p className="font-display text-xl font-semibold text-sage">
-            {aktif.length}
-          </p>
-          <p className="text-[11px] text-ink-soft mt-0.5">Aktif</p>
-        </div>
-        <div className="tag-card p-4 text-center">
-          <p className="font-display text-xl font-semibold text-brick">
-            {ditolak.length}
-          </p>
-          <p className="text-[11px] text-ink-soft mt-0.5">Ditolak</p>
-        </div>
-      </div>
-
-      <DaftarSekolahPending daftar={pending} />
+      <SuperAdminTabs pending={pending} aktif={aktif} ditolak={ditolak} />
     </div>
   );
 }
