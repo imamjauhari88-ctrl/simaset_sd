@@ -152,6 +152,31 @@ body {
   animation: book-open-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Transisi Login <-> Onboarding: dua elemen bernama "auth-form" &
+   "auth-brand" (lihat app/login & app/onboarding) di-morph browser
+   pakai View Transitions API bawaan Next.js — ini cuma atur durasi &
+   easing-nya biar berasa kayak buku kebuka, bukan default 250ms yang
+   kecepetan. */
+::view-transition-group(auth-form),
+::view-transition-group(auth-brand) {
+  animation-duration: 500ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Biar klik/scroll di halaman gak keblokir overlay transisi yang lagi jalan. */
+::view-transition {
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+}
+
 .animate-skeleton {
   animation: skeleton-pulse 1.4s ease-in-out infinite;
   background-color: var(--color-line);
