@@ -12,7 +12,7 @@ import type {
 } from "@/types/database";
 
 export type AsetWithRelasi = Aset & {
-  kategori_aset: Pick<KategoriAset, "id" | "nama"> | null;
+  kategori_aset: Pick<KategoriAset, "id" | "nama" | "kode_kib"> | null;
   ruangan: Pick<Ruangan, "id" | "nama"> | null;
 };
 
@@ -701,7 +701,7 @@ export async function getLaporanAsetPerKategori(
   let query = supabase
     .from("aset")
     .select(
-      `*, kategori_aset:kategori_id ( id, nama ), ruangan:ruangan_id ( id, nama )`
+      `*, kategori_aset:kategori_id ( id, nama, kode_kib ), ruangan:ruangan_id ( id, nama )`
     );
 
   if (kategoriId) {

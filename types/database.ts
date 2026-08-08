@@ -10,6 +10,9 @@ export interface Sekolah {
   npsn: string | null;
   alamat: string | null;
   logo_url: string | null;
+  /** Kode lokasi ala format dinas, mis. "12.13.28.08.07.03.49" —
+   * dipakai di kop cetak laporan KIB. */
+  kode_lokasi: string | null;
   created_at: string;
 }
 

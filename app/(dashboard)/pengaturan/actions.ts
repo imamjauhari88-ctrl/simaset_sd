@@ -133,3 +133,27 @@ export async function cabutAksesPengguna(targetId: string) {
 
   revalidatePath("/pengaturan");
 }
+
+/**
+ * Update kode lokasi sekolah — dipakai di kop cetak laporan KIB format
+ * dinas. Lewat client biasa (bukan service client) karena policy
+ * `sekolah_update_admin` sudah mengizinkan admin update baris
+ * sekolahnya sendiri.
+ */
+export async function updateKodeLokasi(kodeLokasi: string) {
+  const profil = await getProfilSaya();
+  if (!profil) throw new Error("Kamu belum terhubung ke sekolah mana pun.");
+  if (profil.role !== "admin") {
+    throw new Error("Hanya admin yang bisa mengubah pengaturan sekolah.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("sekolah")
+    .update({ kode_lokasi: kodeLokasi.trim() || null })
+    .eq("id", profil.sekolah_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/pengaturan");
+}
