@@ -22,49 +22,103 @@ type PemeliharaanRingkas = {
   created_at: string;
   aset: { nama: string } | null;
 };
+type PeminjamanRingkas = {
+  borrow_id: string;
+  status: string;
+  updated_at: string;
+  atas_nama: string | null;
+  aset: { nama: string } | null;
+  peminjam: { nama: string } | null;
+};
+
+const LABEL_AKTIVITAS_PINJAM: Record<string, string> = {
+  MENUNGGU: "Pengajuan peminjaman",
+  DIPINJAM: "Peminjaman disetujui",
+  DITOLAK: "Peminjaman ditolak",
+  DIKEMBALIKAN: "Aset dikembalikan",
+};
 
 /**
- * Versi ringan dari aktivitas di Dashboard — cuma aset baru, mutasi, dan
- * pemeliharaan (skip "aset diubah" yang butuh query tambahan) supaya dropdown
- * notifikasi tetap cepat. Sengaja lazy (`enabled`) supaya tidak ikut nge-load
- * di setiap perpindahan halaman, cuma jalan saat dropdown dibuka.
+ * Versi ringan dari aktivitas di Dashboard — skip "aset diubah" (butuh
+ * query tambahan) supaya dropdown notifikasi tetap cepat, tapi selebihnya
+ * (aset baru, mutasi, pemeliharaan, peminjaman) sama kayak Dashboard biar
+ * dua tempat ini gak nampilin info yang beda-beda. Sengaja lazy
+ * (`enabled`) supaya tidak ikut nge-load di setiap perpindahan halaman,
+ * cuma jalan saat dropdown dibuka.
  */
 async function fetchAktivitasTerbaru(): Promise<AktivitasItem[]> {
   const supabase = createClient();
 
-  const [asetBaruRes, mutasiRes, pemeliharaanRes] = await Promise.all([
-    supabase
-      .from("aset")
-      .select("id, kode_aset, nama, created_at")
-      .order("created_at", { ascending: false })
-      .limit(4),
-    supabase
-      .from("mutasi_aset")
-      .select(
-        `id, created_at, disetujui_oleh, aset:aset_id ( nama ), ruangan_asal:ruangan_asal_id ( nama ), ruangan_tujuan:ruangan_tujuan_id ( nama )`
-      )
-      .order("created_at", { ascending: false })
-      .limit(4),
-    supabase
-      .from("pemeliharaan_aset")
-      .select(`id, jenis, created_at, aset:aset_id ( nama )`)
-      .order("created_at", { ascending: false })
-      .limit(4),
-  ]);
+  const [asetBaruRes, mutasiRes, pemeliharaanRes, peminjamanRes] =
+    await Promise.all([
+      supabase
+        .from("aset")
+        .select("id, kode_aset, nama, created_at")
+        .order("created_at", { ascending: false })
+        // Limit dinaikin (bukan 4) — dibutuhkan buat deteksi grouping
+        // batch Tambah Aset Massal di bawah, gak bisa kedeteksi kalau
+        // cuma ambil beberapa baris teratas.
+        .limit(20),
+      supabase
+        .from("mutasi_aset")
+        .select(
+          `id, created_at, disetujui_oleh, aset:aset_id ( nama ), ruangan_asal:ruangan_asal_id ( nama ), ruangan_tujuan:ruangan_tujuan_id ( nama )`
+        )
+        .order("created_at", { ascending: false })
+        .limit(4),
+      supabase
+        .from("pemeliharaan_aset")
+        .select(`id, jenis, created_at, aset:aset_id ( nama )`)
+        .order("created_at", { ascending: false })
+        .limit(4),
+      supabase
+        .from("peminjaman_dengan_status")
+        .select(
+          `borrow_id, status, updated_at, atas_nama, aset:aset_id ( nama ), peminjam:peminjam_id ( nama )`
+        )
+        .order("updated_at", { ascending: false })
+        .limit(4),
+    ]);
 
   const asetBaru = (asetBaruRes.data ?? []) as unknown as AsetBaru[];
   const mutasi = (mutasiRes.data ?? []) as unknown as MutasiRingkas[];
   const pemeliharaan = (pemeliharaanRes.data ?? []) as unknown as PemeliharaanRingkas[];
+  const peminjaman = (peminjamanRes.data ?? []) as unknown as PeminjamanRingkas[];
 
   const mentah: { id: string; teks: string; waktuRaw: string }[] = [];
 
+  // Aset baru dikelompokkan per (created_at, nama) — sama kayak logic di
+  // getDashboardData, biar satu batch Tambah Massal (mis. 40 kursi) gak
+  // ngambil semua slot aktivitas sendirian.
+  const grupAsetBaru = new Map<
+    string,
+    { nama: string; created_at: string; kodeContoh: string; jumlah: number }
+  >();
   for (const a of asetBaru) {
+    const key = `${a.created_at}|${a.nama}`;
+    const existing = grupAsetBaru.get(key);
+    if (existing) {
+      existing.jumlah += 1;
+    } else {
+      grupAsetBaru.set(key, {
+        nama: a.nama,
+        created_at: a.created_at,
+        kodeContoh: a.kode_aset,
+        jumlah: 1,
+      });
+    }
+  }
+  for (const g of grupAsetBaru.values()) {
     mentah.push({
-      id: `aset-baru-${a.id}`,
-      teks: `Aset baru ditambahkan — ${a.kode_aset} · ${a.nama}`,
-      waktuRaw: a.created_at,
+      id: `aset-baru-${g.created_at}-${g.nama}`,
+      teks:
+        g.jumlah > 1
+          ? `${g.jumlah} aset baru ditambahkan — ${g.nama}`
+          : `Aset baru ditambahkan — ${g.kodeContoh} · ${g.nama}`,
+      waktuRaw: g.created_at,
     });
   }
+
   for (const m of mutasi) {
     mentah.push({
       id: `mutasi-${m.id}`,
@@ -82,6 +136,15 @@ async function fetchAktivitasTerbaru(): Promise<AktivitasItem[]> {
       id: `pemeliharaan-${p.id}`,
       teks: `Pemeliharaan (${jenisLabel}) dicatat — ${p.aset?.nama ?? "Aset"}`,
       waktuRaw: p.created_at,
+    });
+  }
+  for (const p of peminjaman) {
+    const namaPeminjam = p.atas_nama || p.peminjam?.nama || "Seseorang";
+    const label = LABEL_AKTIVITAS_PINJAM[p.status] ?? "Peminjaman diperbarui";
+    mentah.push({
+      id: `peminjaman-${p.borrow_id}`,
+      teks: `${label} — ${p.aset?.nama ?? "Aset"} (${namaPeminjam})`,
+      waktuRaw: p.updated_at,
     });
   }
 

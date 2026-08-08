@@ -445,7 +445,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       .from("aset")
       .select("id, kode_aset, nama, created_at")
       .order("created_at", { ascending: false })
-      .limit(5),
+      .limit(30),
     supabase
       .from("aset")
       .select("id, kode_aset, nama, created_at, updated_at")
@@ -612,11 +612,39 @@ export async function getDashboardData(): Promise<DashboardData> {
 
   const aktivitasMentah: { id: string; teks: string; waktuRaw: string }[] = [];
 
+  // Aset baru dikelompokkan per (created_at, nama) SEBELUM masuk feed —
+  // bukan satu baris per baris tabel. Tambah Aset Massal insert banyak
+  // baris dalam SATU statement SQL, jadi semuanya berbagi timestamp
+  // `created_at` identik (waktu transaksi) dan `nama` sama persis (mis.
+  // "Kursi Siswa" x 40). Tanpa grouping ini, satu batch bisa ngambil
+  // semua 6 slot Aktivitas Terbaru sendirian dan nutupin aktivitas lain
+  // (peminjaman, mutasi, dst) yang kejadian di waktu yang sama.
+  const grupAsetBaru = new Map<
+    string,
+    { nama: string; created_at: string; kodeContoh: string; jumlah: number }
+  >();
   for (const a of asetBaru) {
+    const key = `${a.created_at}|${a.nama}`;
+    const existing = grupAsetBaru.get(key);
+    if (existing) {
+      existing.jumlah += 1;
+    } else {
+      grupAsetBaru.set(key, {
+        nama: a.nama,
+        created_at: a.created_at,
+        kodeContoh: a.kode_aset,
+        jumlah: 1,
+      });
+    }
+  }
+  for (const g of grupAsetBaru.values()) {
     aktivitasMentah.push({
-      id: `aset-baru-${a.id}`,
-      teks: `Aset baru ditambahkan — ${a.kode_aset} · ${a.nama}`,
-      waktuRaw: a.created_at,
+      id: `aset-baru-${g.created_at}-${g.nama}`,
+      teks:
+        g.jumlah > 1
+          ? `${g.jumlah} aset baru ditambahkan — ${g.nama}`
+          : `Aset baru ditambahkan — ${g.kodeContoh} · ${g.nama}`,
+      waktuRaw: g.created_at,
     });
   }
 
@@ -819,6 +847,135 @@ const LABEL_STATUS_PINJAM: Record<string, string> = {
   DITOLAK: "ditolak",
   DIKEMBALIKAN: "sudah dikembalikan",
 };
+
+export interface RiwayatSesiOpname {
+  id: string;
+  judul: string;
+  created_at: string;
+  selesai_at: string | null;
+  dibuat_oleh: string | null;
+  totalDiscan: number;
+}
+
+/** Daftar sesi Opname Fisik yang SUDAH selesai — sebelumnya begitu status
+ * jadi "selesai", sesi itu hilang dari UI selamanya (halaman opname cuma
+ * nampilin sesi berlangsung). Dipakai di /opname/riwayat. */
+export async function getDaftarSesiOpnameSelesai(): Promise<RiwayatSesiOpname[]> {
+  const supabase = await createClient();
+
+  const { data: sesiList, error } = await supabase
+    .from("opname_sesi")
+    .select("id, judul, created_at, selesai_at, dibuat_oleh")
+    .eq("status", "selesai")
+    .order("selesai_at", { ascending: false });
+
+  if (error || !sesiList) {
+    if (error) console.error("Gagal mengambil riwayat opname:", error.message);
+    return [];
+  }
+
+  // Jumlah sesi historis biasanya gak banyak (opname fisik idealnya
+  // beberapa kali setahun), jadi count per-sesi lewat Promise.all cukup
+  // — gak perlu query gabungan yang lebih rumit.
+  return Promise.all(
+    sesiList.map(async (s) => {
+      const { count } = await supabase
+        .from("opname_detail")
+        .select("id", { count: "exact", head: true })
+        .eq("sesi_id", s.id);
+      return { ...s, totalDiscan: count ?? 0 };
+    })
+  );
+}
+
+export interface DetailSesiOpnameItem {
+  asetId: string;
+  kodeAset: string;
+  nama: string;
+  kondisiSaatOpname: KondisiAset | null;
+  catatan: string | null;
+  diScanOleh: string | null;
+  waktuScan: string;
+}
+
+export interface DetailSesiOpname {
+  sesi: {
+    id: string;
+    judul: string;
+    created_at: string;
+    selesai_at: string | null;
+    dibuat_oleh: string | null;
+  };
+  discan: DetailSesiOpnameItem[];
+  belumDiscan: { id: string; kode_aset: string; nama: string }[];
+}
+
+/**
+ * Detail hasil satu sesi opname yang udah selesai — daftar yang ke-scan
+ * (lengkap kondisi/catatan/siapa yang scan) + yang GAK ke-scan.
+ *
+ * Buat "belum discan": dihitung dari aset yang sudah ADA per tanggal sesi
+ * ini selesai (created_at <= selesai_at), BUKAN dari total aset SEKARANG
+ * — soalnya kalau ada aset baru ditambahkan setelah sesi ini kelar, aset
+ * itu jelas gak relevan buat dianggap "belum discan" di opname yang udah
+ * lewat.
+ */
+export async function getDetailSesiOpname(
+  sesiId: string
+): Promise<DetailSesiOpname | null> {
+  const supabase = await createClient();
+
+  const { data: sesi } = await supabase
+    .from("opname_sesi")
+    .select("id, judul, created_at, selesai_at, dibuat_oleh")
+    .eq("id", sesiId)
+    .single();
+
+  if (!sesi) return null;
+
+  const batasWaktu = sesi.selesai_at ?? sesi.created_at;
+
+  const [{ data: detailRes }, { data: asetSaatItu }] = await Promise.all([
+    supabase
+      .from("opname_detail")
+      .select(
+        `aset_id, kondisi_saat_opname, catatan, di_scan_oleh, created_at, aset:aset_id ( kode_aset, nama )`
+      )
+      .eq("sesi_id", sesiId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("aset")
+      .select("id, kode_aset, nama")
+      .lte("created_at", batasWaktu),
+  ]);
+
+  type DetailRingkas = {
+    aset_id: string;
+    kondisi_saat_opname: KondisiAset | null;
+    catatan: string | null;
+    di_scan_oleh: string | null;
+    created_at: string;
+    aset: { kode_aset: string; nama: string } | null;
+  };
+
+  const detail = (detailRes ?? []) as unknown as DetailRingkas[];
+  const idDiscan = new Set(detail.map((d) => d.aset_id));
+  const belumDiscan = (asetSaatItu ?? []).filter((a) => !idDiscan.has(a.id));
+
+  return {
+    sesi,
+    discan: detail.map((d) => ({
+      asetId: d.aset_id,
+      kodeAset: d.aset?.kode_aset ?? "—",
+      nama: d.aset?.nama ?? "—",
+      kondisiSaatOpname: d.kondisi_saat_opname,
+      catatan: d.catatan,
+      diScanOleh: d.di_scan_oleh,
+      waktuScan: d.created_at,
+    })),
+    belumDiscan,
+  };
+}
 
 /**
  * Riwayat satu aset spesifik — gabungan mutasi, pemeliharaan, dan
