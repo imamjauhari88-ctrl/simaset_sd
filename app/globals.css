@@ -200,6 +200,22 @@ body {
   color: var(--color-pine-dark);
 }
 
+/* Native <button> DEFAULT-nya cursor: default (panah biasa) di
+   Chrome/Safari, BUKAN pointer (tangan) — beda dari <a> yang otomatis
+   dapet pointer dari browser. Banyak yang ngira <button> otomatis dapet
+   cursor pointer, padahal enggak, dan Tailwind juga gak nge-reset ini.
+   Aturan global ini nutup gap itu buat SEMUA tombol di app sekaligus
+   (bukan nambahin cursor-pointer manual satu-satu di tiap komponen) —
+   otomatis berlaku juga buat tombol baru yang ditambah nanti.
+   :disabled dikecualikan biar gak nabrak `disabled:cursor-not-allowed`
+   yang udah dipasang eksplisit di beberapa tombol (form submit, dst). */
+button:not(:disabled),
+[type="button"]:not(:disabled),
+[type="submit"]:not(:disabled),
+[type="reset"]:not(:disabled) {
+  cursor: pointer;
+}
+
 @media print {
   @page {
     margin: 1cm;
