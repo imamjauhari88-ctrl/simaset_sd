@@ -50,7 +50,7 @@ export async function buatSekolahBaru(
 
   const { data: sekolah, error: errSekolah } = await service
     .from("sekolah")
-    .insert({ nama, npsn, alamat })
+    .insert({ nama, npsn, alamat, status: "menunggu_approval" })
     .select("id")
     .single();
 
@@ -69,5 +69,8 @@ export async function buatSekolahBaru(
     return { error: errProfil.message };
   }
 
-  redirect("/dashboard");
+  // Bukan langsung /dashboard — sekolah baru nunggu di-approve super
+  // admin dulu (lihat proxy.ts/middleware.ts yang jaga ini juga di sisi
+  // server, redirect ini cuma buat pengalaman pertama kali daftar).
+  redirect("/menunggu-approval");
 }

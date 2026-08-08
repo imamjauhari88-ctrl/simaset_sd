@@ -83,9 +83,17 @@ export default function LoginPage() {
                   />
                 </div>
                 <div>
-                  <label className="text-[13px] text-ink-soft block mb-1">
-                    Kata Sandi
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[13px] text-ink-soft">
+                      Kata Sandi
+                    </label>
+                    <a
+                      href="/lupa-sandi"
+                      className="text-[12px] text-pine hover:underline"
+                    >
+                      Lupa kata sandi?
+                    </a>
+                  </div>
                   <input
                     name="password"
                     type="password"

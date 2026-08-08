@@ -20,6 +20,12 @@ const envSchema = z.object({
   // nggak ada mode unsigned buatnya). JANGAN pernah prefix NEXT_PUBLIC_.
   CLOUDINARY_API_KEY: z.string().min(1),
   CLOUDINARY_API_SECRET: z.string().min(1),
+
+  // Daftar email developer/pemilik platform, dipisah koma — BUKAN role
+  // per-sekolah (beda dari `admin` di tabel profil). Yang match akses
+  // /super-admin, di luar sistem multi-tenant biasa (lintas sekolah).
+  // Opsional: kalau kosong, /super-admin tertutup total buat siapa pun.
+  SUPER_ADMIN_EMAILS: z.string().optional().default(""),
 });
 
 // Hanya divalidasi di server (route handler/server component/action).
@@ -43,6 +49,8 @@ function loadServerEnv() {
 
   CLOUDINARY_API_SECRET:
     process.env.CLOUDINARY_API_SECRET,
+
+  SUPER_ADMIN_EMAILS: process.env.SUPER_ADMIN_EMAILS,
 });
 
   if (!parsed.success) {

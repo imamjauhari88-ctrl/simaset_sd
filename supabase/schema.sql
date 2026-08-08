@@ -30,6 +30,20 @@ create table if not exists sekolah (
   created_at timestamptz default now()
 );
 
+-- Approval pendaftaran sekolah oleh super admin (developer platform,
+-- BUKAN role 'admin' per-sekolah — lihat lib/super-admin.ts). Default
+-- 'aktif' SENGAJA dipilih (bukan 'menunggu_approval') supaya sekolah
+-- yang udah lebih dulu ada sebelum kolom ini ditambahkan otomatis ke-
+-- backfill 'aktif' (gak kekunci mendadak). Insert BARU dari alur
+-- onboarding tetap eksplisit set 'menunggu_approval' di action-nya,
+-- nge-override default ini.
+alter table sekolah add column if not exists status text not null default 'aktif';
+alter table sekolah drop constraint if exists sekolah_status_check;
+alter table sekolah add constraint sekolah_status_check
+  check (status in ('menunggu_approval','aktif','ditolak'));
+alter table sekolah add column if not exists disetujui_at timestamptz;
+alter table sekolah add column if not exists ditolak_alasan text;
+
 -- Satu baris profil = satu user Supabase Auth, terikat ke SATU sekolah.
 -- Inilah akar dari isolasi multi-tenant: semua RLS policy di bawah
 -- menelusuri baris ini lewat auth.uid().
