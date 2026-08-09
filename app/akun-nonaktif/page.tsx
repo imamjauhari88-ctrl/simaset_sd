@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
-import { Clock3, XCircle } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Footer } from "@/components/layout/footer";
 import { LogoMark } from "@/components/layout/sidebar";
 import { logout } from "@/lib/auth/actions";
 
-export default async function MenungguApprovalPage() {
+export default async function AkunNonaktifPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -15,21 +15,18 @@ export default async function MenungguApprovalPage() {
 
   const { data: profil } = await supabase
     .from("profil")
-    .select("sekolah:sekolah_id ( nama, status, ditolak_alasan )")
+    .select("sekolah:sekolah_id ( nama, status, alasan_nonaktif )")
     .eq("id", user.id)
     .maybeSingle();
 
   const sekolah = (
     profil as unknown as {
-      sekolah: { nama: string; status: string; ditolak_alasan: string | null } | null;
+      sekolah: { nama: string; status: string; alasan_nonaktif: string | null } | null;
     } | null
   )?.sekolah;
 
-  // Sekolahnya udah aktif (mungkin baru aja di-approve) — jangan biarin
-  // nyangkut di halaman tunggu, lempar langsung ke dashboard.
+  // Sekolahnya udah diaktifkan lagi — jangan biarin nyangkut di sini.
   if (sekolah?.status === "aktif") redirect("/dashboard");
-
-  const ditolak = sekolah?.status === "ditolak";
 
   return (
     <div className="min-h-screen flex flex-col bg-paper">
@@ -47,37 +44,23 @@ export default async function MenungguApprovalPage() {
             </div>
           </div>
 
-          <div
-            className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center mb-4 ${
-              ditolak ? "bg-brick-soft text-brick" : "bg-brass-soft text-brass"
-            }`}
-          >
-            {ditolak ? <XCircle size={22} /> : <Clock3 size={22} />}
+          <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center mb-4 bg-brick-soft text-brick">
+            <ShieldAlert size={22} />
           </div>
 
           <p className="font-display font-semibold text-ink text-lg">
-            {ditolak ? "Pendaftaran Ditolak" : "Menunggu Persetujuan"}
+            Akun Sekolah Dinonaktifkan
           </p>
           <p className="text-[13px] text-ink-soft mt-2">
-            {ditolak ? (
+            Akses <span className="font-medium">{sekolah?.nama}</span> untuk
+            sementara dinonaktifkan oleh developer platform.
+            {sekolah?.alasan_nonaktif && (
               <>
-                Pendaftaran <span className="font-medium">{sekolah?.nama}</span>{" "}
-                gak disetujui.
-                {sekolah?.ditolak_alasan && (
-                  <>
-                    {" "}
-                    Alasan: <span className="italic">{sekolah.ditolak_alasan}</span>
-                  </>
-                )}
-                {" "}Hubungi developer kalau ini keliru.
-              </>
-            ) : (
-              <>
-                Pendaftaran <span className="font-medium">{sekolah?.nama}</span>{" "}
-                lagi ditinjau developer platform. Kamu bakal bisa masuk ke
-                dashboard begitu disetujui — biasanya gak lama.
+                {" "}
+                Alasan: <span className="italic">{sekolah.alasan_nonaktif}</span>
               </>
             )}
+            {" "}Hubungi developer kalau ini keliru.
           </p>
 
           <form action={logout} className="mt-6">

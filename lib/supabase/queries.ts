@@ -1144,3 +1144,29 @@ export async function getDaftarPeminjamanPaginated(
 
   return { data: data as unknown as PeminjamanWithRelasi[], count: count ?? 0 };
 }
+
+export interface PengumumanItem {
+  id: string;
+  judul: string;
+  isi: string;
+  created_at: string;
+}
+
+/** Pengumuman dari super admin (developer platform) buat sekolah ini —
+ * RLS `pengumuman_select_tenant` sudah ngizinin baris yang sekolah_id-nya
+ * cocok sama current_sekolah_id() ATAU null (broadcast semua sekolah),
+ * jadi query biasa (bukan service client) aman dipakai di sini. */
+export async function getPengumumanAktif(): Promise<PengumumanItem[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("pengumuman_platform")
+    .select("id, judul, isi, created_at")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  if (error) {
+    console.error("Gagal mengambil pengumuman:", error.message);
+    return [];
+  }
+  return data;
+}

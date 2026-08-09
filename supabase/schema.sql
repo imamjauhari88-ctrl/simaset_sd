@@ -30,18 +30,21 @@ create table if not exists sekolah (
   created_at timestamptz default now()
 );
 
--- Approval pendaftaran sekolah oleh super admin (developer platform,
--- BUKAN role 'admin' per-sekolah — lihat lib/super-admin.ts). Default
--- 'aktif' SENGAJA dipilih (bukan 'menunggu_approval') supaya sekolah
--- yang udah lebih dulu ada sebelum kolom ini ditambahkan otomatis ke-
--- backfill 'aktif' (gak kekunci mendadak). Insert BARU dari alur
--- onboarding tetap eksplisit set 'menunggu_approval' di action-nya,
--- nge-override default ini.
+-- Status sekolah (dulu ada alur approval super admin — SEKARANG DICABUT,
+-- lihat blok "Approval pendaftaran sekolah DICABUT" di bawah buat migrasi
+-- & constraint final-nya). Baris ini SENGAJA dibiarkan pakai constraint
+-- lama ('menunggu_approval'/'aktif'/'ditolak') supaya kolomnya tetap ada
+-- buat sekolah yang udah eksis sebelum kolom ini ditambahkan — constraint
+-- final yang cuma ('aktif'/'nonaktif') di-apply belakangan di bawah,
+-- setelah data lama dimigrasi. Kolom `disetujui_at`/`ditolak_alasan` yang
+-- dulu dipakai bareng alur approval ini SUDAH DIHAPUS (lihat blok migrasi
+-- di bawah) — `ditolak_alasan` sempat ditambahin lagi sebentar di sini
+-- cuma buat jaga-jaga data lama ke-baca pas migrasi, sebelum di-drop
+-- permanen.
 alter table sekolah add column if not exists status text not null default 'aktif';
 alter table sekolah drop constraint if exists sekolah_status_check;
 alter table sekolah add constraint sekolah_status_check
   check (status in ('menunggu_approval','aktif','ditolak'));
-alter table sekolah add column if not exists disetujui_at timestamptz;
 alter table sekolah add column if not exists ditolak_alasan text;
 
 -- Satu baris profil = satu user Supabase Auth, terikat ke SATU sekolah.
@@ -866,3 +869,69 @@ grant execute on function fn_return_peminjaman(uuid) to authenticated;
 -- karena sekolah lama belum tentu langsung isi pas migrasi jalan.
 -- ============================================================
 alter table sekolah add column if not exists kode_lokasi text;
+
+-- ============================================================
+-- Approval pendaftaran sekolah DICABUT — sekolah yang daftar sekarang
+-- langsung 'aktif' (lihat app/onboarding/actions.ts). Status sekolah
+-- disederhanakan jadi cuma 2 nilai: 'aktif' / 'nonaktif' (dipakai super
+-- admin buat suspend sekolah spam/abuse, lihat app/super-admin/actions.ts).
+-- Migrasi data lama: yang masih 'menunggu_approval' otomatis diaktifkan
+-- (bukan dihilangkan), yang dulu 'ditolak' dipetakan ke 'nonaktif' (setara
+-- suspend) supaya tetap gak bisa masuk tapi juga gak hilang dari radar.
+-- ============================================================
+alter table sekolah add column if not exists alasan_nonaktif text;
+
+update sekolah set status = 'aktif' where status = 'menunggu_approval';
+update sekolah
+  set status = 'nonaktif', alasan_nonaktif = coalesce(alasan_nonaktif, ditolak_alasan)
+  where status = 'ditolak';
+
+alter table sekolah drop constraint if exists sekolah_status_check;
+alter table sekolah add constraint sekolah_status_check
+  check (status in ('aktif','nonaktif'));
+
+-- Kolom peninggalan alur approval lama — udah gak dipakai kode manapun,
+-- dan alasan penolakan yang relevan udah dipindah ke `alasan_nonaktif`
+-- di atas. Dihapus permanen di sini (bukan sekadar dibiarin nganggur).
+alter table sekolah drop column if exists disetujui_at;
+alter table sekolah drop column if exists ditolak_alasan;
+
+-- View ringkasan lintas-tenant buat halaman Data Sekolah super admin —
+-- satu query, bukan N+1 (hitung jumlah aset & user per sekolah langsung
+-- di database). Cuma boleh diakses lewat service role (super admin),
+-- makanya gak perlu RLS/policy tambahan di sini.
+create or replace view sekolah_ringkasan as
+select
+  s.id,
+  s.nama,
+  s.npsn,
+  s.alamat,
+  s.status,
+  s.alasan_nonaktif,
+  s.created_at,
+  s.kode_lokasi,
+  (select count(*) from aset a where a.sekolah_id = s.id) as jumlah_aset,
+  (select count(*) from profil p where p.sekolah_id = s.id) as jumlah_user
+from sekolah s;
+
+-- Pengumuman dari super admin (developer platform) ke sekolah — broadcast
+-- ke SATU sekolah (sekolah_id terisi) atau ke SEMUA sekolah sekaligus
+-- (sekolah_id NULL). Insert/update/delete cuma lewat service role (super
+-- admin), makanya cuma ada policy SELECT di bawah.
+create table if not exists pengumuman_platform (
+  id uuid primary key default gen_random_uuid(),
+  sekolah_id uuid references sekolah(id) on delete cascade,
+  judul text not null,
+  isi text not null,
+  created_at timestamptz default now()
+);
+
+create index if not exists idx_pengumuman_sekolah on pengumuman_platform(sekolah_id);
+create index if not exists idx_pengumuman_created on pengumuman_platform(created_at desc);
+
+alter table pengumuman_platform enable row level security;
+
+drop policy if exists pengumuman_select_tenant on pengumuman_platform;
+create policy pengumuman_select_tenant on pengumuman_platform for select
+  to authenticated
+  using (sekolah_id = current_sekolah_id() or sekolah_id is null);

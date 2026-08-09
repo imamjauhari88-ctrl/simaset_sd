@@ -48,9 +48,12 @@ export async function buatSekolahBaru(
   // jadi belum lolos RLS mana pun untuk insert baris `sekolah`.
   const service = createServiceClient();
 
+  // Approval super admin sudah dicabut — sekolah baru langsung 'aktif'
+  // begitu daftar, gak perlu ditinjau dulu (lihat lib/supabase/middleware.ts
+  // & supabase/schema.sql untuk sisi lain dari perubahan ini).
   const { data: sekolah, error: errSekolah } = await service
     .from("sekolah")
-    .insert({ nama, npsn, alamat, status: "menunggu_approval" })
+    .insert({ nama, npsn, alamat, status: "aktif" })
     .select("id")
     .single();
 
@@ -69,8 +72,6 @@ export async function buatSekolahBaru(
     return { error: errProfil.message };
   }
 
-  // Bukan langsung /dashboard — sekolah baru nunggu di-approve super
-  // admin dulu (lihat proxy.ts/middleware.ts yang jaga ini juga di sisi
-  // server, redirect ini cuma buat pengalaman pertama kali daftar).
-  redirect("/menunggu-approval");
+  // Sekolah baru langsung aktif — gak ada lagi jeda nunggu approval.
+  redirect("/dashboard");
 }

@@ -31,8 +31,8 @@ export async function login(formData: FormData) {
     redirect("/super-admin");
   }
 
-  // proxy.ts yang urus lanjutannya: kalau belum punya `profil`,
-  // otomatis dilempar ke /onboarding; kalau sekolahnya belum di-approve,
-  // ke /menunggu-approval; kalau udah, ke /dashboard.
+  // proxy.ts yang urus lanjutannya: kalau belum punya `profil`, otomatis
+  // dilempar ke /onboarding; kalau sekolahnya di-suspend, ke
+  // /akun-nonaktif; kalau enggak, ke /dashboard.
   redirect("/dashboard");
 }

@@ -41,6 +41,11 @@ export async function updateSession(request: NextRequest) {
     path.startsWith("/lupa-sandi") ||
     path.startsWith("/auth/callback");
 
+  // Sekolah baru sekarang langsung 'aktif' pas daftar (tanpa approval
+  // super admin) — satu-satunya cara status jadi bukan 'aktif' sekarang
+  // adalah di-suspend, makanya halamannya dinamai /akun-nonaktif.
+  const halamanAkunNonaktif = path.startsWith("/akun-nonaktif");
+
   // /reset-sandi beda dari yang di atas: WAJIB ada sesi (cuma bisa
   // dicapai lewat link reset yang diklik, yang bikin sesi recovery
   // sementara lewat /auth/callback) — tapi sengaja dikecualikan dari
@@ -53,7 +58,12 @@ export async function updateSession(request: NextRequest) {
   // per-sekolah — lihat lib/super-admin.ts). Lolos dari !user check di
   // bawah kalau memang email-nya cocok; kalau enggak, tetap kelempar ke
   // /login sama seperti halaman terproteksi lain.
-  const halamanSuperAdmin = path.startsWith("/super-admin");
+  // Include juga /api/super-admin/* (mis. route export Excel) — kalau
+  // enggak, path-nya gak ke-match "/super-admin" (karena diawali /api),
+  // trus kena cabang "super admin nyasar ke path tenant" di bawah dan
+  // ke-redirect balik ke /super-admin, bikin download-nya gagal.
+  const halamanSuperAdmin =
+    path.startsWith("/super-admin") || path.startsWith("/api/super-admin");
 
   if (!user && !publikTanpaAuth) {
     const url = request.nextUrl.clone();
@@ -85,8 +95,8 @@ export async function updateSession(request: NextRequest) {
 
   // User sudah login tapi belum punya baris `profil` (belum onboarding
   // bikin sekolah, atau belum terima undangan) → arahkan ke /onboarding.
-  // Kalau udah punya profil tapi sekolahnya belum di-approve super admin
-  // → arahkan ke /menunggu-approval, bukan langsung ke dashboard.
+  // Kalau udah punya profil tapi sekolahnya di-suspend super admin →
+  // arahkan ke /akun-nonaktif, bukan ke dashboard.
   if (user && !publikTanpaAuth && !halamanResetSandi) {
     const { data: profil } = await supabase
       .from("profil")
@@ -104,13 +114,17 @@ export async function updateSession(request: NextRequest) {
       profil as unknown as { sekolah: { status: string } | null }
     ).sekolah?.status;
 
-    if (
-      statusSekolah &&
-      statusSekolah !== "aktif" &&
-      !path.startsWith("/menunggu-approval")
-    ) {
+    if (statusSekolah === "nonaktif" && !halamanAkunNonaktif) {
       const url = request.nextUrl.clone();
-      url.pathname = "/menunggu-approval";
+      url.pathname = "/akun-nonaktif";
+      return NextResponse.redirect(url);
+    }
+
+    // Sekolahnya aktif tapi entah kenapa nyasar ke /akun-nonaktif (mis.
+    // baru aja diaktifkan lagi) — lempar balik ke dashboard.
+    if (statusSekolah === "aktif" && halamanAkunNonaktif) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
       return NextResponse.redirect(url);
     }
   }

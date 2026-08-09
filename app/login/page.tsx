@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense, useActionState, ViewTransition } from "react";
-import { useSearchParams } from "next/navigation";
+import { useActionState, ViewTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { login } from "./actions";
 import { LogoMark } from "@/components/layout/sidebar";
@@ -10,36 +9,7 @@ import { PanelBrand } from "@/components/ui/panel-brand";
 
 const initialState: { error?: string } = {};
 
-// Pesan buat query param ?error=... yang dikirim /auth/callback pas
-// exchangeCodeForSession gagal (link reset kedaluwarsa/sudah dipakai,
-// dsb) — tanpa ini, kegagalan reset password kelihatan cuma "kelempar
-// ke login biasa" tanpa penjelasan apa pun ke user.
-const PESAN_ERROR_CALLBACK: Record<string, string> = {
-  "link-tidak-valid":
-    "Link reset kata sandi sudah kedaluwarsa atau sudah pernah dipakai. Minta link baru lewat 'Lupa kata sandi?' di bawah.",
-};
-
 export default function LoginPage() {
-  return (
-    // useSearchParams wajib dibungkus Suspense di App Router, kalau
-    // enggak Next.js gagal nge-prerender halaman ini.
-    <Suspense fallback={<FormLogin errorCallback={null} />}>
-      <LoginPageIsi />
-    </Suspense>
-  );
-}
-
-function LoginPageIsi() {
-  const searchParams = useSearchParams();
-  const errorCallback = searchParams.get("error");
-  return <FormLogin errorCallback={errorCallback} />;
-}
-
-function FormLogin({ errorCallback }: { errorCallback: string | null }) {
-  const pesanErrorCallback = errorCallback
-    ? PESAN_ERROR_CALLBACK[errorCallback] ?? "Terjadi kesalahan. Silakan coba lagi."
-    : null;
-
   const [state, formAction, pending] = useActionState(
     async (_prev: typeof initialState, formData: FormData) => {
       const result = await login(formData);
@@ -86,15 +56,6 @@ function FormLogin({ errorCallback }: { errorCallback: string | null }) {
                 className="space-y-4"
                 aria-busy={pending}
               >
-                {pesanErrorCallback && (
-                  <p
-                    role="alert"
-                    aria-live="assertive"
-                    className="bg-brick-soft text-brick text-[13px] rounded-lg px-3 py-2"
-                  >
-                    {pesanErrorCallback}
-                  </p>
-                )}
                 {/* role="alert" + aria-live: pesan error langsung diumumkan
                     screen reader begitu muncul, gak perlu user cari sendiri. */}
                 {state?.error && (
