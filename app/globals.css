@@ -224,8 +224,8 @@ select {
 
 select option:checked,
 select option:hover {
-  background: var(--color-pine-soft) linear-gradient(0deg, var(--color-pine-soft) 0%, var(--color-pine-soft) 100%);
-  color: var(--color-pine-dark);
+  background: var(--color-pine-soft) linear-gradient(0deg, var(--color-pine-soft) 0%, var(--color-pine-soft) 100%) !important;
+  color: var(--color-pine-dark) !important;
 }
 
 button:not(:disabled),
