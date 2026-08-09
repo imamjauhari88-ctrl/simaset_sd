@@ -209,25 +209,6 @@ body {
    otomatis berlaku juga buat tombol baru yang ditambah nanti.
    :disabled dikecualikan biar gak nabrak `disabled:cursor-not-allowed`
    yang udah dipasang eksplisit di beberapa tombol (form submit, dst). */
-
-/* Dropdown native <select> di seluruh app pakai warna biru bawaan
-   browser pas opsi di-hover/dipilih (khususnya Chrome/Windows) — gak
-   nyambung sama palet pine/brass SIMASET. `accent-color` benerin
-   Firefox; buat Chrome/Edge, trik-nya kasih `background` eksplisit
-   (gradient solid, bukan cuma warna polos) di :checked/:hover, karena
-   Chromium cuma mau override highlight bawaan kalau background-nya
-   di-declare pakai gradient. Satu aturan ini otomatis berlaku ke
-   SEMUA <select> di app tanpa perlu ubah tiap komponen satu-satu. */
-select {
-  accent-color: var(--color-pine);
-}
-
-select option:checked,
-select option:hover {
-  background: var(--color-pine-soft) linear-gradient(0deg, var(--color-pine-soft) 0%, var(--color-pine-soft) 100%) !important;
-  color: var(--color-pine-dark) !important;
-}
-
 button:not(:disabled),
 [type="button"]:not(:disabled),
 [type="submit"]:not(:disabled),
