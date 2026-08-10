@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FileBarChart, ArrowLeftRight, Printer, FileSpreadsheet } from "lucide-react";
 import type { KategoriAset, Ruangan } from "@/types/database";
 import { daftarTahunOpsi } from "@/lib/format";
+import { Select } from "@/components/ui/select";
 
 const OPSI_TAHUN = daftarTahunOpsi();
 
@@ -40,18 +41,15 @@ export function LaporanManager({
           <label className="text-[12px] text-ink-soft mb-1 block">
             Kategori Barang
           </label>
-          <select
+          <Select
+            size="sm"
             value={kategoriId}
-            onChange={(e) => setKategoriId(e.target.value)}
-            className="w-full border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink outline-none focus:border-pine transition-colors"
-          >
-            <option value="">Semua Kategori</option>
-            {kategoriList.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.nama}
-              </option>
-            ))}
-          </select>
+            onChange={setKategoriId}
+            options={[
+              { value: "", label: "Semua Kategori" },
+              ...kategoriList.map((k) => ({ value: k.id, label: k.nama })),
+            ]}
+          />
         </div>
 
         <div className="mt-auto flex gap-2">
@@ -92,18 +90,15 @@ export function LaporanManager({
           <label className="text-[12px] text-ink-soft mb-1 block">
             Ruangan
           </label>
-          <select
+          <Select
+            size="sm"
             value={ruanganId}
-            onChange={(e) => setRuanganId(e.target.value)}
-            className="w-full border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink outline-none focus:border-pine transition-colors"
-          >
-            <option value="">Semua Ruangan</option>
-            {ruanganList.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nama}
-              </option>
-            ))}
-          </select>
+            onChange={setRuanganId}
+            options={[
+              { value: "", label: "Semua Ruangan" },
+              ...ruanganList.map((r) => ({ value: r.id, label: r.nama })),
+            ]}
+          />
         </div>
 
         <div className="mt-auto flex gap-2">
@@ -146,18 +141,15 @@ export function LaporanManager({
 
         <div>
           <label className="text-[12px] text-ink-soft mb-1 block">Tahun</label>
-          <select
+          <Select
+            size="sm"
             value={tahunMutasi}
-            onChange={(e) => setTahunMutasi(e.target.value)}
-            className="w-full border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink outline-none focus:border-pine transition-colors"
-          >
-            <option value="">Semua Tahun</option>
-            {OPSI_TAHUN.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            onChange={setTahunMutasi}
+            options={[
+              { value: "", label: "Semua Tahun" },
+              ...OPSI_TAHUN.map((t) => ({ value: String(t), label: String(t) })),
+            ]}
+          />
         </div>
 
         <div className="mt-auto flex gap-2">

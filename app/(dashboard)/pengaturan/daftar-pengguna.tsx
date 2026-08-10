@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Users, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { ubahRolePengguna, cabutAksesPengguna } from "./actions";
 import type { Profil, RolePengguna } from "@/types/database";
 
@@ -91,17 +92,17 @@ export function DaftarPengguna({
 
               {!diriSendiri && p.role !== "admin" && (
                 <div className="flex items-center gap-2 shrink-0">
-                  <select
+                  <Select
+                    size="sm"
                     value={p.role}
                     disabled={pending}
-                    onChange={(e) =>
-                      handleUbahRole(p.id, e.target.value as RolePengguna)
-                    }
-                    className="border border-line rounded-lg px-2 py-1.5 text-[12px] bg-surface outline-none focus:border-pine disabled:opacity-60"
-                  >
-                    <option value="guru">Guru</option>
-                    <option value="kepsek">Kepala Sekolah</option>
-                  </select>
+                    onChange={(v) => handleUbahRole(p.id, v as RolePengguna)}
+                    className="w-40"
+                    options={[
+                      { value: "guru", label: "Guru" },
+                      { value: "kepsek", label: "Kepala Sekolah" },
+                    ]}
+                  />
                   <button
                     onClick={() => setCabutTarget(p)}
                     disabled={pending}

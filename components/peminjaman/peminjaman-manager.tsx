@@ -7,6 +7,7 @@ import { Plus, Search, Check, X as XIcon, Undo2, HandCoins } from "lucide-react"
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import {
   useDaftarPeminjamanPaginated,
@@ -216,19 +217,13 @@ export function PeminjamanManager({
                 />
                 Hanya terlambat
               </label>
-              <select
+              <Select
+                size="sm"
                 value={status}
-                onChange={(e) =>
-                  perbaruiUrl({ status: e.target.value, page: null })
-                }
-                className="border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink-soft outline-none focus:border-pine transition-colors"
-              >
-                {OPSI_STATUS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => perbaruiUrl({ status: v, page: null })}
+                className="w-44"
+                options={OPSI_STATUS}
+              />
             </div>
           </div>
 

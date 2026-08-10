@@ -5,6 +5,7 @@ import { Search, Boxes, Eye } from "lucide-react";
 import { KondisiBadge } from "@/components/ui/kondisi-badge";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Select } from "@/components/ui/select";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { formatRupiah } from "@/lib/format";
 import {
@@ -83,40 +84,35 @@ export function TabelAsetGlobal({
             className="bg-transparent outline-none w-full placeholder:text-ink-soft"
           />
         </div>
-        <select
+        <Select
           value={sekolahId}
-          onChange={(e) => ubahFilter(() => setSekolahId(e.target.value))}
-          className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-pine"
-        >
-          <option value="">Semua sekolah</option>
-          {opsiFilter.tenant.map((t) => (
-            <option key={t.id} value={t.id}>
-              {t.nama}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={(v) => ubahFilter(() => setSekolahId(v))}
+          className="sm:w-48"
+          options={[
+            { value: "", label: "Semua sekolah" },
+            ...opsiFilter.tenant.map((t) => ({ value: t.id, label: t.nama })),
+          ]}
+        />
+        <Select
           value={kategoriNama}
-          onChange={(e) => ubahFilter(() => setKategoriNama(e.target.value))}
-          className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-pine"
-        >
-          <option value="">Semua kategori</option>
-          {opsiFilter.kategoriNama.map((k) => (
-            <option key={k} value={k}>
-              {k}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={(v) => ubahFilter(() => setKategoriNama(v))}
+          className="sm:w-48"
+          options={[
+            { value: "", label: "Semua kategori" },
+            ...opsiFilter.kategoriNama.map((k) => ({ value: k, label: k })),
+          ]}
+        />
+        <Select
           value={kondisi}
-          onChange={(e) => ubahFilter(() => setKondisi(e.target.value))}
-          className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-pine"
-        >
-          <option value="semua">Semua status</option>
-          <option value="baik">Baik</option>
-          <option value="rusak_ringan">Rusak Ringan</option>
-          <option value="rusak_berat">Rusak Berat</option>
-        </select>
+          onChange={(v) => ubahFilter(() => setKondisi(v))}
+          className="sm:w-44"
+          options={[
+            { value: "semua", label: "Semua status" },
+            { value: "baik", label: "Baik" },
+            { value: "rusak_ringan", label: "Rusak Ringan" },
+            { value: "rusak_berat", label: "Rusak Berat" },
+          ]}
+        />
       </div>
 
       {data.length === 0 && !loading ? (

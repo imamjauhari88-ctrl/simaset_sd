@@ -7,6 +7,7 @@ import { Plus, Trash2, ArrowLeftRight, BadgeCheck, Search } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
 import { daftarTahunOpsi } from "@/lib/format";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import {
@@ -185,18 +186,16 @@ export function MutasiManager({
                 className="bg-transparent outline-none w-full placeholder:text-ink-soft"
               />
             </div>
-            <select
+            <Select
+              size="sm"
               value={tahun}
-              onChange={(e) => perbaruiUrl({ tahun: e.target.value, page: null })}
-              className="border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink-soft outline-none focus:border-pine transition-colors"
-            >
-              <option value="semua">Semua Tahun</option>
-              {OPSI_TAHUN.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => perbaruiUrl({ tahun: v, page: null })}
+              className="w-40"
+              options={[
+                { value: "semua", label: "Semua Tahun" },
+                ...OPSI_TAHUN.map((t) => ({ value: String(t), label: String(t) })),
+              ]}
+            />
           </div>
 
           <div className="overflow-x-auto">

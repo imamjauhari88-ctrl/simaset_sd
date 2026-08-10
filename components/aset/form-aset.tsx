@@ -9,6 +9,7 @@ import { useSimpanAset } from "@/lib/queries/aset";
 import { hapusFotoLamaAset } from "@/lib/aset/actions";
 import { FotoAsetInput } from "@/components/aset/foto-aset-input";
 import { TombolScanQr } from "@/components/ui/tombol-scan-qr";
+import { Select } from "@/components/ui/select";
 import type { KategoriAset, Ruangan, Aset } from "@/types/database";
 
 const inputClass =
@@ -145,28 +146,26 @@ export function FormAset({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Kategori</label>
-          <select {...register("kategori_id")} className={inputClass}>
-            <option value="">Pilih kategori</option>
-            {kategoriList.map((k) => (
-              <option key={k.id} value={k.id}>
-                {k.nama}
-              </option>
-            ))}
-          </select>
+          <input type="hidden" {...register("kategori_id")} />
+          <Select
+            value={watch("kategori_id") ?? ""}
+            onChange={(v) => setValue("kategori_id", v, { shouldValidate: true })}
+            placeholder="Pilih kategori"
+            options={kategoriList.map((k) => ({ value: k.id, label: k.nama }))}
+          />
           {errors.kategori_id && (
             <p className={errorClass}>{errors.kategori_id.message}</p>
           )}
         </div>
         <div>
           <label className={labelClass}>Ruangan</label>
-          <select {...register("ruangan_id")} className={inputClass}>
-            <option value="">Pilih ruangan</option>
-            {ruanganList.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nama}
-              </option>
-            ))}
-          </select>
+          <input type="hidden" {...register("ruangan_id")} />
+          <Select
+            value={watch("ruangan_id") ?? ""}
+            onChange={(v) => setValue("ruangan_id", v, { shouldValidate: true })}
+            placeholder="Pilih ruangan"
+            options={ruanganList.map((r) => ({ value: r.id, label: r.nama }))}
+          />
           {errors.ruangan_id && (
             <p className={errorClass}>{errors.ruangan_id.message}</p>
           )}
@@ -208,22 +207,31 @@ export function FormAset({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Sumber Dana</label>
-          <select {...register("sumber_dana")} className={inputClass}>
-            <option value="bos">BOS</option>
-            <option value="apbd">APBD</option>
-            <option value="hibah">Hibah</option>
-            <option value="swadaya">Swadaya</option>
-            <option value="lainnya">Lainnya</option>
-          </select>
+          <input type="hidden" {...register("sumber_dana")} />
+          <Select
+            value={watch("sumber_dana") ?? "bos"}
+            onChange={(v) => setValue("sumber_dana", v as AsetFormValues["sumber_dana"], { shouldValidate: true })}
+            options={[
+              { value: "bos", label: "BOS" },
+              { value: "apbd", label: "APBD" },
+              { value: "hibah", label: "Hibah" },
+              { value: "swadaya", label: "Swadaya" },
+              { value: "lainnya", label: "Lainnya" },
+            ]}
+          />
         </div>
         <div>
           <label className={labelClass}>Kondisi</label>
-          <select {...register("kondisi")} className={inputClass}>
-            <option value="baik">Baik</option>
-            <option value="rusak_ringan">Rusak Ringan</option>
-            <option value="rusak_berat">Rusak Berat</option>
-          </select>
+          <input type="hidden" {...register("kondisi")} />
+          <Select
+            value={watch("kondisi") ?? "baik"}
+            onChange={(v) => setValue("kondisi", v as AsetFormValues["kondisi"], { shouldValidate: true })}
+            options={[
+              { value: "baik", label: "Baik" },
+              { value: "rusak_ringan", label: "Rusak Ringan" },
+              { value: "rusak_berat", label: "Rusak Berat" },
+            ]}
+          />
         </div>
       </div>
 

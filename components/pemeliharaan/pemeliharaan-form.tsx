@@ -10,6 +10,7 @@ import {
   type PemeliharaanFormValues,
 } from "@/lib/validasi/pemeliharaan";
 import { useCatatPemeliharaan } from "@/lib/queries/pemeliharaan";
+import { Select } from "@/components/ui/select";
 import type { AsetWithRelasi } from "@/lib/supabase/queries";
 import type { KondisiAset } from "@/types/database";
 
@@ -32,6 +33,7 @@ export function PemeliharaanForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<PemeliharaanFormValues>({
     resolver: zodResolver(pemeliharaanSchema),
@@ -58,15 +60,18 @@ export function PemeliharaanForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className={labelClass}>Aset</label>
-        <select {...register("aset_id")} className={inputClass} autoFocus>
-          <option value="">Pilih aset</option>
-          {asetPerluDipelihara.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.kode_aset} — {a.nama} (
-              {a.kondisi === "rusak_berat" ? "Rusak Berat" : "Rusak Ringan"})
-            </option>
-          ))}
-        </select>
+        <input type="hidden" {...register("aset_id")} />
+        <Select
+          value={asetIdDipilih ?? ""}
+          onChange={(v) => setValue("aset_id", v, { shouldValidate: true })}
+          placeholder="Pilih aset"
+          options={asetPerluDipelihara.map((a) => ({
+            value: a.id,
+            label: `${a.kode_aset} — ${a.nama} (${
+              a.kondisi === "rusak_berat" ? "Rusak Berat" : "Rusak Ringan"
+            })`,
+          }))}
+        />
         {errors.aset_id && <p className={errorClass}>{errors.aset_id.message}</p>}
         {asetPerluDipelihara.length === 0 && (
           <p className="text-[12px] text-ink-soft mt-1">
@@ -92,10 +97,15 @@ export function PemeliharaanForm({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Jenis</label>
-          <select {...register("jenis")} className={inputClass}>
-            <option value="rutin">Rutin</option>
-            <option value="perbaikan">Perbaikan</option>
-          </select>
+          <input type="hidden" {...register("jenis")} />
+          <Select
+            value={watch("jenis") ?? "rutin"}
+            onChange={(v) => setValue("jenis", v as PemeliharaanFormValues["jenis"], { shouldValidate: true })}
+            options={[
+              { value: "rutin", label: "Rutin" },
+              { value: "perbaikan", label: "Perbaikan" },
+            ]}
+          />
         </div>
         <div>
           <label className={labelClass}>Tanggal</label>
@@ -132,16 +142,16 @@ export function PemeliharaanForm({
           Update Kondisi Aset Jadi{" "}
           <span className="text-ink-soft/70">(opsional, mis. abis perbaikan)</span>
         </label>
-        <select
+        <Select
           value={kondisiSetelah}
-          onChange={(e) => setKondisiSetelah(e.target.value as KondisiAset | "")}
-          className={inputClass}
-        >
-          <option value="">Jangan ubah kondisi aset</option>
-          <option value="baik">Baik</option>
-          <option value="rusak_ringan">Rusak Ringan</option>
-          <option value="rusak_berat">Rusak Berat</option>
-        </select>
+          onChange={(v) => setKondisiSetelah(v as KondisiAset | "")}
+          options={[
+            { value: "", label: "Jangan ubah kondisi aset" },
+            { value: "baik", label: "Baik" },
+            { value: "rusak_ringan", label: "Rusak Ringan" },
+            { value: "rusak_berat", label: "Rusak Berat" },
+          ]}
+        />
       </div>
 
       <div className="flex gap-3 pt-1">

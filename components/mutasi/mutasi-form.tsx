@@ -9,6 +9,7 @@ import {
   type MutasiFormValues,
 } from "@/lib/validasi/mutasi";
 import { useCatatMutasi } from "@/lib/queries/mutasi";
+import { Select } from "@/components/ui/select";
 import type { AsetWithRelasi } from "@/lib/supabase/queries";
 import type { Ruangan } from "@/types/database";
 
@@ -31,6 +32,7 @@ export function MutasiForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<MutasiFormValues>({
     resolver: zodResolver(mutasiSchema),
@@ -54,14 +56,16 @@ export function MutasiForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
         <label className={labelClass}>Aset</label>
-        <select {...register("aset_id")} className={inputClass} autoFocus>
-          <option value="">Pilih aset</option>
-          {asetList.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.kode_aset} — {a.nama}
-            </option>
-          ))}
-        </select>
+        <input type="hidden" {...register("aset_id")} />
+        <Select
+          value={asetIdDipilih ?? ""}
+          onChange={(v) => setValue("aset_id", v, { shouldValidate: true })}
+          placeholder="Pilih aset"
+          options={asetList.map((a) => ({
+            value: a.id,
+            label: `${a.kode_aset} — ${a.nama}`,
+          }))}
+        />
         {errors.aset_id && <p className={errorClass}>{errors.aset_id.message}</p>}
       </div>
 
@@ -76,16 +80,15 @@ export function MutasiForm({
 
       <div>
         <label className={labelClass}>Ruangan Tujuan</label>
-        <select {...register("ruangan_tujuan_id")} className={inputClass}>
-          <option value="">Pilih ruangan tujuan</option>
-          {ruanganList
+        <input type="hidden" {...register("ruangan_tujuan_id")} />
+        <Select
+          value={watch("ruangan_tujuan_id") ?? ""}
+          onChange={(v) => setValue("ruangan_tujuan_id", v, { shouldValidate: true })}
+          placeholder="Pilih ruangan tujuan"
+          options={ruanganList
             .filter((r) => r.id !== asetDipilih?.ruangan_id)
-            .map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.nama}
-              </option>
-            ))}
-        </select>
+            .map((r) => ({ value: r.id, label: r.nama }))}
+        />
         {errors.ruangan_tujuan_id && (
           <p className={errorClass}>{errors.ruangan_tujuan_id.message}</p>
         )}

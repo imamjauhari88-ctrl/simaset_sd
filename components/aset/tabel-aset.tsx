@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { KondisiBadge } from "@/components/ui/kondisi-badge";
 import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
 import type { AsetWithRelasi, DaftarAsetResult } from "@/lib/supabase/queries";
 import type { KondisiAset } from "@/types/database";
 import { useDaftarAsetPaginated } from "@/lib/queries/aset";
@@ -166,16 +167,18 @@ export function TabelAset({
             className="bg-transparent outline-none w-full placeholder:text-ink-soft"
           />
         </div>
-        <select
+        <Select
+          size="sm"
           value={kondisi}
-          onChange={(e) => perbaruiUrl({ kondisi: e.target.value, page: null })}
-          className="border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink-soft outline-none focus:border-pine transition-colors"
-        >
-          <option value="semua">Semua Kondisi</option>
-          <option value="baik">Baik</option>
-          <option value="rusak_ringan">Rusak Ringan</option>
-          <option value="rusak_berat">Rusak Berat</option>
-        </select>
+          onChange={(v) => perbaruiUrl({ kondisi: v, page: null })}
+          className="w-full sm:w-44"
+          options={[
+            { value: "semua", label: "Semua Kondisi" },
+            { value: "baik", label: "Baik" },
+            { value: "rusak_ringan", label: "Rusak Ringan" },
+            { value: "rusak_berat", label: "Rusak Berat" },
+          ]}
+        />
       </div>
 
       <div className="overflow-x-auto">

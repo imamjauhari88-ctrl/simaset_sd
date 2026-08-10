@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Pagination } from "@/components/ui/pagination";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import { formatWaktuRelatif } from "@/lib/format";
 import {
@@ -125,28 +126,26 @@ export function TabelUserGlobal({
             className="bg-transparent outline-none w-full placeholder:text-ink-soft"
           />
         </div>
-        <select
+        <Select
           value={sekolahId}
-          onChange={(e) => ubahFilter(() => setSekolahId(e.target.value))}
-          className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-pine"
-        >
-          <option value="">Semua sekolah</option>
-          {sekolahList.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nama}
-            </option>
-          ))}
-        </select>
-        <select
+          onChange={(v) => ubahFilter(() => setSekolahId(v))}
+          className="sm:w-56"
+          options={[
+            { value: "", label: "Semua sekolah" },
+            ...sekolahList.map((s) => ({ value: s.id, label: s.nama })),
+          ]}
+        />
+        <Select
           value={role}
-          onChange={(e) => ubahFilter(() => setRole(e.target.value))}
-          className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-pine"
-        >
-          <option value="">Semua role</option>
-          <option value="admin">Admin Tenant</option>
-          <option value="guru">Guru/TU</option>
-          <option value="kepsek">Kepala Sekolah</option>
-        </select>
+          onChange={(v) => ubahFilter(() => setRole(v))}
+          className="sm:w-48"
+          options={[
+            { value: "", label: "Semua role" },
+            { value: "admin", label: "Admin Tenant" },
+            { value: "guru", label: "Guru/TU" },
+            { value: "kepsek", label: "Kepala Sekolah" },
+          ]}
+        />
       </div>
 
       {data.length === 0 && !loading ? (

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { Copy, Check, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { generateLinkUndangan } from "./actions";
+import { Select } from "@/components/ui/select";
 import type { RolePengguna } from "@/types/database";
 
 export function UndangPengguna() {
@@ -48,14 +49,15 @@ export function UndangPengguna() {
       </p>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        <select
+        <Select
           value={role}
-          onChange={(e) => setRole(e.target.value as RolePengguna)}
-          className="border border-line rounded-lg px-3 py-2 text-sm bg-surface outline-none focus:border-pine"
-        >
-          <option value="guru">Guru</option>
-          <option value="kepsek">Kepala Sekolah</option>
-        </select>
+          onChange={(v) => setRole(v as RolePengguna)}
+          className="sm:w-48"
+          options={[
+            { value: "guru", label: "Guru" },
+            { value: "kepsek", label: "Kepala Sekolah" },
+          ]}
+        />
         <button
           onClick={handleGenerate}
           disabled={pending}

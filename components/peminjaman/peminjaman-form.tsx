@@ -9,6 +9,7 @@ import {
   type PeminjamanFormValues,
 } from "@/lib/validasi/peminjaman";
 import { useAjukanPeminjaman } from "@/lib/queries/peminjaman";
+import { Select } from "@/components/ui/select";
 import type { AsetWithRelasi } from "@/lib/supabase/queries";
 import type { RolePengguna } from "@/types/database";
 
@@ -31,6 +32,7 @@ export function PeminjamanForm({
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<PeminjamanFormValues>({
     resolver: zodResolver(peminjamanSchema),
@@ -74,14 +76,17 @@ export function PeminjamanForm({
 
       <div>
         <label className={labelClass}>Aset</label>
-        <select {...register("aset_id")} className={inputClass} autoFocus>
-          <option value="">Pilih aset</option>
-          {asetList.map((a) => (
-            <option key={a.id} value={a.id} disabled={a.stok < 1}>
-              {a.kode_aset} — {a.nama} (stok: {a.stok})
-            </option>
-          ))}
-        </select>
+        <input type="hidden" {...register("aset_id")} />
+        <Select
+          value={asetIdDipilih ?? ""}
+          onChange={(v) => setValue("aset_id", v, { shouldValidate: true })}
+          placeholder="Pilih aset"
+          options={asetList.map((a) => ({
+            value: a.id,
+            label: `${a.kode_aset} — ${a.nama} (stok: ${a.stok})`,
+            disabled: a.stok < 1,
+          }))}
+        />
         {errors.aset_id && <p className={errorClass}>{errors.aset_id.message}</p>}
       </div>
 

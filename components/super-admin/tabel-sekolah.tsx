@@ -14,6 +14,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
+import { Select } from "@/components/ui/select";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatTanggalSingkat, formatAngka } from "@/lib/format";
 import {
@@ -119,17 +120,18 @@ export function TabelSekolah({ daftar }: { daftar: SekolahUntukSuperAdmin[] }) {
               className="bg-transparent outline-none w-full placeholder:text-ink-soft"
             />
           </div>
-          <select
+          <Select
             value={filterAset}
-            onChange={(e) => setFilterAset(e.target.value as FilterAset)}
-            className="bg-surface border border-line rounded-lg px-3 py-2 text-sm text-ink outline-none focus:border-pine"
-          >
-            <option value="semua">Semua jumlah aset</option>
-            <option value="kosong">Belum ada aset</option>
-            <option value="1-50">1–50 aset</option>
-            <option value="51-200">51–200 aset</option>
-            <option value="200+">200+ aset</option>
-          </select>
+            onChange={(v) => setFilterAset(v as FilterAset)}
+            className="sm:w-56"
+            options={[
+              { value: "semua", label: "Semua jumlah aset" },
+              { value: "kosong", label: "Belum ada aset" },
+              { value: "1-50", label: "1–50 aset" },
+              { value: "51-200", label: "51–200 aset" },
+              { value: "200+", label: "200+ aset" },
+            ]}
+          />
         </div>
 
         <button

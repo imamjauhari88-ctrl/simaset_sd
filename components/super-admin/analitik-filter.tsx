@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Building2, Download } from "lucide-react";
 import { GrafikPenggunaanFitur } from "@/components/super-admin/grafik-penggunaan-fitur";
+import { Select } from "@/components/ui/select";
 import { formatRupiah, formatAngka } from "@/lib/format";
 import {
   getLaporanPenggunaanFitur,
@@ -61,20 +62,17 @@ export function AnalitikFilter({
   return (
     <div className="space-y-6">
       <div className="tag-card p-3 flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="flex items-center gap-2 bg-paper border border-line rounded-lg px-3 py-2 text-sm text-ink flex-1 sm:max-w-xs">
+        <div className="flex items-center gap-2 flex-1 sm:max-w-xs">
           <Building2 size={15} className="text-ink-soft shrink-0" />
-          <select
+          <Select
             value={sekolahId}
-            onChange={(e) => setSekolahId(e.target.value)}
-            className="bg-transparent outline-none w-full text-ink"
-          >
-            <option value="">Semua sekolah</option>
-            {opsiSekolah.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nama}
-              </option>
-            ))}
-          </select>
+            onChange={setSekolahId}
+            className="flex-1"
+            options={[
+              { value: "", label: "Semua sekolah" },
+              ...opsiSekolah.map((s) => ({ value: s.id, label: s.nama })),
+            ]}
+          />
         </div>
 
         <a

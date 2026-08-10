@@ -7,6 +7,7 @@ import { Plus, Trash2, Wrench, BadgeCheck, Search } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Pagination } from "@/components/ui/pagination";
+import { Select } from "@/components/ui/select";
 import { daftarTahunOpsi, formatRupiah } from "@/lib/format";
 import { useDebounce } from "@/lib/hooks/use-debounce";
 import {
@@ -184,27 +185,27 @@ export function PemeliharaanManager({
               />
             </div>
             <div className="flex items-center gap-2">
-              <select
+              <Select
+                size="sm"
                 value={jenis}
-                onChange={(e) => perbaruiUrl({ jenis: e.target.value, page: null })}
-                className="border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink-soft outline-none focus:border-pine transition-colors"
-              >
-                <option value="semua">Semua Jenis</option>
-                <option value="rutin">Rutin</option>
-                <option value="perbaikan">Perbaikan</option>
-              </select>
-              <select
+                onChange={(v) => perbaruiUrl({ jenis: v, page: null })}
+                className="w-40"
+                options={[
+                  { value: "semua", label: "Semua Jenis" },
+                  { value: "rutin", label: "Rutin" },
+                  { value: "perbaikan", label: "Perbaikan" },
+                ]}
+              />
+              <Select
+                size="sm"
                 value={tahun}
-                onChange={(e) => perbaruiUrl({ tahun: e.target.value, page: null })}
-                className="border border-line rounded-lg px-3 py-1.5 text-sm bg-surface text-ink-soft outline-none focus:border-pine transition-colors"
-              >
-                <option value="semua">Semua Tahun</option>
-                {OPSI_TAHUN.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => perbaruiUrl({ tahun: v, page: null })}
+                className="w-40"
+                options={[
+                  { value: "semua", label: "Semua Tahun" },
+                  ...OPSI_TAHUN.map((t) => ({ value: String(t), label: String(t) })),
+                ]}
+              />
             </div>
           </div>
 
