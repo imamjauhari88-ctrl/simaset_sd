@@ -202,7 +202,7 @@ export function TabelSekolah({ daftar }: { daftar: SekolahUntukSuperAdmin[] }) {
                         title="Lihat Detail (read-only)"
                       >
                         <Eye size={13} />
-                        Detail
+                        <span className="hidden sm:inline">Detail</span>
                       </Link>
                       {s.status === "aktif" ? (
                         <button
@@ -212,7 +212,7 @@ export function TabelSekolah({ daftar }: { daftar: SekolahUntukSuperAdmin[] }) {
                           title="Suspend"
                         >
                           <Ban size={13} />
-                          Suspend
+                          <span className="hidden sm:inline">Suspend</span>
                         </button>
                       ) : (
                         <button
@@ -222,7 +222,7 @@ export function TabelSekolah({ daftar }: { daftar: SekolahUntukSuperAdmin[] }) {
                           title="Aktifkan kembali"
                         >
                           <RotateCcw size={13} />
-                          Aktifkan
+                          <span className="hidden sm:inline">Aktifkan</span>
                         </button>
                       )}
                       <button
@@ -232,7 +232,7 @@ export function TabelSekolah({ daftar }: { daftar: SekolahUntukSuperAdmin[] }) {
                         title="Kirim Pengumuman"
                       >
                         <Megaphone size={13} />
-                        Umumkan
+                        <span className="hidden sm:inline">Umumkan</span>
                       </button>
                     </div>
                   </td>
