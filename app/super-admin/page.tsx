@@ -1,6 +1,6 @@
 import { School, Boxes, Users, Activity } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/super-admin-guard";
-import { getRingkasanDashboardSuperAdmin } from "@/lib/queries/super-admin";
+import { getRingkasanDashboardSuperAdmin } from "@/lib/supabase/super-admin-queries";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { GrafikSekolahAktif } from "@/components/super-admin/grafik-sekolah-aktif";
 import { formatAngka } from "@/lib/format";

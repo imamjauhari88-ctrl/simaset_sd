@@ -29,6 +29,7 @@ ulang file ini, nggak perlu khawatir ada yang tabrakan atau ketinggalan.
 | `NEXT_PUBLIC_APP_URL` | URL deploy kamu | Base URL link undangan + metadata PWA |
 | `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME` / `NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` | Cloudinary Dashboard | Unsigned upload foto aset langsung dari browser — lihat "Setup Cloudinary" di bawah |
 | `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Cloudinary Dashboard → halaman utama Dashboard (bukan Upload preset) | **Server-only.** Signed request untuk hapus foto lama saat foto aset diganti/dihapus — destroy Cloudinary wajib signed, beda dari upload di atas yang unsigned |
+| `SUPER_ADMIN_EMAILS` | isi sendiri, email developer/pemilik platform (pisah koma kalau lebih dari satu) | **Server-only.** Akses `/super-admin` — lintas-tenant, di luar sistem role `profil` biasa. Lihat "Panel Super Admin" di bawah cara bikin akunnya |
 
 ## Setup Cloudinary (unsigned upload)
 
@@ -70,33 +71,50 @@ app/
   register-service-worker.tsx  # daftarkan public/sw.js (PWA)
   manifest.ts                  # Web App Manifest native Next.js
   page.tsx                     # redirect ke /dashboard
-  login/page.tsx
-  onboarding/                  # bikin sekolah baru → jadi admin pertama
-  undangan/[token]/            # terima undangan → signup + join sekolah
+  login/                        # + loading.tsx, panel dua-sisi (form + PanelBrand)
+  lupa-sandi/                   # minta link reset password (supabase resetPasswordForEmail)
+  reset-sandi/                  # set password baru — dicapai lewat /auth/callback
+  onboarding/                   # bikin sekolah baru → jadi admin pertama
+  undangan/[token]/             # terima undangan → signup + join sekolah
+  akun-nonaktif/                # ditampilkan kalau sekolah user login berstatus nonaktif
+  auth/callback/                # exchange kode PKCE dari email Supabase (reset password dst) jadi sesi
   (dashboard)/                 # route group, semua halaman pakai sidebar & topbar
-    dashboard/page.tsx          # stat cards, chart kondisi, chart tren, activity log
-    aset/                       # Data Aset — FULL CRUD (list, tambah, edit)
-    kategori/ ruangan/ mutasi/ pemeliharaan/ opname/ laporan/
-    pengaturan/                 # form "Undang Pengguna" (generate link + role)
+    dashboard/page.tsx          # stat cards, chart kondisi/tren/nilai&jumlah per kategori, activity log
+    aset/                       # Data Aset — CRUD, tambah-massal/, [id]/ (detail+riwayat)
+    kategori/ ruangan/ mutasi/ pemeliharaan/
+    opname/                     # mulai sesi + scan, riwayat/ (sesi yang sudah selesai)
+    laporan/                    # KIB/KIR/Mutasi — cetak & export Excel
+    pengaturan/                 # Info Sekolah, Undang Pengguna, Manajemen Pengguna (daftar+ubah role+cabut akses)
+  super-admin/                  # panel developer, lintas-tenant — lihat "Panel Super Admin" di bawah
   api/
-    laporan/export/             # tempat route handler export PDF/Excel
+    laporan/export/{kib,kir,mutasi}/  # route handler generate .xlsx (paket `xlsx`)
+    super-admin/export/ringkasan/     # export data ringkasan platform
 
 components/
-  layout/       # Sidebar, Topbar
-  dashboard/    # StatCard, KondisiChart, TrenChart, ActivityLog
-  aset/         # TabelAset, FormAset (RHF+Zod), FotoAsetInput (upload Cloudinary unsigned)
-  ui/           # EmptyState, KondisiBadge
+  layout/       # Sidebar, Topbar, Footer, NotifikasiDropdown, TopbarSearch
+  dashboard/    # StatCard, WelcomeBanner, KondisiChart, TrenChart, NilaiKategoriChart, JumlahKategoriChart, ActivityLog
+  aset/         # TabelAset, FormAset & FormAsetMassal (RHF+Zod), FotoAsetInput, RiwayatAset
+  onboarding/   # OnboardingForm (client, dipisah dari page.tsx server)
+  undangan/     # UndanganForm
+  super-admin/  # komponen khusus panel developer (tabel-sekolah, tabel-user-global, tabel-aset-global, grafik-*, dll)
+  ui/           # EmptyState, ErrorState, NotFoundState, Modal, Skeleton (+varian per-bentuk halaman), PanelBrand
 
 lib/
   env.ts                  # validasi semua env var pakai Zod, gagal cepat kalau ada yang kosong
-  cloudinary-upload.ts     # hook client untuk upload foto (unsigned, langsung ke Cloudinary)
-  validasi/aset.ts         # skema Zod form aset
-  queries/aset.ts          # hooks TanStack Query (query + mutation) untuk aset
+  cloudinary-upload.ts     # hook client untuk upload foto (unsigned, langsung ke Cloudinary, progress asli via XHR)
+  cloudinary-server.ts     # signed request hapus foto lama
+  format.ts                # formatRupiah, labelKondisi, formatTanggalSingkat, dst
+  laporan-excel.ts         # generator .xlsx (SheetJS) buat export Laporan
+  validasi/                # skema Zod per form (aset.ts, aset-massal.ts, peminjaman.ts, dst)
+  queries/                 # SEMUA "use client" — hooks TanStack Query (query+mutation) per domain
+  super-admin.ts           # isSuperAdminEmail() — cek email lawan SUPER_ADMIN_EMAILS
+  super-admin-guard.ts     # requireSuperAdmin() — dipanggil di tiap page/action /super-admin
   supabase/
     client.ts / server.ts   # client Supabase biasa, tunduk RLS
-    service.ts               # SERVICE ROLE, bypass RLS — hanya untuk onboarding/undangan
-    middleware.ts            # dipakai proxy.ts: cek auth + cek sudah onboarding
-    queries.ts                # fetch data aset/kategori/ruangan sisi server (SSR awal)
+    service.ts               # SERVICE ROLE, bypass RLS — onboarding/undangan/super-admin (lintas-tenant)
+    middleware.ts            # dipakai proxy.ts: cek auth, status sekolah, jalur khusus super admin
+    queries.ts                # fetch data sisi server (SSR) untuk halaman tenant
+    super-admin-queries.ts    # fetch data sisi server LINTAS-TENANT, khusus /super-admin
   tenant/
     context.ts               # getProfilSaya() — ambil sekolah_id + role user login
     undangan.ts               # sign/verify token undangan pakai SESSION_SECRET (jose)
@@ -137,7 +155,15 @@ Dua jalur user bisa "masuk" ke sebuah sekolah:
    ulang.
 
 `proxy.ts` mengarahkan user yang sudah login tapi belum punya `profil` ke
-`/onboarding` secara otomatis.
+`/onboarding` secara otomatis, dan ke `/akun-nonaktif` kalau sekolahnya
+berstatus `nonaktif` (lihat "Panel Super Admin" di bawah).
+
+**Lupa password** (`/lupa-sandi` → `/auth/callback` → `/reset-sandi`) pakai
+`supabase.auth.resetPasswordForEmail()` bawaan Supabase — bukan jalur
+"masuk ke sekolah", tapi disebut di sini karena satu keluarga sama
+login/onboarding/undangan (layout dua-panel yang sama, `PanelBrand`).
+Pesan yang ditampilkan ke user SELALU sama persis baik emailnya beneran
+terdaftar atau enggak, biar gak ada celah user enumeration.
 
 ## Catatan PWA
 
@@ -151,6 +177,40 @@ Web App Manifest native Next.js, dengan `public/icon-192.png` &
 `icon.svg` tetap dipertahankan sebagai entri tambahan `sizes: "any"` biar
 browser yang dukung SVG icon bisa pakai versi vektornya.
 
+## Panel Super Admin
+
+`/super-admin` — dashboard developer platform, **di luar** sistem role
+`profil` per-sekolah biasa. Siapa yang boleh masuk ditentukan dari env var
+`SUPER_ADMIN_EMAILS` (`lib/super-admin.ts`), dicek ulang di tiap
+page/action lewat `requireSuperAdmin()` (`lib/super-admin-guard.ts`)
+selain dijaga juga di `proxy.ts` — bukan lewat RLS, karena fitur ini
+justru butuh baca data LINTAS semua sekolah (pakai `createServiceClient()`
+di `lib/supabase/super-admin-queries.ts`, bypass RLS dengan sengaja).
+
+**Cara bikin akun super admin pertama kali** — gak ada jalur self-register
+buat ini (onboarding selalu bikin sekolah baru):
+1. Supabase Dashboard → **Authentication → Users → Add User** — isi email
+   & password sendiri. **Jangan** daftar lewat `/onboarding`.
+2. Masukkan email itu ke `SUPER_ADMIN_EMAILS` (pisah koma kalau lebih dari
+   satu).
+3. Login seperti biasa lewat `/login` — otomatis diarahkan ke
+   `/super-admin`, bukan dashboard sekolah manapun.
+
+Halaman yang ada di dalamnya:
+- **Dashboard** (`/super-admin`) — ringkasan: total sekolah, total aset,
+  total user, grafik sekolah paling aktif.
+- **Analitik** — laporan penggunaan fitur & aset lintas sekolah, bisa
+  difilter per sekolah.
+- **Sekolah** — daftar semua sekolah + detail per sekolah (stat & chart
+  kondisi asetnya), termasuk aksi nonaktifkan/aktifkan.
+- **Aset** & **User** — tabel lintas-tenant, bisa cari & filter per
+  sekolah.
+
+Sekolah yang di-nonaktifkan (kolom `sekolah.status`) langsung ke-block
+akses ke semua data-nya lewat `proxy.ts` (dialihkan ke `/akun-nonaktif`)
+— bukan dihapus datanya, cuma dikunci aksesnya, bisa diaktifkan lagi
+kapan pun dari `/super-admin/sekolah`.
+
 ## Catatan keamanan
 
 ⚠️ Next.js 16.0.0 punya kerentanan kritis (CVE-2025-66478, RCE di App
@@ -159,21 +219,25 @@ downgrade ke 16.0.0.
 
 ## Status per menu
 
-**Data Aset**: lengkap — list+filter+search, tambah, edit, upload foto
-Cloudinary (unsigned), validasi Zod+RHF, sinkron TanStack Query, cetak
-label QR (satu per aset atau semua sekaligus).
+**Data Aset**: lengkap — list+filter+search, tambah (satuan & massal,
+generate kode berurutan otomatis), edit, upload foto Cloudinary
+(unsigned, progress asli), validasi Zod+RHF, sinkron TanStack Query,
+riwayat per aset (mutasi+pemeliharaan+peminjaman dalam satu timeline),
+cetak label QR (satu/pilih beberapa/semua sekaligus).
 **Kategori Barang** & **Ruangan / Lokasi**: lengkap — CRUD via modal
 (tambah/edit/hapus), reusable di `components/kategori/` & `components/ruangan/`.
 **Mutasi Aset** & **Pemeliharaan**: lengkap — manager + form (RHF+Zod)
 sendiri-sendiri, pola sama dengan `components/aset/`.
 **Opname Fisik**: lengkap — mulai sesi, scan QR pakai kamera HP (jsQR,
 tanpa lib berat), progress real-time, ringkasan aset yang belum discan
-pas sesi ditutup.
-**Pengaturan**: fitur Undang Pengguna sudah jalan — link sekali pakai
-(lihat "Alur multi-tenant" di bawah), berlaku 7 hari.
-**Laporan**: masih empty state — pola di `components/aset/` atau
-`components/kategori/` bisa dicontek langsung buat mulai (export
-KIB/KIR ke PDF/Excel).
+pas sesi ditutup, plus riwayat sesi yang sudah selesai (bisa dilihat
+lagi kapan pun, gak cuma sekali muncul pas sesi ditutup).
+**Pengaturan**: Undang Pengguna (link sekali pakai, lihat "Alur
+multi-tenant" di atas) dan Manajemen Pengguna (daftar semua pengguna
+satu sekolah, admin bisa ubah role atau cabut akses).
+**Laporan**: lengkap — KIB (per kategori), KIR (per ruangan), Laporan
+Mutasi (per tahun), bisa dicetak langsung (browser print) atau di-export
+ke Excel (`lib/laporan-excel.ts`, paket `xlsx`).
 
 > **Catatan:** menu **Penghapusan Aset** sengaja tidak ada di aplikasi
 > ini — persetujuan penghapusan/write-off aset itu ranah Dinas
@@ -200,4 +264,3 @@ KIB/KIR ke PDF/Excel).
 - Sesi opname (`opname_sesi` + `opname_detail`) satu sekolah cuma boleh
   punya satu sesi `berlangsung` dalam satu waktu — ditegakkan di kode
   app (`OpnameManager`), bukan constraint database.
-update

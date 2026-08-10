@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireSuperAdmin } from "@/lib/super-admin-guard";
-import { getDaftarSekolahUntukSuperAdmin } from "@/lib/queries/super-admin";
+import { getDaftarSekolahUntukSuperAdmin } from "@/lib/supabase/super-admin-queries";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
 
 /** Export ringkasan sekolah (nama, admin, tgl daftar, jml aset, jml user,

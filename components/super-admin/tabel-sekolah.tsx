@@ -21,7 +21,7 @@ import {
   aktifkanKembaliSekolah,
   kirimPengumuman,
 } from "@/app/super-admin/actions";
-import type { SekolahUntukSuperAdmin } from "@/lib/queries/super-admin";
+import type { SekolahUntukSuperAdmin } from "@/lib/supabase/super-admin-queries";
 
 type FilterAset = "semua" | "kosong" | "1-50" | "51-200" | "200+";
 

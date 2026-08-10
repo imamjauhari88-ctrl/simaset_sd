@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Boxes, DoorOpen, Users, Eye } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/super-admin-guard";
-import { getRingkasanSekolahDetail } from "@/lib/queries/super-admin";
+import { getRingkasanSekolahDetail } from "@/lib/supabase/super-admin-queries";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { KondisiChart } from "@/components/dashboard/kondisi-chart";
 import { formatAngka, formatTanggalSingkat } from "@/lib/format";

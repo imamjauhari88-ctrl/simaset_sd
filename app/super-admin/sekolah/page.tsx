@@ -1,5 +1,5 @@
 import { requireSuperAdmin } from "@/lib/super-admin-guard";
-import { getDaftarSekolahUntukSuperAdmin } from "@/lib/queries/super-admin";
+import { getDaftarSekolahUntukSuperAdmin } from "@/lib/supabase/super-admin-queries";
 import { TabelSekolah } from "@/components/super-admin/tabel-sekolah";
 
 export default async function DataSekolahPage() {
