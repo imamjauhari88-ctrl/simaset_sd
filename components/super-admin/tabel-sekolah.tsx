@@ -195,7 +195,7 @@ export function TabelSekolah({ daftar }: { daftar: SekolahUntukSuperAdmin[] }) {
                     )}
                   </td>
                   <td className="p-4">
-                    <div className="flex items-center gap-1 flex-wrap">
+                    <div className="flex items-center gap-1 flex-nowrap">
                       <Link
                         href={`/super-admin/sekolah/${s.id}`}
                         className="inline-flex items-center gap-1 text-ink-soft text-[12px] font-medium px-2.5 py-1.5 rounded-lg border border-line hover:bg-paper transition-colors"
