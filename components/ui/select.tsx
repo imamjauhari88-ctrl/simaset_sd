@@ -90,7 +90,7 @@ export function Select({
       {terbuka && (
         <div
           role="listbox"
-          className="absolute z-20 mt-1.5 w-full max-h-64 overflow-auto tag-card p-1.5 animate-fade-in"
+          className="absolute z-20 mt-1.5 w-full max-h-64 overflow-auto bg-surface border border-line rounded-[0.75rem] shadow-[0_4px_14px_rgba(28,36,32,0.08),0_2px_4px_rgba(28,36,32,0.04)] p-1.5 animate-fade-in"
         >
           {options.map((opt) => {
             const aktif = opt.value === value;
