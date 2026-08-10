@@ -168,3 +168,65 @@ export function ListCardSkeleton({ count = 5 }: { count?: number }) {
     </div>
   );
 }
+
+/** Halaman auth gaya 2-panel (Login/Onboarding/Lupa Sandi/Reset Sandi) —
+ *  form skeleton di satu sisi, blok warna solid nutupin sisi PanelBrand
+ *  (bukan di-skeleton detail, karena isinya cuma dekoratif/statis, gak
+ *  ada data yang beneran "loading"). Ukuran & grid persis nyamain
+ *  wrapper asli (max-w-4xl md:h-[560px]) biar gak ada layout shift pas
+ *  konten asli masuk. */
+export function AuthPanelSkeleton({ fields = 2 }: { fields?: number }) {
+  return (
+    <div className="min-h-screen flex flex-col bg-paper">
+      <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
+          <div className="order-2 md:order-1 p-8 sm:p-10 flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-8">
+              <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-2.5 w-32" />
+              </div>
+            </div>
+            <Skeleton className="h-5 w-40 mb-2" />
+            <Skeleton className="h-3 w-56 mb-6" />
+            <div className="space-y-4">
+              {Array.from({ length: fields }).map((_, i) => (
+                <div key={i} className="space-y-1.5">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-9 w-full rounded-lg" />
+                </div>
+              ))}
+              <Skeleton className="h-9 w-full rounded-lg" />
+            </div>
+          </div>
+          <div className="order-1 md:order-2 bg-line/40" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Halaman 1 kartu di tengah layar (mis. AkunNonaktif) — bukan form,
+ *  cuma ikon + teks status, jadi skeleton-nya juga sederhana. */
+export function SingleCardSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col bg-paper">
+      <div className="flex-1 flex items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md tag-card p-8 text-center">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <Skeleton className="w-7 h-7 rounded-lg shrink-0" />
+            <div className="space-y-1.5 text-left">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-2.5 w-32" />
+            </div>
+          </div>
+          <Skeleton className="w-12 h-12 rounded-full mx-auto mb-4" />
+          <Skeleton className="h-4 w-40 mx-auto mb-2" />
+          <Skeleton className="h-3 w-full mb-1.5" />
+          <Skeleton className="h-3 w-2/3 mx-auto" />
+        </div>
+      </div>
+    </div>
+  );
+}
