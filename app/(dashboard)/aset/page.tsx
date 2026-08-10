@@ -31,25 +31,26 @@ export default async function AsetPage({
     <>
       <Topbar title="Data Aset" />
       <main className="flex-1 p-6 space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-[13px] text-ink-soft">
             {totalAset} aset tercatat
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {totalAset > 0 && (
               <Link
                 href="/cetak/aset/semua"
                 target="_blank"
-                className="inline-flex items-center gap-1.5 text-ink-soft text-sm font-medium px-4 py-2 rounded-lg border border-line hover:bg-paper transition-colors"
+                className="inline-flex items-center gap-1.5 text-ink-soft text-sm font-medium px-3.5 sm:px-4 py-2 rounded-lg border border-line hover:bg-paper transition-colors"
               >
                 <QrCode size={16} />
-                Cetak Semua Label
+                <span className="hidden sm:inline">Cetak Semua Label</span>
+                <span className="sm:hidden">Cetak Label</span>
               </Link>
             )}
             {bisaTambah && (
               <Link
                 href="/aset/tambah-massal"
-                className="inline-flex items-center gap-1.5 text-ink-soft text-sm font-medium px-4 py-2 rounded-lg border border-line hover:bg-paper transition-colors"
+                className="inline-flex items-center gap-1.5 text-ink-soft text-sm font-medium px-3.5 sm:px-4 py-2 rounded-lg border border-line hover:bg-paper transition-colors"
               >
                 <Layers size={16} />
                 Tambah Massal
@@ -58,7 +59,7 @@ export default async function AsetPage({
             {bisaTambah && (
               <Link
                 href="/aset/tambah"
-                className="inline-flex items-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
+                className="inline-flex items-center gap-1.5 bg-pine text-white text-sm font-medium px-3.5 sm:px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
               >
                 <Plus size={16} />
                 Tambah Aset
