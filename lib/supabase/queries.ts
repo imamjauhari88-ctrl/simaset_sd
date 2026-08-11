@@ -775,6 +775,30 @@ export async function getLaporanAsetPerKategori(
   return data as unknown as AsetWithRelasi[];
 }
 
+/** Laporan Daftar Usulan Barang yang Dihapus — sumber datanya aset
+ * kondisi Rusak Berat (kandidat usulan penghapusan). Bukan berarti
+ * aset ini beneran dihapus dari sistem — modul Penghapusan sengaja
+ * dinonaktifkan (wewenang dinas), ini cuma laporan baca dari kondisi
+ * aset yang sudah tercatat. */
+export async function getAsetRusakBerat(): Promise<AsetWithRelasi[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id ( id, nama, kode_kib ), ruangan:ruangan_id ( id, nama )`
+    )
+    .eq("kondisi", "rusak_berat")
+    .order("kode_aset", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil data aset rusak berat:", error.message);
+    return [];
+  }
+
+  return data as unknown as AsetWithRelasi[];
+}
+
 /**
  * KIR (Kartu Inventaris Ruangan) dikelompokkan per ruangan. Sama seperti
  * KIB, `ruanganId` kosong berarti semua ruangan.

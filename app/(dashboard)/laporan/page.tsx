@@ -1,11 +1,13 @@
 import { Topbar } from "@/components/layout/topbar";
 import { LaporanManager } from "@/components/laporan/laporan-manager";
 import { getKategoriList, getRuanganList } from "@/lib/supabase/queries";
+import { getSekolahSaya } from "@/lib/tenant/context";
 
 export default async function LaporanPage() {
-  const [kategoriList, ruanganList] = await Promise.all([
+  const [kategoriList, ruanganList, sekolah] = await Promise.all([
     getKategoriList(),
     getRuanganList(),
+    getSekolahSaya(),
   ]);
 
   return (
@@ -17,7 +19,11 @@ export default async function LaporanPage() {
           dibuka di tab baru — gunakan tombol Cetak di halaman itu untuk
           menyimpan sebagai PDF lewat dialog cetak browser.
         </p>
-        <LaporanManager kategoriList={kategoriList} ruanganList={ruanganList} />
+        <LaporanManager
+          kategoriList={kategoriList}
+          ruanganList={ruanganList}
+          usulanNihil={sekolah?.usulan_penghapusan_nihil ?? false}
+        />
       </main>
     </>
   );

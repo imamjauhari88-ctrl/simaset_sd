@@ -157,3 +157,61 @@ export async function updateKodeLokasi(kodeLokasi: string) {
 
   revalidatePath("/pengaturan");
 }
+
+/** Data penandatangan & wilayah buat kop tanda tangan laporan format
+ * dinas (KIB/KIR/Buku Inventaris/Daftar Usulan) — disimpan sekaligus
+ * dalam satu form, bukan per-field kayak kode lokasi. */
+export async function updateDataLaporan(data: {
+  kabupatenKota: string;
+  provinsi: string;
+  kepalaSekolahNama: string;
+  kepalaSekolahNip: string;
+  pengurusBarangNama: string;
+  pengurusBarangNip: string;
+}) {
+  const profil = await getProfilSaya();
+  if (!profil) throw new Error("Kamu belum terhubung ke sekolah mana pun.");
+  if (profil.role !== "admin") {
+    throw new Error("Hanya admin yang bisa mengubah pengaturan sekolah.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("sekolah")
+    .update({
+      kabupaten_kota: data.kabupatenKota.trim() || null,
+      provinsi: data.provinsi.trim() || null,
+      kepala_sekolah_nama: data.kepalaSekolahNama.trim() || null,
+      kepala_sekolah_nip: data.kepalaSekolahNip.trim() || null,
+      pengurus_barang_nama: data.pengurusBarangNama.trim() || null,
+      pengurus_barang_nip: data.pengurusBarangNip.trim() || null,
+    })
+    .eq("id", profil.sekolah_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/pengaturan");
+}
+
+/** Toggle laporan Daftar Usulan Barang yang Dihapus — paksa NIHIL
+ * (dipakai kalau sekolah belum mau usulkan penghapusan meski ada aset
+ * rusak berat) atau biarkan auto-generate dari data aset kondisi
+ * Rusak Berat (default). */
+export async function updateUsulanPenghapusanNihil(nihil: boolean) {
+  const profil = await getProfilSaya();
+  if (!profil) throw new Error("Kamu belum terhubung ke sekolah mana pun.");
+  if (profil.role !== "admin") {
+    throw new Error("Hanya admin yang bisa mengubah pengaturan sekolah.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("sekolah")
+    .update({ usulan_penghapusan_nihil: nihil })
+    .eq("id", profil.sekolah_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/pengaturan");
+  revalidatePath("/laporan");
+}

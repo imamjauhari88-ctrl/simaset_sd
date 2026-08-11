@@ -1,6 +1,7 @@
 import { getLaporanAsetPerKategori, getKategoriList } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
+import { TandaTangan } from "@/app/cetak/tanda-tangan";
 import { formatAngka, labelAsalUsul } from "@/lib/format";
 
 /** Sel kolom "NOMOR" (Pabrik/Rangka/Mesin/Polisi/BPKB) belum ada field-
@@ -123,6 +124,8 @@ export default async function CetakKibPage({
           <p className="text-[11px] text-ink-soft mt-6 print:mt-10">
             Dicetak: {new Date().toLocaleString("id-ID")}
           </p>
+
+          <TandaTangan sekolah={sekolah} />
         </>
       )}
     </div>

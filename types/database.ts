@@ -13,6 +13,17 @@ export interface Sekolah {
   /** Kode lokasi ala format dinas, mis. "12.13.28.08.07.03.49" —
    * dipakai di kop cetak laporan KIB. */
   kode_lokasi: string | null;
+  /** Data penandatangan laporan format dinas — dipakai di blok
+   * "Mengetahui, Kepala..." & "Pengurus Barang" tiap laporan cetak. */
+  kabupaten_kota: string | null;
+  provinsi: string | null;
+  kepala_sekolah_nama: string | null;
+  kepala_sekolah_nip: string | null;
+  pengurus_barang_nama: string | null;
+  pengurus_barang_nip: string | null;
+  /** Kalau true, laporan Daftar Usulan Barang yang Dihapus dipaksa
+   * tampil NIHIL walau ada aset kondisi Rusak Berat. */
+  usulan_penghapusan_nihil: boolean;
   created_at: string;
 }
 

@@ -871,6 +871,29 @@ grant execute on function fn_return_peminjaman(uuid) to authenticated;
 alter table sekolah add column if not exists kode_lokasi text;
 
 -- ============================================================
+-- Data penandatangan laporan format dinas (KIB/KIR/Buku Inventaris/
+-- Daftar Usulan) — blok "Mengetahui, Kepala..." & "Pengurus Barang"
+-- di kop tanda tangan tiap laporan cetak. Diisi manual sekali di
+-- Pengaturan, dipakai berulang di semua laporan (bukan per-laporan).
+-- ============================================================
+alter table sekolah add column if not exists kabupaten_kota text;
+alter table sekolah add column if not exists provinsi text;
+alter table sekolah add column if not exists kepala_sekolah_nama text;
+alter table sekolah add column if not exists kepala_sekolah_nip text;
+alter table sekolah add column if not exists pengurus_barang_nama text;
+alter table sekolah add column if not exists pengurus_barang_nip text;
+
+-- ============================================================
+-- Toggle laporan "Daftar Usulan Barang yang Dihapus" — defaultnya
+-- laporan ini auto-generate dari aset kondisi Rusak Berat. Tapi admin
+-- bisa paksa tampil NIHIL (kosong) lewat toggle di Pengaturan, buat
+-- kasus sekolah belum mau/perlu ngusulin penghapusan meski ada aset
+-- rusak berat tercatat — modul Penghapusan sendiri sengaja dinonaktifkan
+-- (wewenang dinas), laporan ini cuma bacaan dari kondisi aset yang ada.
+-- ============================================================
+alter table sekolah add column if not exists usulan_penghapusan_nihil boolean not null default false;
+
+-- ============================================================
 -- Approval pendaftaran sekolah DICABUT — sekolah yang daftar sekarang
 -- langsung 'aktif' (lihat app/onboarding/actions.ts). Status sekolah
 -- disederhanakan jadi cuma 2 nilai: 'aktif' / 'nonaktif' (dipakai super

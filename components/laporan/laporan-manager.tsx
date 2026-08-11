@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileBarChart, ArrowLeftRight, Printer, FileSpreadsheet } from "lucide-react";
+import { FileBarChart, ArrowLeftRight, Printer, FileSpreadsheet, BookOpen, FileX2 } from "lucide-react";
 import type { KategoriAset, Ruangan } from "@/types/database";
 import { daftarTahunOpsi } from "@/lib/format";
 import { Select } from "@/components/ui/select";
@@ -11,9 +11,11 @@ const OPSI_TAHUN = daftarTahunOpsi();
 export function LaporanManager({
   kategoriList,
   ruanganList,
+  usulanNihil,
 }: {
   kategoriList: KategoriAset[];
   ruanganList: Ruangan[];
+  usulanNihil: boolean;
 }) {
   const [kategoriId, setKategoriId] = useState("");
   const [ruanganId, setRuanganId] = useState("");
@@ -25,6 +27,45 @@ export function LaporanManager({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* Buku Inventaris — rekap semua aset lintas kategori */}
+      <div className="tag-card p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-pine-soft flex items-center justify-center shrink-0">
+            <BookOpen size={18} className="text-pine" />
+          </div>
+          <div>
+            <p className="font-display font-semibold text-ink text-sm">
+              Buku Inventaris
+            </p>
+            <p className="text-[12px] text-ink-soft">
+              Rekap semua aset, lintas kategori & ruangan
+            </p>
+          </div>
+        </div>
+
+        <p className="text-[12px] text-ink-soft">
+          Satu daftar lengkap seluruh aset sekolah, sesuai format Buku
+          Inventaris dinas.
+        </p>
+
+        <div className="mt-auto flex gap-2">
+          <button
+            onClick={() => bukaCetak("/cetak/laporan/buku-inventaris")}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
+          >
+            <Printer size={15} />
+            Cetak
+          </button>
+          <a
+            href="/api/laporan/export/buku-inventaris"
+            className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
+            title="Export ke Excel"
+          >
+            <FileSpreadsheet size={15} />
+          </a>
+        </div>
+      </div>
+
       {/* KIB — Kartu Inventaris Barang, per kategori */}
       <div className="tag-card p-5 flex flex-col gap-4">
         <div className="flex items-center gap-2.5">
@@ -166,6 +207,51 @@ export function LaporanManager({
           </button>
           <a
             href={`/api/laporan/export/mutasi${tahunMutasi ? `?tahun=${tahunMutasi}` : ""}`}
+            className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
+            title="Export ke Excel"
+          >
+            <FileSpreadsheet size={15} />
+          </a>
+        </div>
+      </div>
+
+      {/* Daftar Usulan Barang yang Dihapus — otomatis dari aset Rusak Berat */}
+      <div className="tag-card p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-lg bg-brick-soft flex items-center justify-center shrink-0">
+            <FileX2 size={18} className="text-brick" />
+          </div>
+          <div>
+            <p className="font-display font-semibold text-ink text-sm">
+              Daftar Usulan Penghapusan
+            </p>
+            <p className="text-[12px] text-ink-soft">
+              Otomatis dari aset kondisi Rusak Berat
+            </p>
+          </div>
+        </div>
+
+        <p className="text-[12px] text-ink-soft">
+          {usulanNihil ? (
+            <>
+              Ditandai <span className="font-medium text-ink">NIHIL</span> —
+              ubah di Pengaturan kalau mau tampilkan data.
+            </>
+          ) : (
+            "Ubah ke NIHIL kapan aja lewat Pengaturan."
+          )}
+        </p>
+
+        <div className="mt-auto flex gap-2">
+          <button
+            onClick={() => bukaCetak("/cetak/laporan/daftar-usulan")}
+            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
+          >
+            <Printer size={15} />
+            Cetak
+          </button>
+          <a
+            href="/api/laporan/export/daftar-usulan"
             className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
             title="Export ke Excel"
           >

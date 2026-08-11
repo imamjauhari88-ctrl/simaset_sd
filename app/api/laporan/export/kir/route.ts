@@ -5,7 +5,6 @@ import {
 } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
-import { labelKondisi } from "@/lib/format";
 
 export async function GET(request: NextRequest) {
   const profil = await getProfilSaya();
@@ -25,42 +24,52 @@ export async function GET(request: NextRequest) {
     ? ruanganList.find((r) => r.id === ruanganId)?.nama ?? "—"
     : "Semua Ruangan";
 
-  const totalNilai = daftarAset.reduce(
-    (jumlah, a) => jumlah + (a.harga_perolehan ?? 0),
-    0
-  );
-
+  // Kolom & urutan persis format KIR dinas — Merk/Model, No Seri Pabrik,
+  // Ukuran, Bahan belum ada field-nya di data aset (sama kayak KIB B),
+  // dikosongkan aja bukan dihapus kolomnya. "Keadaan Barang" dipecah 3
+  // kolom (B/KB/RB) sesuai istilah form dinas.
   const buffer = buatXlsxLaporan({
     judul: "KARTU INVENTARIS RUANGAN (KIR)",
     subJudul: [
-      sekolah?.nama ?? "",
+      `Provinsi: ${sekolah?.provinsi || "—"}  |  Kab/Kota: ${sekolah?.kabupaten_kota || "—"}`,
+      `Satuan Kerja: ${sekolah?.nama ?? ""}`,
       `Ruangan: ${namaRuangan}`,
+      `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
       `Dicetak: ${new Date().toLocaleString("id-ID")}`,
     ],
     header: [
       "No",
-      "Kode Aset",
-      "Nama Barang",
-      "Kategori",
-      "Merk/Tipe",
-      "Tahun",
-      "Harga Perolehan",
-      "Kondisi",
+      "Kode Barang",
+      "Nama Barang/ Jenis Barang",
+      "Merk/ Model",
+      "No. Seri Pabrik",
+      "Ukuran",
+      "Bahan",
+      "Tahun Pembuatan/ Pembelian",
+      "Jumlah Barang/ Register",
+      "Harga Beli/ Perolehan",
+      "Baik (B)",
+      "Kurang Baik (KB)",
+      "Rusak Berat (RB)",
+      "Keterangan Mutasi",
     ],
-    baris: [
-      ...daftarAset.map((a, i) => [
-        i + 1,
-        a.kode_aset,
-        a.nama,
-        a.kategori_aset?.nama || "—",
-        a.merk_tipe || "—",
-        a.tahun_perolehan || "—",
-        a.harga_perolehan ?? 0,
-        labelKondisi(a.kondisi),
-      ]),
-      ["", "", "", "", "", "Total", totalNilai, ""],
-    ],
-    lebarKolom: [4, 16, 28, 18, 20, 8, 18, 14],
+    baris: daftarAset.map((a, i) => [
+      i + 1,
+      a.kode_aset,
+      a.nama,
+      a.merk_tipe || "",
+      "",
+      "",
+      "",
+      a.tahun_perolehan || "",
+      a.stok,
+      a.harga_perolehan ?? 0,
+      a.kondisi === "baik" ? a.stok : "",
+      a.kondisi === "rusak_ringan" ? a.stok : "",
+      a.kondisi === "rusak_berat" ? a.stok : "",
+      a.catatan || "",
+    ]),
+    lebarKolom: [4, 14, 26, 14, 14, 10, 10, 12, 10, 16, 8, 12, 12, 20],
   });
 
   return new NextResponse(new Uint8Array(buffer), {
