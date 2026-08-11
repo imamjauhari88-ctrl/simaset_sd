@@ -169,3 +169,55 @@ export interface OpnameDetail {
   di_scan_oleh: string | null;
   created_at: string;
 }
+
+export type JenisKib = "A" | "C" | "D" | "E" | "F";
+
+/** Field spesifik per jenis KIB — disimpan longgar (semua optional)
+ * karena tiap jenis KIB punya kolom yang beda total. Cuma field yang
+ * relevan buat `jenis_kib` baris itu yang diisi, sisanya undefined. */
+export interface AsetTetapDetail {
+  // KIB A — Tanah
+  luas_m2?: string;
+  letak_alamat?: string;
+  status_hak?: string;
+  no_sertifikat?: string;
+  penggunaan?: string;
+  asal_usul?: string;
+  // KIB C — Gedung dan Bangunan
+  kondisi?: "baik" | "kurang_baik" | "rusak_berat";
+  bertingkat?: string;
+  beton?: string;
+  luas_lantai_m2?: string;
+  letak_lokasi?: string;
+  status_tanah?: string;
+  no_kode_tanah?: string;
+  // KIB D — tambahan
+  konstruksi?: string;
+  panjang_km?: string;
+  lebar_m?: string;
+  // KIB E — Aset Tetap Lainnya
+  jenis_khusus?: "kesenian_kebudayaan" | "hewan_ternak_tumbuhan" | "buku_perpustakaan" | "lainnya";
+  judul_pencipta?: string;
+  spesifikasi?: string;
+  bahan?: string;
+  jumlah?: string;
+  // KIB F — Konstruksi Dalam Pengerjaan
+  bangunan_psp_d?: string;
+  asal_usul_pembiayaan?: string;
+  nilai_kontrak?: string;
+}
+
+export interface AsetTetap {
+  id: string;
+  sekolah_id: string;
+  jenis_kib: JenisKib;
+  kode_barang: string | null;
+  nama: string;
+  tahun: number | null;
+  harga: number;
+  keterangan: string | null;
+  detail: AsetTetapDetail;
+  dibuat_oleh: string | null;
+  created_at: string;
+  updated_at: string;
+}

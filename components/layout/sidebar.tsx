@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
   FileBarChart,
   Settings,
+  Landmark,
 } from "lucide-react";
 import clsx from "clsx";
 import { useSidebar } from "./sidebar-context";
@@ -28,6 +29,7 @@ const menu = [
   { href: "/peminjaman", label: "Peminjaman", icon: HandCoins },
   { href: "/pemeliharaan", label: "Pemeliharaan", icon: Wrench },
   { href: "/opname", label: "Opname Fisik", icon: ClipboardCheck },
+  { href: "/aset-tetap", label: "Aset Tetap Khusus", icon: Landmark },
   { href: "/laporan", label: "Laporan", icon: FileBarChart },
   { href: "/pengaturan", label: "Pengaturan", icon: Settings },
 ];

@@ -9,6 +9,8 @@ import type {
   Peminjaman,
   Profil,
   Ruangan,
+  AsetTetap,
+  JenisKib,
 } from "@/types/database";
 
 export type AsetWithRelasi = Aset & {
@@ -279,6 +281,25 @@ export async function getDaftarPemeliharaanPaginated(
     data: data as unknown as PemeliharaanWithRelasi[],
     count: count ?? 0,
   };
+}
+
+/** Semua data Aset Tetap Khusus (KIB A/C/D/E/F) sekolah — dipakai buat
+ * initial data manager (SSR) & buat laporan KIB A/C/D/E/F. */
+export async function getAsetTetapList(jenis?: JenisKib): Promise<AsetTetap[]> {
+  const supabase = await createClient();
+  let query = supabase.from("aset_tetap").select("*");
+  if (jenis) query = query.eq("jenis_kib", jenis);
+
+  const { data, error } = await query
+    .order("jenis_kib")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Gagal mengambil data aset tetap:", error.message);
+    return [];
+  }
+
+  return data as AsetTetap[];
 }
 
 export async function getKategoriList(): Promise<KategoriAset[]> {

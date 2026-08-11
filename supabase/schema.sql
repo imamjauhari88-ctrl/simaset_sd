@@ -958,3 +958,74 @@ drop policy if exists pengumuman_select_tenant on pengumuman_platform;
 create policy pengumuman_select_tenant on pengumuman_platform for select
   to authenticated
   using (sekolah_id = current_sekolah_id() or sekolah_id is null);
+
+-- ============================================================
+-- ASET TETAP KHUSUS (KIB A/C/D/E/F) — Tanah, Gedung & Bangunan, Jalan/
+-- Irigasi/Jaringan, Aset Tetap Lainnya, Konstruksi Dalam Pengerjaan.
+-- Terpisah dari tabel `aset` (yang isinya barang harian: meja, laptop,
+-- dll — masuk KIB B lewat kategori) karena jenisnya jarang berubah
+-- (biasanya cuma 1-4 baris per sekolah, lihat contoh dinas) dan tiap
+-- jenis KIB punya kolom yang beda total (luas tanah vs panjang jalan
+-- vs judul buku, dst) — bukan cocok dipaksa masuk 1 skema kolom tetap
+-- kayak `aset`. Field spesifik per jenis disimpan di `detail` (jsonb),
+-- field yang sama di semua jenis (kode, nama, tahun, harga, ket) tetap
+-- kolom biasa biar gampang di-query/laporan.
+-- ============================================================
+create table if not exists aset_tetap (
+  id uuid primary key default gen_random_uuid(),
+  sekolah_id uuid not null default current_sekolah_id() references sekolah(id) on delete cascade,
+  jenis_kib text not null check (jenis_kib in ('A','C','D','E','F')),
+  kode_barang text,
+  nama text not null,
+  tahun int,
+  harga numeric default 0,
+  keterangan text,
+  -- Field spesifik per jenis KIB, contoh isi:
+  --   A: { luas_m2, letak_alamat, status_hak, no_sertifikat, penggunaan, asal_usul }
+  --   C: { kondisi, bertingkat, beton, luas_lantai_m2, letak_lokasi, status_tanah, no_kode_tanah, asal_usul }
+  --   D: { konstruksi, panjang_km, lebar_m, luas_m2, letak_lokasi, status_tanah, no_kode_tanah, asal_usul, kondisi }
+  --   E: { jenis_khusus, judul_pencipta, spesifikasi, bahan, jumlah, asal_usul }
+  --   F: { bangunan_psp_d, bertingkat, beton, luas_m2, letak_lokasi, status_tanah, no_kode_tanah, asal_usul_pembiayaan, nilai_kontrak }
+  detail jsonb not null default '{}'::jsonb,
+  dibuat_oleh uuid references profil(id) on delete set null default auth.uid(),
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_aset_tetap_sekolah on aset_tetap(sekolah_id);
+create index if not exists idx_aset_tetap_jenis on aset_tetap(sekolah_id, jenis_kib);
+
+alter table aset_tetap enable row level security;
+
+drop policy if exists aset_tetap_select on aset_tetap;
+drop policy if exists aset_tetap_insert on aset_tetap;
+drop policy if exists aset_tetap_update on aset_tetap;
+drop policy if exists aset_tetap_delete on aset_tetap;
+
+create policy aset_tetap_select on aset_tetap
+  for select using (sekolah_id = current_sekolah_id());
+
+create policy aset_tetap_insert on aset_tetap
+  for insert with check (
+    sekolah_id = current_sekolah_id()
+    and current_role_app() in ('admin','guru')
+  );
+
+create policy aset_tetap_update on aset_tetap
+  for update using (
+    sekolah_id = current_sekolah_id()
+    and (
+      current_role_app() = 'admin'
+      or (current_role_app() = 'guru' and dibuat_oleh = auth.uid())
+    )
+  );
+
+create policy aset_tetap_delete on aset_tetap
+  for delete using (
+    sekolah_id = current_sekolah_id() and current_role_app() = 'admin'
+  );
+
+drop trigger if exists trg_aset_tetap_updated_at on aset_tetap;
+create trigger trg_aset_tetap_updated_at
+  before update on aset_tetap
+  for each row execute function set_updated_at();
