@@ -180,6 +180,7 @@ export interface AsetTetapDetail {
   luas_m2?: string;
   letak_alamat?: string;
   status_hak?: string;
+  tanggal_sertifikat?: string;
   no_sertifikat?: string;
   penggunaan?: string;
   asal_usul?: string;
@@ -191,6 +192,9 @@ export interface AsetTetapDetail {
   letak_lokasi?: string;
   status_tanah?: string;
   no_kode_tanah?: string;
+  // Dokumen (KIB C/D/F) — tanggal & nomor dokumen kepemilikan/perolehan
+  dokumen_tanggal?: string;
+  dokumen_nomor?: string;
   // KIB D — tambahan
   konstruksi?: string;
   panjang_km?: string;
@@ -198,11 +202,11 @@ export interface AsetTetapDetail {
   // KIB E — Aset Tetap Lainnya
   jenis_khusus?: "kesenian_kebudayaan" | "hewan_ternak_tumbuhan" | "buku_perpustakaan" | "lainnya";
   judul_pencipta?: string;
-  spesifikasi?: string;
   bahan?: string;
   jumlah?: string;
   // KIB F — Konstruksi Dalam Pengerjaan
-  bangunan_psp_d?: string;
+  bangunan_psp_d?: "P" | "SP" | "D";
+  tgl_bln_thn_tanah?: string;
   asal_usul_pembiayaan?: string;
   nilai_kontrak?: string;
 }

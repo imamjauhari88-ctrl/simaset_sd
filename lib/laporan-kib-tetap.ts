@@ -67,7 +67,7 @@ function kondisiLabel(k?: string) {
 }
 
 function bangunanTipeLabel(a: AsetTetap, tipe: "P" | "SP" | "D") {
-  return a.detail.bangunan_psp_d?.toUpperCase() === tipe ? tipe : "";
+  return a.detail.bangunan_psp_d === tipe ? tipe : "";
 }
 
 export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
@@ -85,7 +85,7 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
       label: "Status Tanah",
       anak: [
         { label: "Hak", ambil: (a) => a.detail.status_hak || "", lebar: 12 },
-        { label: "Tanggal", ambil: () => "", lebar: 10 },
+        { label: "Tanggal", ambil: (a) => a.detail.tanggal_sertifikat || "", lebar: 10 },
         { label: "Nomor", ambil: (a) => a.detail.no_sertifikat || "", lebar: 14 },
       ],
     },
@@ -121,8 +121,8 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
     {
       label: "Dokumen Gedung",
       anak: [
-        { label: "Tanggal", ambil: () => "", lebar: 10 },
-        { label: "Nomor", ambil: () => "", lebar: 10 },
+        { label: "Tanggal", ambil: (a) => a.detail.dokumen_tanggal || "", lebar: 10 },
+        { label: "Nomor", ambil: (a) => a.detail.dokumen_nomor || "", lebar: 10 },
       ],
     },
     { label: "Status Tanah", ambil: (a) => a.detail.status_tanah || "", lebar: 12 },
@@ -154,8 +154,8 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
     {
       label: "Dokumen",
       anak: [
-        { label: "Tanggal", ambil: () => "", lebar: 10 },
-        { label: "Nomor", ambil: () => "", lebar: 10 },
+        { label: "Tanggal", ambil: (a) => a.detail.dokumen_tanggal || "", lebar: 10 },
+        { label: "Nomor", ambil: (a) => a.detail.dokumen_nomor || "", lebar: 10 },
       ],
     },
     { label: "Status Tanah", ambil: (a) => a.detail.status_tanah || "", lebar: 12 },
@@ -232,11 +232,11 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
     {
       label: "Dokumen",
       anak: [
-        { label: "Tanggal", ambil: () => "", lebar: 10 },
-        { label: "Nomor", ambil: () => "", lebar: 10 },
+        { label: "Tanggal", ambil: (a) => a.detail.dokumen_tanggal || "", lebar: 10 },
+        { label: "Nomor", ambil: (a) => a.detail.dokumen_nomor || "", lebar: 10 },
       ],
     },
-    { label: "Tgl, Bln, Thn Tanah", ambil: () => "", lebar: 12 },
+    { label: "Tgl, Bln, Thn Tanah", ambil: (a) => a.detail.tgl_bln_thn_tanah || "", lebar: 12 },
     { label: "Status Tanah", ambil: (a) => a.detail.status_tanah || "", lebar: 12 },
     { label: "Nomor Kode Tanah", ambil: (a) => a.detail.no_kode_tanah || "", lebar: 14 },
     { label: "Asal Usul Pembiayaan", ambil: (a) => a.detail.asal_usul_pembiayaan || "", lebar: 16 },

@@ -105,9 +105,13 @@ export function AsetTetapForm({
               <input {...register("no_sertifikat")} className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Penggunaan</label>
-              <input {...register("penggunaan")} placeholder="mis. Gedung Sekolah" className={inputClass} />
+              <label className={labelClass}>Tanggal Sertifikat</label>
+              <input {...register("tanggal_sertifikat")} type="date" className={inputClass} />
             </div>
+          </div>
+          <div>
+            <label className={labelClass}>Penggunaan</label>
+            <input {...register("penggunaan")} placeholder="mis. Gedung Sekolah" className={inputClass} />
           </div>
           <div>
             <label className={labelClass}>Asal Usul</label>
@@ -158,6 +162,16 @@ export function AsetTetapForm({
               <input {...register("no_kode_tanah")} className={`${inputClass} font-mono`} />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Tanggal Dokumen</label>
+              <input {...register("dokumen_tanggal")} type="date" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Nomor Dokumen</label>
+              <input {...register("dokumen_nomor")} className={inputClass} />
+            </div>
+          </div>
           <div>
             <label className={labelClass}>Asal Usul</label>
             <input {...register("asal_usul")} placeholder="mis. Beli / Bantuan / Swadana" className={inputClass} />
@@ -202,6 +216,16 @@ export function AsetTetapForm({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
+              <label className={labelClass}>Tanggal Dokumen</label>
+              <input {...register("dokumen_tanggal")} type="date" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Nomor Dokumen</label>
+              <input {...register("dokumen_nomor")} className={inputClass} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <label className={labelClass}>Asal Usul</label>
               <input {...register("asal_usul")} className={inputClass} />
             </div>
@@ -235,10 +259,6 @@ export function AsetTetapForm({
             <label className={labelClass}>Judul/ Pencipta</label>
             <input {...register("judul_pencipta")} className={inputClass} />
           </div>
-          <div>
-            <label className={labelClass}>Spesifikasi</label>
-            <input {...register("spesifikasi")} className={inputClass} />
-          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Bahan</label>
@@ -261,8 +281,13 @@ export function AsetTetapForm({
         <>
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className={labelClass}>Bangunan (P/SP/D)</label>
-              <input {...register("bangunan_psp_d")} className={inputClass} />
+              <label className={labelClass}>Bangunan</label>
+              <select {...register("bangunan_psp_d")} className={inputClass}>
+                <option value="">—</option>
+                <option value="P">Permanen (P)</option>
+                <option value="SP">Semi Permanen (SP)</option>
+                <option value="D">Darurat (D)</option>
+              </select>
             </div>
             <div>
               <label className={labelClass}>Bertingkat?</label>
@@ -285,32 +310,48 @@ export function AsetTetapForm({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Status Tanah</label>
-              <input {...register("status_tanah")} className={inputClass} />
+              <label className={labelClass}>Tanggal Dokumen</label>
+              <input {...register("dokumen_tanggal")} type="date" className={inputClass} />
             </div>
             <div>
-              <label className={labelClass}>Nomor Kode Tanah</label>
-              <input {...register("no_kode_tanah")} className={`${inputClass} font-mono`} />
+              <label className={labelClass}>Nomor Dokumen</label>
+              <input {...register("dokumen_nomor")} className={inputClass} />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Asal Usul Pembiayaan</label>
-              <input {...register("asal_usul_pembiayaan")} className={inputClass} />
+              <label className={labelClass}>Tgl, Bln, Thn Tanah</label>
+              <input {...register("tgl_bln_thn_tanah")} type="date" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Status Tanah</label>
+              <input {...register("status_tanah")} className={inputClass} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Nomor Kode Tanah</label>
+              <input {...register("no_kode_tanah")} className={`${inputClass} font-mono`} />
             </div>
             <div>
               <label className={labelClass}>Nilai Kontrak (Ribuan Rp)</label>
               <input {...register("nilai_kontrak")} className={inputClass} />
             </div>
           </div>
+          <div>
+            <label className={labelClass}>Asal Usul Pembiayaan</label>
+            <input {...register("asal_usul_pembiayaan")} className={inputClass} />
+          </div>
         </>
       )}
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass}>Harga {jenis === "F" ? "" : "Perolehan"}</label>
-          <input {...register("harga")} type="number" className={inputClass} />
-        </div>
+        {jenis !== "F" && (
+          <div>
+            <label className={labelClass}>Harga Perolehan</label>
+            <input {...register("harga")} type="number" className={inputClass} />
+          </div>
+        )}
         <div>
           <label className={labelClass}>Keterangan</label>
           <input {...register("keterangan")} className={inputClass} />

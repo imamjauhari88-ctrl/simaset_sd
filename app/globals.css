@@ -225,6 +225,34 @@ button:not(:disabled),
     -webkit-print-color-adjust: exact;
   }
 
+  /* Paksa balik ke palet terang pas cetak, apa pun tema yang lagi aktif
+   * di layar (`.dark` bisa masih nempel di <html> pas tab cetak dibuka).
+   * Tanpa ini, teks laporan ikut warna terang punya dark mode
+   * (--color-ink jadi hampir putih) dan nyaris gak kebaca di atas kertas
+   * putih. Ditaruh setelah blok `.dark` & pakai selector yang sama biar
+   * menang di urutan cascade, terlepas dari class apa yang nempel. */
+  :root,
+  .dark {
+    --color-ink: #1c2420;
+    --color-ink-soft: #4a534d;
+    --color-paper: #ffffff;
+    --color-surface: #ffffff;
+    --color-line: #cfcabc;
+
+    --color-pine: #1f4b43;
+    --color-pine-dark: #12332d;
+    --color-pine-soft: #dce8e4;
+
+    --color-brass: #b9852f;
+    --color-brass-soft: #f2e6cd;
+
+    --color-sage: #5f7f63;
+    --color-sage-soft: #e3ece4;
+
+    --color-brick: #a84a3d;
+    --color-brick-soft: #f3e0dc;
+  }
+
   /* Laporan KIB B (16 kolom) kepanjangan buat potrait — cetak dalam
    * orientasi landscape lewat named page (didukung Chrome/Edge), gak
    * ganggu laporan lain yang tetap potrait default. */
