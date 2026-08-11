@@ -3,7 +3,7 @@ import { getAsetTetapList } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
-import { JUDUL_KIB, KOLOM_KIB, isJenisKib } from "@/lib/laporan-kib-tetap";
+import { JUDUL_KIB, KOLOM_KIB, isGroup, ratakanKolom, isJenisKib } from "@/lib/laporan-kib-tetap";
 
 export default async function CetakKibTetapPage({
   params,
@@ -19,6 +19,8 @@ export default async function CetakKibTetapPage({
   ]);
 
   const kolom = KOLOM_KIB[jenis];
+  const leafKolom = ratakanKolom(kolom);
+  const adaGrup = kolom.some(isGroup);
 
   return (
     <div className="cetak-landscape max-w-[1400px] mx-auto">
@@ -38,52 +40,60 @@ export default async function CetakKibTetapPage({
         <span className="font-mono">{sekolah?.kode_lokasi || "—"}</span>
       </p>
 
-      {daftar.length === 0 ? (
-        <table className="w-full text-[10px] border-collapse border border-ink/40 mb-6">
-          <thead>
-            <tr className="text-center font-semibold">
-              {kolom.map((k) => (
-                <th key={k.label} className="border border-ink/40 px-1 py-1">
+      <table className="w-full text-[10px] border-collapse border border-ink/40 mb-6">
+        <thead>
+          <tr className="text-center font-semibold">
+            {kolom.map((k) =>
+              isGroup(k) ? (
+                <th key={k.label} colSpan={k.anak.length} className="border border-ink/40 px-1 py-1">
                   {k.label}
                 </th>
-              ))}
+              ) : (
+                <th
+                  key={k.label}
+                  rowSpan={adaGrup ? 2 : 1}
+                  className="border border-ink/40 px-1 py-1"
+                >
+                  {k.label}
+                </th>
+              )
+            )}
+          </tr>
+          {adaGrup && (
+            <tr className="text-center font-semibold">
+              {kolom.filter(isGroup).flatMap((g) =>
+                g.anak.map((a) => (
+                  <th key={`${g.label}-${a.label}`} className="border border-ink/40 px-1 py-1">
+                    {a.label}
+                  </th>
+                ))
+              )}
             </tr>
-          </thead>
-          <tbody>
+          )}
+        </thead>
+        <tbody>
+          {daftar.length === 0 ? (
             <tr>
               <td
-                colSpan={kolom.length}
+                colSpan={leafKolom.length}
                 className="border border-ink/40 px-1.5 py-8 text-center font-display font-bold text-lg tracking-[0.3em] text-ink-soft"
               >
                 NIHIL
               </td>
             </tr>
-          </tbody>
-        </table>
-      ) : (
-        <table className="w-full text-[10px] border-collapse border border-ink/40 mb-6">
-          <thead>
-            <tr className="text-center font-semibold">
-              {kolom.map((k) => (
-                <th key={k.label} className="border border-ink/40 px-1 py-1">
-                  {k.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {daftar.map((a, i) => (
+          ) : (
+            daftar.map((a, i) => (
               <tr key={a.id} className="break-inside-avoid">
-                {kolom.map((k) => (
+                {leafKolom.map((k) => (
                   <td key={k.label} className="border border-ink/40 px-1 py-1">
                     {k.ambil(a, i)}
                   </td>
                 ))}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+            ))
+          )}
+        </tbody>
+      </table>
 
       <p className="text-[11px] text-ink-soft mt-6 print:mt-10">
         Dicetak: {new Date().toLocaleString("id-ID")}

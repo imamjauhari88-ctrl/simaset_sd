@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import clsx from "clsx";
 
@@ -14,6 +15,13 @@ import clsx from "clsx";
  * putih polos + biru default OS/browser. Satu-satunya cara biar konsisten
  * di semua halaman adalah bangun listbox sendiri dari <div>, bukan native
  * <option>.
+ *
+ * Listbox-nya di-render lewat portal ke <body> (bukan `position: absolute`
+ * biasa di dalam kartu) — soalnya kalau cuma absolute, dia masih kejebak di
+ * "lapisan" kartunya sendiri, jadi begitu ada kartu lain di grid yang render
+ * belakangan (row di bawahnya), dropdown yang lagi kebuka bisa ketutupan.
+ * Lewat portal, posisinya dihitung manual dari lokasi tombolnya, jadi selalu
+ * di lapisan paling atas gak peduli ada di kartu mana dia dipanggil.
  */
 
 export interface SelectOption {
@@ -40,30 +48,93 @@ export function Select({
   size?: "sm" | "md";
 }) {
   const [terbuka, setTerbuka] = useState(false);
+  const [posisi, setPosisi] = useState({ top: 0, left: 0, width: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
+  const tombolRef = useRef<HTMLButtonElement>(null);
+  const listboxRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (!terbuka || !tombolRef.current) return;
+    function hitungPosisi() {
+      const r = tombolRef.current!.getBoundingClientRect();
+      setPosisi({ top: r.bottom + window.scrollY + 6, left: r.left + window.scrollX, width: r.width });
+    }
+    hitungPosisi();
+    window.addEventListener("scroll", hitungPosisi, true);
+    window.addEventListener("resize", hitungPosisi);
+    return () => {
+      window.removeEventListener("scroll", hitungPosisi, true);
+      window.removeEventListener("resize", hitungPosisi);
+    };
+  }, [terbuka]);
 
   useEffect(() => {
-    function handleClickLuar(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+    function handleKlikLuar(e: MouseEvent) {
+      const target = e.target as Node;
+      if (
+        rootRef.current &&
+        !rootRef.current.contains(target) &&
+        listboxRef.current &&
+        !listboxRef.current.contains(target)
+      ) {
         setTerbuka(false);
       }
     }
     function handleEsc(e: KeyboardEvent) {
       if (e.key === "Escape") setTerbuka(false);
     }
-    document.addEventListener("mousedown", handleClickLuar);
+    document.addEventListener("mousedown", handleKlikLuar);
     document.addEventListener("keydown", handleEsc);
     return () => {
-      document.removeEventListener("mousedown", handleClickLuar);
+      document.removeEventListener("mousedown", handleKlikLuar);
       document.removeEventListener("keydown", handleEsc);
     };
   }, []);
 
   const dipilih = options.find((o) => o.value === value);
 
+  const listbox = terbuka && (
+    <div
+      ref={listboxRef}
+      role="listbox"
+      style={{ position: "absolute", top: posisi.top, left: posisi.left, width: posisi.width }}
+      className="z-[100] max-h-64 overflow-auto bg-surface border border-line rounded-[0.75rem] shadow-[0_4px_14px_rgba(28,36,32,0.08),0_2px_4px_rgba(28,36,32,0.04)] p-1.5 animate-fade-in"
+    >
+      {options.map((opt) => {
+        const aktif = opt.value === value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            role="option"
+            aria-selected={aktif}
+            disabled={opt.disabled}
+            onClick={() => {
+              if (opt.disabled) return;
+              onChange(opt.value);
+              setTerbuka(false);
+            }}
+            className={clsx(
+              "w-full flex items-center justify-between gap-2 text-left px-2.5 py-2 rounded-md text-sm transition-colors",
+              opt.disabled
+                ? "text-ink-soft/50 cursor-not-allowed"
+                : aktif
+                ? "bg-pine-soft text-pine-dark font-medium"
+                : "text-ink hover:bg-paper"
+            )}
+          >
+            <span className="truncate">{opt.label}</span>
+            {aktif && <Check size={14} className="shrink-0" />}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div ref={rootRef} className={clsx("relative", className)}>
       <button
+        ref={tombolRef}
         type="button"
         disabled={disabled}
         onClick={() => setTerbuka((t) => !t)}
@@ -87,41 +158,7 @@ export function Select({
         />
       </button>
 
-      {terbuka && (
-        <div
-          role="listbox"
-          className="absolute z-20 mt-1.5 w-full max-h-64 overflow-auto bg-surface border border-line rounded-[0.75rem] shadow-[0_4px_14px_rgba(28,36,32,0.08),0_2px_4px_rgba(28,36,32,0.04)] p-1.5 animate-fade-in"
-        >
-          {options.map((opt) => {
-            const aktif = opt.value === value;
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                role="option"
-                aria-selected={aktif}
-                disabled={opt.disabled}
-                onClick={() => {
-                  if (opt.disabled) return;
-                  onChange(opt.value);
-                  setTerbuka(false);
-                }}
-                className={clsx(
-                  "w-full flex items-center justify-between gap-2 text-left px-2.5 py-2 rounded-md text-sm transition-colors",
-                  opt.disabled
-                    ? "text-ink-soft/50 cursor-not-allowed"
-                    : aktif
-                    ? "bg-pine-soft text-pine-dark font-medium"
-                    : "text-ink hover:bg-paper"
-                )}
-              >
-                <span className="truncate">{opt.label}</span>
-                {aktif && <Check size={14} className="shrink-0" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      {listbox && typeof document !== "undefined" && createPortal(listbox, document.body)}
     </div>
   );
 }

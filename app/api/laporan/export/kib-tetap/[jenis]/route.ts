@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAsetTetapList } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
-import { JUDUL_KIB, KOLOM_KIB, isJenisKib } from "@/lib/laporan-kib-tetap";
+import { JUDUL_KIB, KOLOM_KIB, ratakanKolom, labelKolomExcel, isJenisKib } from "@/lib/laporan-kib-tetap";
 
 export async function GET(
   _request: NextRequest,
@@ -24,6 +24,7 @@ export async function GET(
   ]);
 
   const kolom = KOLOM_KIB[jenis];
+  const leafKolom = ratakanKolom(kolom);
 
   const buffer = buatXlsxLaporan({
     judul: `KARTU INVENTARIS BARANG (KIB) ${jenis} — ${JUDUL_KIB[jenis].toUpperCase()}`,
@@ -31,12 +32,12 @@ export async function GET(
       `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
       `Dicetak: ${new Date().toLocaleString("id-ID")}`,
     ],
-    header: kolom.map((k) => k.label),
+    header: labelKolomExcel(kolom),
     baris:
       daftar.length === 0
-        ? [["", "NIHIL", ...Array(kolom.length - 2).fill("")]]
-        : daftar.map((a, i) => kolom.map((k) => k.ambil(a, i))),
-    lebarKolom: kolom.map((k) => k.lebar ?? 14),
+        ? [["", "NIHIL", ...Array(leafKolom.length - 2).fill("")]]
+        : daftar.map((a, i) => leafKolom.map((k) => k.ambil(a, i))),
+    lebarKolom: leafKolom.map((k) => k.lebar ?? 14),
   });
 
   return new NextResponse(new Uint8Array(buffer), {
