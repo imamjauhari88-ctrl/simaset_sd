@@ -63,18 +63,18 @@ export default async function CetakKibPage({
           <table className="w-full text-[10px] border-collapse border border-ink/40">
             <thead>
               <tr className="text-center font-semibold">
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1 w-7">NO</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">KODE BARANG</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">NAMA BARANG/ JENIS BARANG</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">NOMOR REGISTRASI</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">MERK/ TYPE</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">UKURAN/ CC</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">BAHAN</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">TAHUN PEMBELIAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1 w-7">NO</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KODE BARANG</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">NAMA BARANG/ JENIS BARANG</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">NOMOR REGISTRASI</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">MERK/ TYPE</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">UKURAN/ CC</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">BAHAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">TAHUN PEMBELIAN</th>
                 <th colSpan={5} className="border border-ink/40 px-1 py-1">NOMOR</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">ASAL USUL CARA PEROLEHAN</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">HARGA</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">KET.</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">ASAL USUL CARA PEROLEHAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">HARGA</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KET.</th>
               </tr>
               <tr className="text-center font-semibold">
                 <th className="border border-ink/40 px-1 py-1">PABRIK</th>

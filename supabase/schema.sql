@@ -894,6 +894,14 @@ alter table sekolah add column if not exists pengurus_barang_nip text;
 alter table sekolah add column if not exists usulan_penghapusan_nihil boolean not null default false;
 
 -- ============================================================
+-- Tanggal laporan manual — laporan inventaris (KIB/KIR/Buku Inventaris/
+-- Daftar Usulan) biasanya dibuat per-semester, bukan tanggal pas admin
+-- kebetulan nge-klik cetak. Kalau kosong (null), laporan tetap pakai
+-- tanggal hari ini seperti biasa (fallback), jadi kolom ini opsional.
+-- ============================================================
+alter table sekolah add column if not exists tanggal_laporan date;
+
+-- ============================================================
 -- Approval pendaftaran sekolah DICABUT — sekolah yang daftar sekarang
 -- langsung 'aktif' (lihat app/onboarding/actions.ts). Status sekolah
 -- disederhanakan jadi cuma 2 nilai: 'aktif' / 'nonaktif' (dipakai super

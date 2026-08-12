@@ -215,3 +215,25 @@ export async function updateUsulanPenghapusanNihil(nihil: boolean) {
   revalidatePath("/pengaturan");
   revalidatePath("/laporan");
 }
+
+/** Tanggal manual buat kop tanda tangan laporan (biasanya akhir
+ * semester) — dipakai gantiin tanggal hari ini kalau diisi. Kosongkan
+ * lagi (kirim null) buat balik pakai tanggal hari ini otomatis. */
+export async function updateTanggalLaporan(tanggal: string | null) {
+  const profil = await getProfilSaya();
+  if (!profil) throw new Error("Kamu belum terhubung ke sekolah mana pun.");
+  if (profil.role !== "admin") {
+    throw new Error("Hanya admin yang bisa mengubah pengaturan sekolah.");
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("sekolah")
+    .update({ tanggal_laporan: tanggal || null })
+    .eq("id", profil.sekolah_id);
+
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/pengaturan");
+  revalidatePath("/laporan");
+}

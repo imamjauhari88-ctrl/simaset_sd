@@ -70,6 +70,13 @@ export default async function CetakKibTetapPage({
               )}
             </tr>
           )}
+          <tr className="text-center text-ink-soft">
+            {leafKolom.map((_k, idx) => (
+              <th key={idx} className="border border-ink/40 px-1 py-0.5 font-normal">
+                {idx + 1}
+              </th>
+            ))}
+          </tr>
         </thead>
         <tbody>
           {daftar.length === 0 ? (

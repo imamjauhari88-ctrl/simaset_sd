@@ -22,6 +22,10 @@ import clsx from "clsx";
  * belakangan (row di bawahnya), dropdown yang lagi kebuka bisa ketutupan.
  * Lewat portal, posisinya dihitung manual dari lokasi tombolnya, jadi selalu
  * di lapisan paling atas gak peduli ada di kartu mana dia dipanggil.
+ *
+ * Posisinya juga otomatis "flip" ke atas kalau tombolnya deket bagian bawah
+ * layar dan ruang di bawah gak cukup buat nampilin listbox — dicek dari
+ * ruang kosong di atas vs di bawah tombol tiap kali dibuka.
  */
 
 export interface SelectOption {
@@ -29,6 +33,9 @@ export interface SelectOption {
   label: string;
   disabled?: boolean;
 }
+
+const TINGGI_MAKS_LISTBOX = 256; // samain sama max-h-64
+const JARAK = 6;
 
 export function Select({
   value,
@@ -48,7 +55,7 @@ export function Select({
   size?: "sm" | "md";
 }) {
   const [terbuka, setTerbuka] = useState(false);
-  const [posisi, setPosisi] = useState({ top: 0, left: 0, width: 0 });
+  const [posisi, setPosisi] = useState({ top: 0, left: 0, width: 0, maxHeight: TINGGI_MAKS_LISTBOX, arahAtas: false });
   const rootRef = useRef<HTMLDivElement>(null);
   const tombolRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
@@ -57,7 +64,24 @@ export function Select({
     if (!terbuka || !tombolRef.current) return;
     function hitungPosisi() {
       const r = tombolRef.current!.getBoundingClientRect();
-      setPosisi({ top: r.bottom + window.scrollY + 6, left: r.left + window.scrollX, width: r.width });
+      const ruangBawah = window.innerHeight - r.bottom - JARAK;
+      const ruangAtas = r.top - JARAK;
+
+      // Defaultnya buka ke bawah. Cuma flip ke atas kalau ruang bawah
+      // beneran kurang DAN ruang atas lebih luas — jadi gak asal flip
+      // pas ruang bawah sebenarnya masih cukup buat listbox pendek.
+      const arahAtas = ruangBawah < TINGGI_MAKS_LISTBOX && ruangAtas > ruangBawah;
+      const maxHeight = Math.min(TINGGI_MAKS_LISTBOX, Math.max(120, arahAtas ? ruangAtas : ruangBawah));
+
+      setPosisi({
+        top: arahAtas
+          ? r.top + window.scrollY - JARAK
+          : r.bottom + window.scrollY + JARAK,
+        left: r.left + window.scrollX,
+        width: r.width,
+        maxHeight,
+        arahAtas,
+      });
     }
     hitungPosisi();
     window.addEventListener("scroll", hitungPosisi, true);
@@ -97,8 +121,15 @@ export function Select({
     <div
       ref={listboxRef}
       role="listbox"
-      style={{ position: "absolute", top: posisi.top, left: posisi.left, width: posisi.width }}
-      className="z-[100] max-h-64 overflow-auto bg-surface border border-line rounded-[0.75rem] shadow-[0_4px_14px_rgba(28,36,32,0.08),0_2px_4px_rgba(28,36,32,0.04)] p-1.5 animate-fade-in"
+      style={{
+        position: "absolute",
+        top: posisi.top,
+        left: posisi.left,
+        width: posisi.width,
+        maxHeight: posisi.maxHeight,
+        transform: posisi.arahAtas ? "translateY(-100%)" : undefined,
+      }}
+      className="z-[100] overflow-auto bg-surface border border-line rounded-[0.75rem] shadow-[0_4px_14px_rgba(28,36,32,0.08),0_2px_4px_rgba(28,36,32,0.04)] p-1.5 animate-fade-in"
     >
       {options.map((opt) => {
         const aktif = opt.value === value;

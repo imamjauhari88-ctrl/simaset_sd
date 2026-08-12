@@ -43,7 +43,7 @@ async function fetchAsetTetap(): Promise<AsetTetap[]> {
     .from("aset_tetap")
     .select("*")
     .order("jenis_kib")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return data;
 }

@@ -65,7 +65,7 @@ export function AsetTetapForm({
         {label.pendek} — {label.label}
       </p>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Kode Barang</label>
           <input {...register("kode_barang")} placeholder="mis. 01.01.11.04.02" className={`${inputClass} font-mono`} />
@@ -85,7 +85,7 @@ export function AsetTetapForm({
       {/* ===== KIB A — Tanah ===== */}
       {jenis === "A" && (
         <>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Luas (M²)</label>
               <input {...register("luas_m2")} placeholder="mis. 1227" className={inputClass} />
@@ -99,7 +99,7 @@ export function AsetTetapForm({
             <label className={labelClass}>Letak/ Alamat</label>
             <input {...register("letak_alamat")} className={inputClass} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>No. Sertifikat</label>
               <input {...register("no_sertifikat")} className={inputClass} />
@@ -123,7 +123,7 @@ export function AsetTetapForm({
       {/* ===== KIB C — Gedung dan Bangunan ===== */}
       {jenis === "C" && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Kondisi</label>
               <select {...register("kondisi")} className={inputClass}>
@@ -142,7 +142,7 @@ export function AsetTetapForm({
               <input {...register("beton")} placeholder="Ya / Tidak" className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Luas Lantai (M²)</label>
               <input {...register("luas_lantai_m2")} className={inputClass} />
@@ -152,7 +152,7 @@ export function AsetTetapForm({
               <input {...register("letak_lokasi")} className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Status Tanah</label>
               <input {...register("status_tanah")} className={inputClass} />
@@ -162,7 +162,7 @@ export function AsetTetapForm({
               <input {...register("no_kode_tanah")} className={`${inputClass} font-mono`} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Tanggal Dokumen</label>
               <input {...register("dokumen_tanggal")} type="date" className={inputClass} />
@@ -186,7 +186,7 @@ export function AsetTetapForm({
             <label className={labelClass}>Konstruksi</label>
             <input {...register("konstruksi")} className={inputClass} />
           </div>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Panjang (Km)</label>
               <input {...register("panjang_km")} className={inputClass} />
@@ -204,7 +204,7 @@ export function AsetTetapForm({
             <label className={labelClass}>Letak/ Lokasi</label>
             <input {...register("letak_lokasi")} className={inputClass} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Status Tanah</label>
               <input {...register("status_tanah")} className={inputClass} />
@@ -214,7 +214,7 @@ export function AsetTetapForm({
               <input {...register("no_kode_tanah")} className={`${inputClass} font-mono`} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Tanggal Dokumen</label>
               <input {...register("dokumen_tanggal")} type="date" className={inputClass} />
@@ -224,7 +224,7 @@ export function AsetTetapForm({
               <input {...register("dokumen_nomor")} className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Asal Usul</label>
               <input {...register("asal_usul")} className={inputClass} />
@@ -259,7 +259,7 @@ export function AsetTetapForm({
             <label className={labelClass}>Judul/ Pencipta</label>
             <input {...register("judul_pencipta")} className={inputClass} />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Bahan</label>
               <input {...register("bahan")} className={inputClass} />
@@ -279,7 +279,7 @@ export function AsetTetapForm({
       {/* ===== KIB F — Konstruksi Dalam Pengerjaan ===== */}
       {jenis === "F" && (
         <>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className={labelClass}>Bangunan</label>
               <select {...register("bangunan_psp_d")} className={inputClass}>
@@ -298,7 +298,7 @@ export function AsetTetapForm({
               <input {...register("beton")} placeholder="Ya / Tidak" className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Luas (M²)</label>
               <input {...register("luas_m2")} className={inputClass} />
@@ -308,7 +308,7 @@ export function AsetTetapForm({
               <input {...register("letak_lokasi")} className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Tanggal Dokumen</label>
               <input {...register("dokumen_tanggal")} type="date" className={inputClass} />
@@ -318,7 +318,7 @@ export function AsetTetapForm({
               <input {...register("dokumen_nomor")} className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Tgl, Bln, Thn Tanah</label>
               <input {...register("tgl_bln_thn_tanah")} type="date" className={inputClass} />
@@ -328,7 +328,7 @@ export function AsetTetapForm({
               <input {...register("status_tanah")} className={inputClass} />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Nomor Kode Tanah</label>
               <input {...register("no_kode_tanah")} className={`${inputClass} font-mono`} />
@@ -345,7 +345,7 @@ export function AsetTetapForm({
         </>
       )}
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {jenis !== "F" && (
           <div>
             <label className={labelClass}>Harga Perolehan</label>

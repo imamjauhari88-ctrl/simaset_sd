@@ -151,6 +151,7 @@ export function AsetTetapManager({
         <Modal
           title={`Tambah Data ${LABEL_JENIS_KIB[jenisAktif].pendek}`}
           onClose={() => setModalTambah(false)}
+          size="2xl"
         >
           <AsetTetapForm jenis={jenisAktif} onSelesai={() => setModalTambah(false)} />
         </Modal>
@@ -160,6 +161,7 @@ export function AsetTetapManager({
         <Modal
           title={`Edit Data ${LABEL_JENIS_KIB[editData.jenis_kib].pendek}`}
           onClose={() => setEditData(null)}
+          size="2xl"
         >
           <AsetTetapForm
             jenis={editData.jenis_kib}

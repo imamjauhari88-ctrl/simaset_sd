@@ -15,7 +15,9 @@ import type { Sekolah } from "@/types/database";
  */
 export function TandaTangan({ sekolah }: { sekolah: Sekolah | null }) {
   const kabKota = sekolah?.kabupaten_kota || "…………………";
-  const tanggal = new Date().toLocaleDateString("id-ID", {
+  const tanggal = (
+    sekolah?.tanggal_laporan ? new Date(sekolah.tanggal_laporan) : new Date()
+  ).toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "long",
     year: "numeric",

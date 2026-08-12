@@ -63,18 +63,18 @@ export default async function CetakKirPage({
           <table className="w-full text-[10px] border-collapse border border-ink/40">
             <thead>
               <tr className="text-center font-semibold">
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1 w-7">NO</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">KODE BARANG</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">NAMA BARANG/ JENIS BARANG</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">MERK/ MODEL</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">NO. SERI PABRIK</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">UKURAN</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">BAHAN</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">TAHUN PEMBUATAN/ PEMBELIAN</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">JUMLAH BARANG/ REGISTER</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">HARGA BELI/ PEROLEHAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1 w-7">NO</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KODE BARANG</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">NAMA BARANG/ JENIS BARANG</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">MERK/ MODEL</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">NO. SERI PABRIK</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">UKURAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">BAHAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">TAHUN PEMBUATAN/ PEMBELIAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">JUMLAH BARANG/ REGISTER</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">HARGA BELI/ PEROLEHAN</th>
                 <th colSpan={3} className="border border-ink/40 px-1 py-1">KEADAAN BARANG</th>
-                <th rowSpan={3} className="border border-ink/40 px-1 py-1">KETERANGAN MUTASI</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KETERANGAN MUTASI</th>
               </tr>
               <tr className="text-center font-semibold">
                 <th className="border border-ink/40 px-1 py-1">BAIK (B)</th>

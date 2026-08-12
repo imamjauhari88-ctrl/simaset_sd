@@ -24,6 +24,9 @@ export interface Sekolah {
   /** Kalau true, laporan Daftar Usulan Barang yang Dihapus dipaksa
    * tampil NIHIL walau ada aset kondisi Rusak Berat. */
   usulan_penghapusan_nihil: boolean;
+  /** Tanggal manual buat kop tanda tangan laporan (mis. akhir semester)
+   * — kalau null, laporan pakai tanggal hari ini. */
+  tanggal_laporan: string | null;
   created_at: string;
 }
 

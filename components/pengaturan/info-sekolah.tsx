@@ -7,6 +7,7 @@ import {
   updateKodeLokasi,
   updateDataLaporan,
   updateUsulanPenghapusanNihil,
+  updateTanggalLaporan,
 } from "@/app/(dashboard)/pengaturan/actions";
 import type { Sekolah } from "@/types/database";
 
@@ -34,6 +35,35 @@ export function InfoSekolah({
 
   const [nihilUsulan, setNihilUsulan] = useState(sekolah.usulan_penghapusan_nihil);
   const [pendingNihil, startTransitionNihil] = useTransition();
+
+  const [editTanggal, setEditTanggal] = useState(false);
+  const [nilaiTanggal, setNilaiTanggal] = useState(sekolah.tanggal_laporan ?? "");
+  const [pendingTanggal, startTransitionTanggal] = useTransition();
+
+  function simpanTanggalLaporan() {
+    startTransitionTanggal(async () => {
+      try {
+        await updateTanggalLaporan(nilaiTanggal || null);
+        toast.success("Tanggal laporan disimpan");
+        setEditTanggal(false);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Gagal menyimpan tanggal laporan");
+      }
+    });
+  }
+
+  function pakaiTanggalHariIni() {
+    setNilaiTanggal("");
+    startTransitionTanggal(async () => {
+      try {
+        await updateTanggalLaporan(null);
+        toast.success("Laporan kembali pakai tanggal hari ini");
+        setEditTanggal(false);
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Gagal menyimpan tanggal laporan");
+      }
+    });
+  }
 
   function toggleNihilUsulan(nilai: boolean) {
     setNihilUsulan(nilai);
@@ -313,6 +343,79 @@ export function InfoSekolah({
           Dipakai di blok tanda tangan semua laporan cetak (KIB, KIR, Buku
           Inventaris, Daftar Usulan).
         </p>
+
+        <div className="mt-4 pt-4 border-t border-line/60">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[12px] text-ink-soft">
+              Tanggal Laporan
+              {!sekolah.tanggal_laporan && (
+                <span className="text-ink-soft/70"> — pakai tanggal hari ini</span>
+              )}
+            </p>
+            {bisaUbah && !editTanggal && (
+              <button
+                onClick={() => setEditTanggal(true)}
+                className="text-ink-soft hover:text-pine transition-colors"
+                title="Ubah tanggal laporan"
+              >
+                <Pencil size={13} />
+              </button>
+            )}
+          </div>
+
+          {editTanggal ? (
+            <div className="flex items-center gap-2 mt-1.5">
+              <input
+                type="date"
+                value={nilaiTanggal}
+                onChange={(e) => setNilaiTanggal(e.target.value)}
+                className={inputClass}
+              />
+              <button
+                onClick={simpanTanggalLaporan}
+                disabled={pendingTanggal}
+                className="text-pine hover:text-pine-dark transition-colors disabled:opacity-60"
+                title="Simpan"
+              >
+                <Check size={16} />
+              </button>
+              <button
+                onClick={() => {
+                  setNilaiTanggal(sekolah.tanggal_laporan ?? "");
+                  setEditTanggal(false);
+                }}
+                className="text-ink-soft hover:text-ink transition-colors"
+                title="Batal"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            sekolah.tanggal_laporan && (
+              <div className="flex items-center justify-between gap-2 mt-1">
+                <p className="text-[13px] text-ink">
+                  {new Date(sekolah.tanggal_laporan).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+                {bisaUbah && (
+                  <button
+                    onClick={pakaiTanggalHariIni}
+                    disabled={pendingTanggal}
+                    className="text-[11px] text-ink-soft hover:text-pine transition-colors disabled:opacity-60"
+                  >
+                    Pakai tanggal hari ini
+                  </button>
+                )}
+              </div>
+            )
+          )}
+          <p className="text-[11px] text-ink-soft mt-1.5">
+            Biasanya diisi akhir semester, bukan tanggal admin kebetulan cetak.
+          </p>
+        </div>
       </div>
 
       <div className="mt-5 pt-5 border-t border-line tag-dashed-top">

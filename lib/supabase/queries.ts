@@ -292,7 +292,7 @@ export async function getAsetTetapList(jenis?: JenisKib): Promise<AsetTetap[]> {
 
   const { data, error } = await query
     .order("jenis_kib")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true });
 
   if (error) {
     console.error("Gagal mengambil data aset tetap:", error.message);

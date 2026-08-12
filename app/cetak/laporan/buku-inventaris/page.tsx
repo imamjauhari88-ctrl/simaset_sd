@@ -48,21 +48,21 @@ export default async function CetakBukuInventarisPage() {
           <table className="w-full text-[10px] border-collapse border border-ink/40">
             <thead>
               <tr className="text-center font-semibold">
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1 w-7">NO</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KODE BARANG</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">REGISTER</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">NAMA/ JENIS BARANG</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">MERK/ TYPE</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">NO.SERTIFIKAT/ NO.PABRIK/ NO.CHASIS/ NO.MESIN</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">BAHAN</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">ASAL/ CARA PEROLEHAN BARANG</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">TAHUN PEROLEHAN</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">UKURAN BARANG/ KONSTRUKSI (P,S,D)</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">SATUAN</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KEADAAN BARANG (B/KB/RB)</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">JUMLAH BARANG</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">HARGA</th>
-                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KET.</th>
+                <th className="border border-ink/40 px-1 py-1 w-7">NO</th>
+                <th className="border border-ink/40 px-1 py-1">KODE BARANG</th>
+                <th className="border border-ink/40 px-1 py-1">REGISTER</th>
+                <th className="border border-ink/40 px-1 py-1">NAMA/ JENIS BARANG</th>
+                <th className="border border-ink/40 px-1 py-1">MERK/ TYPE</th>
+                <th className="border border-ink/40 px-1 py-1">NO.SERTIFIKAT/ NO.PABRIK/ NO.CHASIS/ NO.MESIN</th>
+                <th className="border border-ink/40 px-1 py-1">BAHAN</th>
+                <th className="border border-ink/40 px-1 py-1">ASAL/ CARA PEROLEHAN BARANG</th>
+                <th className="border border-ink/40 px-1 py-1">TAHUN PEROLEHAN</th>
+                <th className="border border-ink/40 px-1 py-1">UKURAN BARANG/ KONSTRUKSI (P,S,D)</th>
+                <th className="border border-ink/40 px-1 py-1">SATUAN</th>
+                <th className="border border-ink/40 px-1 py-1">KEADAAN BARANG (B/KB/RB)</th>
+                <th className="border border-ink/40 px-1 py-1">JUMLAH BARANG</th>
+                <th className="border border-ink/40 px-1 py-1">HARGA</th>
+                <th className="border border-ink/40 px-1 py-1">KET.</th>
               </tr>
               <tr className="text-center text-ink-soft">
                 {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => (
