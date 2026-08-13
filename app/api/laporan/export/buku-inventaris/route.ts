@@ -15,11 +15,10 @@ export async function GET() {
     getSekolahSaya(),
   ]);
 
-  // Kolom & urutan persis format Buku Inventaris dinas. "Bahan" belum
-  // ada field-nya di data aset — dikosongkan aja, bukan dihapus
-  // kolomnya. Label header digabung "Grup - Anak" (mis. "Nomor - Kode
-  // Barang") karena Excel gak punya cara natural nampilin header
-  // bertingkat 3 baris kayak di cetak HTML.
+  // Kolom & urutan persis format Buku Inventaris dinas. Label header
+  // digabung "Grup - Anak" (mis. "Nomor - Kode Barang") karena Excel
+  // gak punya cara natural nampilin header bertingkat 3 baris kayak di
+  // cetak HTML.
   const buffer = buatXlsxLaporan({
     judul: "BUKU INVENTARIS",
     subJudul: [
@@ -52,7 +51,7 @@ export async function GET() {
       a.nama,
       a.merk_tipe || "",
       a.no_sertifikat_dll || "",
-      "",
+      a.bahan || "",
       labelAsalUsul(a.sumber_dana),
       a.tahun_perolehan || "",
       a.ukuran_konstruksi || "",

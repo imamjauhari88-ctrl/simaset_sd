@@ -102,7 +102,7 @@ export default async function CetakKibPage({
                   <td className="border border-ink/40 px-1 py-1 font-mono">{a.nomor_register || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.bahan || ""}</td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
                     {a.tahun_perolehan || ""}
                   </td>

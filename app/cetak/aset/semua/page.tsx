@@ -21,6 +21,8 @@ export default async function CetakSemuaLabelPage() {
             <LabelAsetCard
               key={a.id}
               kodeAset={a.kode_aset}
+              kodeBarang={a.kode_barang_dinas}
+              register={a.nomor_register}
               namaAset={a.nama}
               namaSekolah={sekolah?.nama ?? ""}
             />

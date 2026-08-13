@@ -20,6 +20,17 @@ import {
 
 const ASET_KEY = ["aset"] as const;
 
+/** Kode aset internal aplikasi — sekarang otomatis di-generate, bukan
+ * diisi manual lagi. Cuma dipakai buat isi data QR code & tracking
+ * internal (mutasi/pemeliharaan/opname), gak pernah ditampilkan di
+ * label cetak (yang ditampilkan Kode Barang/Register versi dinas).
+ * Formatnya gak perlu human-readable, cukup unik per sekolah. */
+function buatKodeAsetOtomatis(): string {
+  const waktu = Date.now().toString(36).toUpperCase();
+  const acak = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `AST-${waktu}${acak}`;
+}
+
 async function fetchDaftarAsetPaginated(
   params: Required<DaftarAsetParams>
 ): Promise<DaftarAsetResult> {
@@ -112,7 +123,12 @@ export function useSimpanAset() {
       const supabase = createClient();
       const payload = {
         ...values,
+        // Kode aset auto-generate pas nambah baru; pas edit tetap
+        // pertahankan kode lama (jangan pernah diganti-ganti, karena
+        // udah ke-encode di QR yang mungkin udah dicetak/ditempel).
+        kode_aset: id ? values.kode_aset : buatKodeAsetOtomatis(),
         merk_tipe: values.merk_tipe || null,
+        bahan: values.bahan || null,
         kode_barang_dinas: values.kode_barang_dinas || null,
         nomor_register: values.nomor_register || null,
         no_sertifikat_dll: values.no_sertifikat_dll || null,
@@ -166,6 +182,7 @@ export function useSimpanAsetMassal() {
         kategori_id: values.kategori_id,
         ruangan_id: values.ruangan_id,
         merk_tipe: values.merk_tipe || null,
+        bahan: values.bahan || null,
         kode_barang_dinas: values.kode_barang_dinas || null,
         nomor_register: values.nomor_register || null,
         no_sertifikat_dll: values.no_sertifikat_dll || null,

@@ -13,7 +13,11 @@ export default async function CetakLabelAsetPage({
   const supabase = await createClient();
 
   const [{ data: aset }, sekolah] = await Promise.all([
-    supabase.from("aset").select("kode_aset, nama").eq("id", id).single(),
+    supabase
+      .from("aset")
+      .select("kode_aset, kode_barang_dinas, nomor_register, nama")
+      .eq("id", id)
+      .single(),
     getSekolahSaya(),
   ]);
 
@@ -24,6 +28,8 @@ export default async function CetakLabelAsetPage({
       <TombolCetak />
       <LabelAsetCard
         kodeAset={aset.kode_aset}
+        kodeBarang={aset.kode_barang_dinas}
+        register={aset.nomor_register}
         namaAset={aset.nama}
         namaSekolah={sekolah?.nama ?? ""}
       />

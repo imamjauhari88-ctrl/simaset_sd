@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
     : "Semua Kategori";
 
   // Kolom & urutan persis format KIB B (Peralatan dan Mesin) dinas —
-  // No Registrasi/Ukuran/Bahan/Pabrik/Rangka/Mesin/Polisi/BPKB belum
-  // ada field-nya di data aset, dikosongkan aja bukan dihapus kolomnya,
-  // biar tetap bisa diisi manual di Excel-nya kalau memang ada.
+  // Pabrik/Rangka/Mesin/Polisi/BPKB belum ada field terpisah di data
+  // aset (dianggap 1 kolom gabungan "No.Sertifikat/dll" di form),
+  // dikosongkan aja di sini, bukan dihapus kolomnya.
   const buffer = buatXlsxLaporan({
     judul: "KARTU INVENTARIS BARANG (KIB) B — PERALATAN DAN MESIN",
     subJudul: [
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       a.nomor_register || "",
       a.merk_tipe || "",
       a.ukuran_konstruksi || "",
-      "",
+      a.bahan || "",
       a.tahun_perolehan || "",
       "",
       "",

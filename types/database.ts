@@ -92,6 +92,7 @@ export interface Aset {
   no_sertifikat_dll: string | null;
   /** Ukuran Barang/Konstruksi (P,S,D). */
   ukuran_konstruksi: string | null;
+  bahan: string | null;
   dibuat_oleh: string | null;
   created_at: string;
   updated_at: string;

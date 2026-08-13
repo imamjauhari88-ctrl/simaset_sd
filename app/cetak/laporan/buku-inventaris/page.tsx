@@ -92,7 +92,7 @@ export default async function CetakBukuInventarisPage() {
                   <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.no_sertifikat_dll || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.bahan || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{labelAsalUsul(a.sumber_dana)}</td>
                   <td className="border border-ink/40 px-1 py-1 text-center">{a.tahun_perolehan || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>

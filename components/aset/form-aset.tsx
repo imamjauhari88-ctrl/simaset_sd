@@ -8,7 +8,6 @@ import { asetSchema, asetDefaultValues, type AsetFormValues } from "@/lib/valida
 import { useSimpanAset } from "@/lib/queries/aset";
 import { hapusFotoLamaAset } from "@/lib/aset/actions";
 import { FotoAsetInput } from "@/components/aset/foto-aset-input";
-import { TombolScanQr } from "@/components/ui/tombol-scan-qr";
 import { Select } from "@/components/ui/select";
 import type { KategoriAset, Ruangan, Aset } from "@/types/database";
 
@@ -51,6 +50,7 @@ export function FormAset({
           kategori_id: asetAwal.kategori_id,
           ruangan_id: asetAwal.ruangan_id,
           merk_tipe: asetAwal.merk_tipe ?? "",
+          bahan: asetAwal.bahan ?? "",
           kode_barang_dinas: asetAwal.kode_barang_dinas ?? "",
           nomor_register: asetAwal.nomor_register ?? "",
           no_sertifikat_dll: asetAwal.no_sertifikat_dll ?? "",
@@ -116,35 +116,14 @@ export function FormAset({
         }}
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <div className="flex items-center justify-between mb-1">
-            <label className={labelClass + " mb-0"}>Kode Aset</label>
-            <TombolScanQr
-              onScan={(kode) => {
-                setValue("kode_aset", kode, { shouldValidate: true, shouldDirty: true });
-                toast.success(`Kode terbaca: ${kode}`);
-              }}
-            />
-          </div>
-          <input
-            {...register("kode_aset")}
-            placeholder="mis. ELK-0042"
-            className={`${inputClass} font-mono`}
-          />
-          {errors.kode_aset && (
-            <p className={errorClass}>{errors.kode_aset.message}</p>
-          )}
-        </div>
-        <div>
-          <label className={labelClass}>Nama Aset</label>
-          <input
-            {...register("nama")}
-            placeholder="mis. Proyektor Epson EB-X06"
-            className={inputClass}
-          />
-          {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
-        </div>
+      <div>
+        <label className={labelClass}>Nama Aset</label>
+        <input
+          {...register("nama")}
+          placeholder="mis. Proyektor Epson EB-X06"
+          className={inputClass}
+        />
+        {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -243,11 +222,15 @@ export function FormAset({
             <input {...register("no_sertifikat_dll")} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>
-              Ukuran Barang/ Konstruksi (P,S,D)
-            </label>
-            <input {...register("ukuran_konstruksi")} className={inputClass} />
+            <label className={labelClass}>Bahan</label>
+            <input {...register("bahan")} placeholder="mis. Kayu, Besi, Kertas" className={inputClass} />
           </div>
+        </div>
+        <div className="mt-4">
+          <label className={labelClass}>
+            Ukuran Barang/ Konstruksi (P,S,D)
+          </label>
+          <input {...register("ukuran_konstruksi")} className={inputClass} />
         </div>
       </div>
 

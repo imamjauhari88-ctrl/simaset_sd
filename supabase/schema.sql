@@ -1049,3 +1049,4 @@ alter table aset add column if not exists kode_barang_dinas text;
 alter table aset add column if not exists nomor_register text;
 alter table aset add column if not exists no_sertifikat_dll text; -- No.Sertifikat/No.Pabrik/No.Chasis/No.Mesin (1 kolom gabungan)
 alter table aset add column if not exists ukuran_konstruksi text; -- Ukuran Barang/Konstruksi (P,S,D)
+alter table aset add column if not exists bahan text;

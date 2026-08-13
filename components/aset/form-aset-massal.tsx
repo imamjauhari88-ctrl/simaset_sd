@@ -247,11 +247,15 @@ export function FormAsetMassal({
             <input {...register("no_sertifikat_dll")} className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>
-              Ukuran Barang/ Konstruksi (P,S,D)
-            </label>
-            <input {...register("ukuran_konstruksi")} className={inputClass} />
+            <label className={labelClass}>Bahan</label>
+            <input {...register("bahan")} placeholder="mis. Kayu, Besi, Kertas" className={inputClass} />
           </div>
+        </div>
+        <div className="mt-4">
+          <label className={labelClass}>
+            Ukuran Barang/ Konstruksi (P,S,D)
+          </label>
+          <input {...register("ukuran_konstruksi")} className={inputClass} />
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileBarChart, ArrowLeftRight, Printer, FileSpreadsheet, BookOpen, FileX2, Landmark } from "lucide-react";
+import { FileBarChart, ArrowLeftRight, Printer, FileSpreadsheet, BookOpen, FileX2 } from "lucide-react";
 import type { KategoriAset, Ruangan } from "@/types/database";
 import { daftarTahunOpsi } from "@/lib/format";
 import { LABEL_JENIS_KIB } from "@/lib/validasi/aset-tetap";
@@ -26,6 +26,7 @@ export function LaporanManager({
   const [ruanganId, setRuanganId] = useState("");
   const [tahunMutasi, setTahunMutasi] = useState("");
   const [jenisKib, setJenisKib] = useState<string>("A");
+  const [modeKategori, setModeKategori] = useState(true);
 
   function bukaCetak(url: string) {
     window.open(url, "_blank");
@@ -72,7 +73,9 @@ export function LaporanManager({
         </div>
       </div>
 
-      {/* KIB — Kartu Inventaris Barang, per kategori */}
+      {/* KIB — Kartu Inventaris Barang. Toggle nentuin dropdown-nya
+          berdasar Kategori (KIB B, per kategori barang) atau berdasar
+          Jenis KIB A/C/D/E/F (aset tetap khusus). */}
       <div className="tag-card p-5 flex flex-col gap-4">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-lg bg-pine-soft flex items-center justify-center shrink-0">
@@ -85,25 +88,54 @@ export function LaporanManager({
         </div>
 
         <div>
-          <label className="text-[12px] text-ink-soft mb-1 block">
-            Kategori Barang
+          <label className="flex items-center gap-2 mb-2 cursor-pointer select-none w-fit">
+            <input
+              type="checkbox"
+              checked={modeKategori}
+              onChange={(e) => setModeKategori(e.target.checked)}
+              className="w-4 h-4 rounded border-line accent-pine"
+            />
+            <span className="text-[12px] text-ink-soft">
+              {modeKategori
+                ? "Berdasar Kategori Barang"
+                : "Berdasar Jenis (KIB A–F)"}
+            </span>
           </label>
-          <Select
-            size="sm"
-            value={kategoriId}
-            onChange={setKategoriId}
-            options={[
-              { value: "", label: "Semua Kategori" },
-              ...kategoriList.map((k) => ({ value: k.id, label: k.nama })),
-            ]}
-          />
+
+          {modeKategori ? (
+            <Select
+              size="sm"
+              value={kategoriId}
+              onChange={setKategoriId}
+              options={[
+                { value: "", label: "Semua Kategori" },
+                ...kategoriList.map((k) => ({ value: k.id, label: k.nama })),
+              ]}
+            />
+          ) : (
+            <Select
+              size="sm"
+              value={jenisKib}
+              onChange={setJenisKib}
+              options={OPSI_JENIS_KIB}
+            />
+          )}
         </div>
+
+        {!modeKategori && (
+          <p className="text-[11px] text-ink-soft -mt-2">
+            Datanya dikelola di menu{" "}
+            <span className="font-medium text-ink">Aset Tetap Khusus</span>.
+          </p>
+        )}
 
         <div className="mt-auto flex gap-2">
           <button
             onClick={() =>
               bukaCetak(
-                `/cetak/laporan/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
+                modeKategori
+                  ? `/cetak/laporan/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
+                  : `/cetak/laporan/kib-tetap/${jenisKib}`
               )
             }
             className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
@@ -112,56 +144,11 @@ export function LaporanManager({
             Cetak
           </button>
           <a
-            href={`/api/laporan/export/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`}
-            className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
-            title="Export ke Excel"
-          >
-            <FileSpreadsheet size={15} />
-          </a>
-        </div>
-      </div>
-
-      {/* KIB A/C/D/E/F — Tanah, Gedung, Jalan, Aset Lainnya, Konstruksi */}
-      <div className="tag-card p-5 flex flex-col gap-4">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-pine-soft flex items-center justify-center shrink-0">
-            <Landmark size={18} className="text-pine" />
-          </div>
-          <div>
-            <p className="font-display font-semibold text-ink text-sm">
-              KIB A/C/D/E/F
-            </p>
-            <p className="text-[12px] text-ink-soft">
-              Tanah, Bangunan, Jalan, Aset Lainnya, Konstruksi
-            </p>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-[12px] text-ink-soft mb-1 block">Jenis</label>
-          <Select
-            size="sm"
-            value={jenisKib}
-            onChange={setJenisKib}
-            options={OPSI_JENIS_KIB}
-          />
-        </div>
-
-        <p className="text-[11px] text-ink-soft">
-          Datanya dikelola di menu{" "}
-          <span className="font-medium text-ink">Aset Tetap Khusus</span>.
-        </p>
-
-        <div className="mt-auto flex gap-2">
-          <button
-            onClick={() => bukaCetak(`/cetak/laporan/kib-tetap/${jenisKib}`)}
-            className="flex-1 inline-flex items-center justify-center gap-1.5 bg-pine text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-pine-dark transition-colors"
-          >
-            <Printer size={15} />
-            Cetak
-          </button>
-          <a
-            href={`/api/laporan/export/kib-tetap/${jenisKib}`}
+            href={
+              modeKategori
+                ? `/api/laporan/export/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
+                : `/api/laporan/export/kib-tetap/${jenisKib}`
+            }
             className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"
             title="Export ke Excel"
           >

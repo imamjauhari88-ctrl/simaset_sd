@@ -1,14 +1,16 @@
 import { z } from "zod";
 
 export const asetSchema = z.object({
-  kode_aset: z
-    .string()
-    .min(1, "Kode aset wajib diisi")
-    .max(30, "Kode aset maksimal 30 karakter"),
+  // Otomatis di-generate aplikasi pas nambah aset baru (bukan diisi
+  // manual lagi) — dipakai internal buat isi QR code doang, gak
+  // ditampilkan di label cetak. Optional di form karena user gak isi
+  // ini; mutation yang ngisi otomatis sebelum insert.
+  kode_aset: z.string().max(30).optional().or(z.literal("")),
   nama: z.string().min(1, "Nama aset wajib diisi").max(150),
   kategori_id: z.string().uuid("Pilih kategori"),
   ruangan_id: z.string().uuid("Pilih ruangan"),
   merk_tipe: z.string().max(100).optional().or(z.literal("")),
+  bahan: z.string().max(100).optional().or(z.literal("")),
   kode_barang_dinas: z.string().max(60).optional().or(z.literal("")),
   nomor_register: z.string().max(60).optional().or(z.literal("")),
   no_sertifikat_dll: z.string().max(150).optional().or(z.literal("")),
@@ -40,6 +42,7 @@ export const asetDefaultValues: AsetFormValues = {
   kategori_id: "",
   ruangan_id: "",
   merk_tipe: "",
+  bahan: "",
   kode_barang_dinas: "",
   nomor_register: "",
   no_sertifikat_dll: "",
