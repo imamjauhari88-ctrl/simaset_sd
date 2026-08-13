@@ -152,27 +152,214 @@ body {
   animation: book-open-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Transisi Login <-> Onboarding: dua elemen bernama "auth-form" &
-   "auth-brand" (lihat app/login & app/onboarding) di-morph browser pakai
-   View Transitions API.
-   Sengaja CUMA atur durasi & easing-nya, gak override cross-fade
-   konten (::view-transition-old/new) sama sekali — percobaan sebelumnya
-   nge-override `mix-blend-mode` browser jadi "normal" buat bikin
-   animasi custom, tapi itu malah bikin transisinya kerasa "kotor"/gak
-   bersih. Browser sendiri default-nya pakai `plus-lighter` khusus buat
-   nyegah efek numpuk pas dua lapisan (lama+baru) transparan bebarengan
-   di tengah animasi — jangan diutak-atik, biarin bawaan Chrome yang
-   emang udah dioptimasi buat ini. Yang di-custom cuma disamain
-   durasi/easing-nya biar geser posisi & cross-fade konten selesai
-   bebarengan (gak ada yang "nunggu" bagian lain kelar). */
-::view-transition-group(auth-form),
-::view-transition-group(auth-brand),
-::view-transition-old(auth-form),
-::view-transition-new(auth-form),
-::view-transition-old(auth-brand),
-::view-transition-new(auth-brand) {
-  animation-duration: 420ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+/* ============================================================
+   Kartu Login/Onboarding bergaya "sliding toggle" — satu container,
+   dua form (login & onboarding/register) ditumpuk & digeser lewat
+   class .active (bukan navigasi/View Transition antar halaman lagi).
+   Port LANGSUNG dari mekanisme CSS referensi kartu sliding
+   login/register yang dikasih user (form-box + toggle-box kapsul +
+   toggle-panel kiri/kanan, timing 0.6s/1.2s/1.8s persis) — cuma warna
+   (gradient pine, bukan biru) & teks yang disesuaikan ke SIMASET SD.
+   Komponennya: components/auth/auth-card.tsx.
+   ============================================================ */
+.auth-card {
+  position: relative;
+  width: 100%;
+  max-width: 56rem;
+  height: 560px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 28px;
+  box-shadow: 0 20px 50px -20px rgba(18, 51, 45, 0.35);
+  overflow: hidden;
+}
+
+/* Kedua form (login & onboarding) ditumpuk PERSIS di posisi yang sama
+   (right:0, separuh lebar) — makanya pas .active, form onboarding yang
+   belakangan di DOM otomatis "nutupin" form login di baliknya begitu
+   visibility-nya jadi visible, bukan lewat z-index manual. */
+.auth-form-box {
+  position: absolute;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow-y: auto;
+  z-index: 1;
+  background: var(--color-surface);
+  transition:
+    right 0.6s ease-in-out 1.2s,
+    visibility 0s 1s;
+}
+
+.auth-card.active .auth-form-box {
+  right: 50%;
+}
+
+.auth-form-box-onboarding {
+  visibility: hidden;
+}
+.auth-card.active .auth-form-box-onboarding {
+  visibility: visible;
+}
+
+/* Kapsul warna yang "menyapu" seluruh kartu pas toggle — persis
+   toggle-box::before referensi: elemen raksasa (300% lebar) yang
+   awalnya nongkrong jauh di luar kiri, geser ke kanan pas .active.
+   Durasi 1.8s (paling lama di antara semua) itu KUNCI efeknya: form
+   & teks panel baru mulai bergerak/nongol belakangan (delay 0.6s/1.2s
+   di bawah), jadi kapsul ini yang keliatan nutupin dulu sebelum
+   konten baru kebuka — sama kayak yang diminta user. */
+.auth-toggle-box {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.auth-toggle-box::before {
+  content: "";
+  position: absolute;
+  left: -250%;
+  width: 300%;
+  height: 100%;
+  background: linear-gradient(
+    135deg,
+    var(--color-pine-dark),
+    var(--color-pine)
+  );
+  border-radius: 150px;
+  transition: 1.8s ease-in-out;
+}
+.auth-card.active .auth-toggle-box::before {
+  left: 50%;
+}
+
+.auth-toggle-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: linear-gradient(
+      to right,
+      white 1px,
+      transparent 1px
+    ),
+    linear-gradient(to bottom, white 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.auth-toggle-panel {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 36px;
+  color: #fff;
+  pointer-events: auto;
+  transition: 0.6s ease-in-out;
+}
+
+.auth-toggle-left {
+  left: 0;
+  transition-delay: 1.2s;
+}
+.auth-card.active .auth-toggle-left {
+  left: -50%;
+  transition-delay: 0.6s;
+}
+
+.auth-toggle-right {
+  right: -50%;
+  transition-delay: 0.6s;
+}
+.auth-card.active .auth-toggle-right {
+  right: 0;
+  transition-delay: 1.2s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-form-box,
+  .auth-toggle-box::before,
+  .auth-toggle-panel {
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+}
+
+/* Mobile: numpuk vertikal (form di bawah, kapsul+panel di atas),
+   port dari @media (max-width:650px) referensi — proporsi disesuaikan
+   ke tinggi kartu kita (560px tetap, bukan 100vh, biar gak nabrak
+   Footer di bawahnya). */
+@media (max-width: 700px) {
+  .auth-card {
+    height: 640px;
+  }
+  .auth-form-box {
+    right: 0;
+    bottom: 0;
+    top: auto;
+    width: 100%;
+    height: 65%;
+  }
+  .auth-card.active .auth-form-box {
+    right: 0;
+    bottom: 32%;
+  }
+  .auth-toggle-box::before {
+    left: 0;
+    top: -270%;
+    width: 100%;
+    height: 300%;
+    border-radius: 20vw;
+  }
+  .auth-card.active .auth-toggle-box::before {
+    left: 0;
+    top: 68%;
+  }
+  .auth-toggle-panel {
+    width: 100%;
+    height: 32%;
+    padding: 0 24px;
+  }
+  .auth-toggle-left {
+    left: 0;
+    top: 0;
+  }
+  .auth-card.active .auth-toggle-left {
+    left: 0;
+    top: -32%;
+  }
+  .auth-toggle-right {
+    right: 0;
+    bottom: -32%;
+  }
+  .auth-card.active .auth-toggle-right {
+    right: 0;
+    bottom: 0;
+  }
+}
+
+/* Bentuk "kapsul" di panel warna (PanelBrand) — dipakai halaman auth
+   yang BUKAN sliding-toggle (Lupa Sandi/Reset Sandi/Undangan, tetap
+   layout 2-kolom statis) — niru siluet melengkung toggle-box::before
+   di atas biar identitas visualnya senada, tapi statis (gak nge-toggle). */
+@media (min-width: 768px) {
+  .panel-capsule-right {
+    border-top-left-radius: 100% 55%;
+    border-bottom-left-radius: 100% 55%;
+  }
+  .panel-capsule-left {
+    border-top-right-radius: 100% 55%;
+    border-bottom-right-radius: 100% 55%;
+  }
 }
 
 /* Biar klik/scroll di halaman gak keblokir overlay transisi yang lagi jalan. */

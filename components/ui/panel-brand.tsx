@@ -13,6 +13,7 @@ export function PanelBrand({
   linkHref,
   linkLabel,
   icon: Icon = Boxes,
+  side = "right",
 }: {
   title: string;
   description: string;
@@ -22,9 +23,20 @@ export function PanelBrand({
   linkHref?: string;
   linkLabel?: string;
   icon?: LucideIcon;
+  /** Posisi panel di dalam kartu 2-kolom (desktop) — nentuin sisi mana
+   * yang dilengkungin gede ala kapsul `toggle-box` di referensi sliding
+   * login/register (bukan garis lurus biasa). "right" = panel di kanan,
+   * form di kiri (kasus Login/Lupa Sandi/Reset Sandi/Undangan) —
+   * lengkungnya di sisi kiri panel (yang nempel ke form). "left" =
+   * kebalikannya (kasus Onboarding, panel ketuker ke kiri). */
+  side?: "left" | "right";
 }) {
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-[var(--color-pine-dark)] via-[var(--color-pine)] to-[var(--color-pine-dark)] px-8 py-10 flex flex-col items-center justify-center text-center min-h-[220px] h-full">
+    <div
+      className={`relative overflow-hidden bg-gradient-to-br from-[var(--color-pine-dark)] via-[var(--color-pine)] to-[var(--color-pine-dark)] px-8 py-10 flex flex-col items-center justify-center text-center min-h-[220px] h-full ${
+        side === "right" ? "panel-capsule-right" : "panel-capsule-left"
+      }`}
+    >
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.08]"
         style={{
