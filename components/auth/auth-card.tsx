@@ -62,107 +62,126 @@ export function AuthCard({
           Onboarding begitu class .active bikin form onboarding jadi
           visible (menang krn belakangan di DOM, posisi sama persis). */}
       <div className="auth-form-box">
-        <div className="flex items-center gap-3 mb-8">
-          <LogoMark size={28} />
-          <div>
-            <p className="font-display font-semibold text-ink">SIMASET SD</p>
-            <p className="text-[11px] text-ink-soft">
-              Inventaris Aset Sekolah
-            </p>
-          </div>
-        </div>
-
-        <h1 className="font-display text-xl font-semibold text-ink mb-1">
-          Masuk
-        </h1>
-        <p className="text-[13px] text-ink-soft mb-6">
-          Masuk pakai email & kata sandi akunmu.
-        </p>
-
-        <form
-          action={loginFormAction}
-          className="space-y-4"
-          aria-busy={loginPending}
-        >
-          {loginState?.error && (
-            <p
-              role="alert"
-              aria-live="assertive"
-              className="bg-brick-soft text-brick text-[13px] rounded-lg px-3 py-2"
-            >
-              {loginState.error}
-            </p>
-          )}
-          <div>
-            <label className="text-[13px] text-ink-soft block mb-1">
-              Email
-            </label>
-            <AuthInput
-              icon={Mail}
-              name="email"
-              type="email"
-              required
-              autoComplete="email"
-              disabled={loginPending}
-              placeholder="admin@sekolah.sch.id"
-            />
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[13px] text-ink-soft">
-                Kata Sandi
-              </label>
-              <a
-                href="/lupa-sandi"
-                className="text-[12px] text-pine hover:underline"
-              >
-                Lupa kata sandi?
-              </a>
+        <div className="auth-form-box-inner">
+          <div className="flex items-center gap-3 mb-8">
+            <LogoMark size={28} />
+            <div>
+              <p className="font-display font-semibold text-ink">
+                SIMASET SD
+              </p>
+              <p className="text-[11px] text-ink-soft">
+                Inventaris Aset Sekolah
+              </p>
             </div>
-            <AuthInput
-              icon={Lock}
-              name="password"
-              type="password"
-              required
-              autoComplete="current-password"
-              disabled={loginPending}
-              placeholder="••••••••"
-            />
           </div>
-          <button
-            type="submit"
-            disabled={loginPending}
-            className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-3 rounded-xl hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-          >
-            {loginPending && <Loader2 size={16} className="animate-spin" />}
-            {loginPending ? "Memproses..." : "Masuk"}
-          </button>
-        </form>
 
-        <p className="text-[12px] text-ink-soft mt-5">
-          Diundang admin sekolahmu? Pakai link undangan yang dikirim ke
-          emailmu.
-        </p>
+          <h1 className="font-display text-xl font-semibold text-ink mb-1">
+            Masuk
+          </h1>
+          <p className="text-[13px] text-ink-soft mb-6">
+            Masuk pakai email & kata sandi akunmu.
+          </p>
+
+          <form
+            action={loginFormAction}
+            className="space-y-4"
+            aria-busy={loginPending}
+          >
+            {loginState?.error && (
+              <p
+                role="alert"
+                aria-live="assertive"
+                className="bg-brick-soft text-brick text-[13px] rounded-lg px-3 py-2"
+              >
+                {loginState.error}
+              </p>
+            )}
+            <div>
+              <label className="text-[13px] text-ink-soft block mb-1">
+                Email
+              </label>
+              <AuthInput
+                icon={Mail}
+                name="email"
+                type="email"
+                required
+                autoComplete="email"
+                disabled={loginPending}
+                placeholder="admin@sekolah.sch.id"
+              />
+            </div>
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-[13px] text-ink-soft">
+                  Kata Sandi
+                </label>
+                <a
+                  href="/lupa-sandi"
+                  className="text-[12px] text-pine hover:underline"
+                >
+                  Lupa kata sandi?
+                </a>
+              </div>
+              <AuthInput
+                icon={Lock}
+                name="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                disabled={loginPending}
+                placeholder="••••••••"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loginPending}
+              className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-3 rounded-xl hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            >
+              {loginPending && (
+                <Loader2 size={16} className="animate-spin" />
+              )}
+              {loginPending ? "Memproses..." : "Masuk"}
+            </button>
+          </form>
+
+          <p className="text-[12px] text-ink-soft mt-5">
+            Diundang admin sekolahmu? Pakai link undangan yang dikirim ke
+            emailmu.
+          </p>
+        </div>
       </div>
 
       {/* Form Onboarding — hidden (visibility) sampai .active. */}
       <div className="auth-form-box auth-form-box-onboarding">
-        <p className="font-display font-semibold text-ink text-lg">
-          Daftarkan Sekolah
-        </p>
-        <p className="text-[13px] text-ink-soft mt-1 mb-6">
-          {sudahLogin
-            ? "Belum ada sekolah yang terhubung ke akunmu. Isi data di bawah untuk mulai — kamu akan jadi admin pertama."
-            : "Bikin akun sekaligus daftarkan sekolahmu. Kamu akan jadi admin pertama."}
-        </p>
-        <OnboardingForm sudahLogin={sudahLogin} />
+        <div className="auth-form-box-inner">
+          <div className="flex items-center gap-3 mb-6">
+            <LogoMark size={28} />
+            <div>
+              <p className="font-display font-semibold text-ink">
+                SIMASET SD
+              </p>
+              <p className="text-[11px] text-ink-soft">
+                Inventaris Aset Sekolah
+              </p>
+            </div>
+          </div>
+          <h1 className="font-display text-xl font-semibold text-ink mb-1">
+            Daftarkan Sekolah
+          </h1>
+          <p className="text-[13px] text-ink-soft mb-6">
+            {sudahLogin
+              ? "Belum ada sekolah yang terhubung ke akunmu. Isi data di bawah untuk mulai — kamu akan jadi admin pertama."
+              : "Bikin akun sekaligus daftarkan sekolahmu. Kamu akan jadi admin pertama."}
+          </p>
+          <OnboardingForm sudahLogin={sudahLogin} />
+        </div>
       </div>
 
       {/* Kapsul warna + teks ajakan, geser bareng class .active. */}
       <div className="auth-toggle-box">
         <div className="auth-toggle-panel auth-toggle-left">
           <h2 className="font-display text-2xl font-bold text-white">
-            Halo, Selamat datang!
+            Halo, Selamat Datang!
           </h2>
           <p className="mt-2 max-w-xs text-sm text-white/75">
             Belum punya akun admin sekolah? Registrasi dulu sekolahmu di

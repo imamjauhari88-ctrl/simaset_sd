@@ -177,22 +177,50 @@ body {
 /* Kedua form (login & onboarding) ditumpuk PERSIS di posisi yang sama
    (right:0, separuh lebar) — makanya pas .active, form onboarding yang
    belakangan di DOM otomatis "nutupin" form login di baliknya begitu
-   visibility-nya jadi visible, bukan lewat z-index manual. */
+   visibility-nya jadi visible, bukan lewat z-index manual.
+
+   Scroll & padding dipisah jadi 2 layer: .auth-form-box (posisi/lebar
+   50% — ini yang jadi patokan garis batas ke panel hijau, JANGAN kasih
+   overflow di sini) & .auth-form-box-inner (yang beneran scroll +
+   nampung padding/konten). Scrollbar bawaan browser selalu nempel di
+   tepi PALING LUAR elemen yang overflow-y:auto — kalau ditaruh di
+   .auth-form-box, tepi terluarnya PERSIS di garis batas warna ke panel
+   (yang lagi melengkung pula), jadi scrollbar-nya keliatan numpuk/nyusup
+   ke area hijau. Makanya inner-nya sengaja dibikin dikit lebih sempit
+   (calc(100% - 10px)) — sisa 10px itu jadi "gutter" polos warna surface
+   di antara scrollbar & garis batas, biar keliatan rapi punya jaraknya
+   sendiri, gak dempet ke lengkungan panel. */
 .auth-form-box {
   position: absolute;
   right: 0;
   width: 50%;
   height: 100%;
-  padding: 40px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow-y: auto;
   z-index: 1;
   background: var(--color-surface);
   transition:
     right 0.6s ease-in-out 1.2s,
     visibility 0s 1s;
+}
+
+.auth-form-box-inner {
+  width: calc(100% - 10px);
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 48px 40px;
+}
+
+/* Form onboarding jauh lebih panjang dari tinggi kartu → mesti scroll.
+   justify-content:center gak cocok buat konten yang discroll (bikin
+   bagian atas ke-clip), jadi mulai dari atas aja + kasih jarak
+   atas/bawah ekstra biar gak mepet ke tepi kartu pas discroll (header
+   di paling atas, field terakhir dikasih napas di paling bawah). */
+.auth-form-box-onboarding .auth-form-box-inner {
+  justify-content: flex-start;
+  padding-top: 44px;
+  padding-bottom: 64px;
 }
 
 .auth-card.active .auth-form-box {
