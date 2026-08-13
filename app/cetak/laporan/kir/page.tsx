@@ -93,16 +93,20 @@ export default async function CetakKirPage({
               {daftarAset.map((a, i) => (
                 <tr key={a.id} className="break-inside-avoid">
                   <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
-                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.kode_aset}</td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">
+                    {a.kode_barang_dinas || a.kode_aset}
+                  </td>
                   <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.no_sertifikat_dll || ""}</td>
+                  <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>
                   <td className="border border-ink/40 px-1 py-1"></td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
                     {a.tahun_perolehan || ""}
                   </td>
-                  <td className="border border-ink/40 px-1 py-1 text-center">{a.stok}</td>
+                  <td className="border border-ink/40 px-1 py-1 text-center">
+                    {a.nomor_register || a.stok}
+                  </td>
                   <td className="border border-ink/40 px-1 py-1 text-right">
                     {a.harga_perolehan ? formatAngka(a.harga_perolehan) : ""}
                   </td>

@@ -9,6 +9,10 @@ export const asetSchema = z.object({
   kategori_id: z.string().uuid("Pilih kategori"),
   ruangan_id: z.string().uuid("Pilih ruangan"),
   merk_tipe: z.string().max(100).optional().or(z.literal("")),
+  kode_barang_dinas: z.string().max(60).optional().or(z.literal("")),
+  nomor_register: z.string().max(60).optional().or(z.literal("")),
+  no_sertifikat_dll: z.string().max(150).optional().or(z.literal("")),
+  ukuran_konstruksi: z.string().max(100).optional().or(z.literal("")),
   tahun_perolehan: z.coerce
     .number({ invalid_type_error: "Tahun harus berupa angka" })
     .int()
@@ -36,6 +40,10 @@ export const asetDefaultValues: AsetFormValues = {
   kategori_id: "",
   ruangan_id: "",
   merk_tipe: "",
+  kode_barang_dinas: "",
+  nomor_register: "",
+  no_sertifikat_dll: "",
+  ukuran_konstruksi: "",
   tahun_perolehan: new Date().getFullYear(),
   sumber_dana: "bos",
   harga_perolehan: 0,

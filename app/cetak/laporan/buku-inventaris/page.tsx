@@ -5,10 +5,14 @@ import { TandaTangan } from "@/app/cetak/tanda-tangan";
 import { formatAngka, labelAsalUsul } from "@/lib/format";
 
 /** Rekap SEMUA aset lintas kategori jadi satu daftar — beda dari KIB
- * (per kategori A-F) & KIR (per ruangan). Kolom No.Sertifikat/No.Pabrik/
- * No.Chasis/No.Mesin & Ukuran Barang/Konstruksi belum ada field-nya di
- * data aset (khusus tanah/kendaraan/bangunan, ditangani terpisah lewat
- * KIB A/C/D nanti) — dikosongkan dulu, bukan dihapus kolomnya. */
+ * (per kategori A-F) & KIR (per ruangan). Headernya bertingkat 3 baris
+ * persis blangko dinas: grup "NOMOR" (Kode Barang/Register), grup
+ * "SPESIFIKASI BARANG" (Nama/Merk/No.Sertifikat.../Bahan), dan grup
+ * "JUMLAH" (Barang/Harga) — bukan header rata 1 baris.
+ *
+ * "Kode Barang" pakai kode resmi dinas (`kode_barang_dinas`) kalau
+ * sudah diisi, jatuh balik ke kode internal aplikasi (`kode_aset`)
+ * kalau sekolah belum sempat isi kode dinasnya. */
 export default async function CetakBukuInventarisPage() {
   const [daftarAset, sekolah] = await Promise.all([
     getLaporanAsetPerKategori(undefined),
@@ -48,21 +52,26 @@ export default async function CetakBukuInventarisPage() {
           <table className="w-full text-[10px] border-collapse border border-ink/40">
             <thead>
               <tr className="text-center font-semibold">
-                <th className="border border-ink/40 px-1 py-1 w-7">NO</th>
-                <th className="border border-ink/40 px-1 py-1">KODE BARANG</th>
-                <th className="border border-ink/40 px-1 py-1">REGISTER</th>
-                <th className="border border-ink/40 px-1 py-1">NAMA/ JENIS BARANG</th>
-                <th className="border border-ink/40 px-1 py-1">MERK/ TYPE</th>
-                <th className="border border-ink/40 px-1 py-1">NO.SERTIFIKAT/ NO.PABRIK/ NO.CHASIS/ NO.MESIN</th>
-                <th className="border border-ink/40 px-1 py-1">BAHAN</th>
-                <th className="border border-ink/40 px-1 py-1">ASAL/ CARA PEROLEHAN BARANG</th>
-                <th className="border border-ink/40 px-1 py-1">TAHUN PEROLEHAN</th>
-                <th className="border border-ink/40 px-1 py-1">UKURAN BARANG/ KONSTRUKSI (P,S,D)</th>
-                <th className="border border-ink/40 px-1 py-1">SATUAN</th>
-                <th className="border border-ink/40 px-1 py-1">KEADAAN BARANG (B/KB/RB)</th>
-                <th className="border border-ink/40 px-1 py-1">JUMLAH BARANG</th>
-                <th className="border border-ink/40 px-1 py-1">HARGA</th>
-                <th className="border border-ink/40 px-1 py-1">KET.</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1 w-7">NO</th>
+                <th colSpan={2} className="border border-ink/40 px-1 py-1">NOMOR</th>
+                <th colSpan={4} className="border border-ink/40 px-1 py-1">SPESIFIKASI BARANG</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">ASAL/ CARA PEROLEHAN BARANG</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">TAHUN PEROLEHAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">UKURAN BARANG/ KONSTRUKSI (P,S,D)</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">SATUAN</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KEADAAN BARANG (B/KB/RB)</th>
+                <th colSpan={2} className="border border-ink/40 px-1 py-1">JUMLAH</th>
+                <th rowSpan={2} className="border border-ink/40 px-1 py-1">KET.</th>
+              </tr>
+              <tr className="text-center font-semibold">
+                <th className="border border-ink/40 px-1 py-1">Kode Barang</th>
+                <th className="border border-ink/40 px-1 py-1">Register</th>
+                <th className="border border-ink/40 px-1 py-1">Nama/ Jenis Barang</th>
+                <th className="border border-ink/40 px-1 py-1">Merk/ Type</th>
+                <th className="border border-ink/40 px-1 py-1">No.Sertifikat/ No.Pabrik/ No.Chasis/ No.Mesin</th>
+                <th className="border border-ink/40 px-1 py-1">Bahan</th>
+                <th className="border border-ink/40 px-1 py-1">Barang</th>
+                <th className="border border-ink/40 px-1 py-1">Harga</th>
               </tr>
               <tr className="text-center text-ink-soft">
                 {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => (
@@ -76,15 +85,17 @@ export default async function CetakBukuInventarisPage() {
               {daftarAset.map((a, i) => (
                 <tr key={a.id} className="break-inside-avoid">
                   <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
-                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.kode_aset}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">
+                    {a.kode_barang_dinas || a.kode_aset}
+                  </td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.nomor_register || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.no_sertifikat_dll || ""}</td>
                   <td className="border border-ink/40 px-1 py-1"></td>
                   <td className="border border-ink/40 px-1 py-1">{labelAsalUsul(a.sumber_dana)}</td>
                   <td className="border border-ink/40 px-1 py-1 text-center">{a.tahun_perolehan || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>
                   <td className="border border-ink/40 px-1 py-1 text-center">bh</td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
                     {a.kondisi === "baik" ? "B" : a.kondisi === "rusak_ringan" ? "KB" : "RB"}

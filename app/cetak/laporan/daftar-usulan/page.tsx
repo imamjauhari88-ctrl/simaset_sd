@@ -66,7 +66,7 @@ export default async function CetakDaftarUsulanPage() {
               <tr key={a.id} className="break-inside-avoid">
                 <td className="border border-ink/40 px-1.5 py-1.5 text-center">{i + 1}</td>
                 <td className="border border-ink/40 px-1.5 py-1.5">{a.nama}</td>
-                <td className="border border-ink/40 px-1.5 py-1.5 font-mono">{a.kode_aset}</td>
+                <td className="border border-ink/40 px-1.5 py-1.5 font-mono">{a.kode_barang_dinas || a.kode_aset}</td>
                 <td className="border border-ink/40 px-1.5 py-1.5 font-mono">
                   {sekolah?.kode_lokasi || "—"}
                 </td>

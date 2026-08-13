@@ -1037,3 +1037,15 @@ drop trigger if exists trg_aset_tetap_updated_at on aset_tetap;
 create trigger trg_aset_tetap_updated_at
   before update on aset_tetap
   for each row execute function set_updated_at();
+
+-- ============================================================
+-- Field tambahan buat laporan format dinas (Buku Inventaris & KIB B) —
+-- "Kode Barang" resmi itu kode klasifikasi dari dinas (beda sama
+-- `kode_aset` yang internal aplikasi buat tracking/QR), "Register"
+-- nomor urut per unit barang. Semua nullable/manual diisi admin/guru
+-- kalau tahu kodenya, gak wajib.
+-- ============================================================
+alter table aset add column if not exists kode_barang_dinas text;
+alter table aset add column if not exists nomor_register text;
+alter table aset add column if not exists no_sertifikat_dll text; -- No.Sertifikat/No.Pabrik/No.Chasis/No.Mesin (1 kolom gabungan)
+alter table aset add column if not exists ukuran_konstruksi text; -- Ukuran Barang/Konstruksi (P,S,D)

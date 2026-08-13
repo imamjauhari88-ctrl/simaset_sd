@@ -81,6 +81,17 @@ export interface Aset {
   foto_url: string | null;
   foto_public_id: string | null;
   catatan: string | null;
+  /** Kode klasifikasi resmi dari dinas (beda sama `kode_aset` yang
+   * internal aplikasi buat tracking/QR) — dipakai di kolom "Kode
+   * Barang" laporan format dinas. */
+  kode_barang_dinas: string | null;
+  /** Nomor urut per unit barang — dipakai di kolom "Register". */
+  nomor_register: string | null;
+  /** No.Sertifikat/No.Pabrik/No.Chasis/No.Mesin — 1 kolom gabungan
+   * sesuai format Buku Inventaris dinas. */
+  no_sertifikat_dll: string | null;
+  /** Ukuran Barang/Konstruksi (P,S,D). */
+  ukuran_konstruksi: string | null;
   dibuat_oleh: string | null;
   created_at: string;
   updated_at: string;

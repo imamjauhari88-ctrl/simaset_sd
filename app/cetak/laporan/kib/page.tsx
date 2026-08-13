@@ -95,11 +95,13 @@ export default async function CetakKibPage({
               {daftarAset.map((a, i) => (
                 <tr key={a.id} className="break-inside-avoid">
                   <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
-                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.kode_aset}</td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">
+                    {a.kode_barang_dinas || a.kode_aset}
+                  </td>
                   <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.nomor_register || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>
                   <td className="border border-ink/40 px-1 py-1"></td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
                     {a.tahun_perolehan || ""}

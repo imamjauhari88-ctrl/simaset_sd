@@ -51,6 +51,10 @@ export function FormAset({
           kategori_id: asetAwal.kategori_id,
           ruangan_id: asetAwal.ruangan_id,
           merk_tipe: asetAwal.merk_tipe ?? "",
+          kode_barang_dinas: asetAwal.kode_barang_dinas ?? "",
+          nomor_register: asetAwal.nomor_register ?? "",
+          no_sertifikat_dll: asetAwal.no_sertifikat_dll ?? "",
+          ukuran_konstruksi: asetAwal.ukuran_konstruksi ?? "",
           tahun_perolehan: asetAwal.tahun_perolehan,
           sumber_dana: asetAwal.sumber_dana,
           harga_perolehan: asetAwal.harga_perolehan,
@@ -202,6 +206,48 @@ export function FormAset({
           {errors.harga_perolehan && (
             <p className={errorClass}>{errors.harga_perolehan.message}</p>
           )}
+        </div>
+      </div>
+
+      <div>
+        <p className="text-[12px] font-medium text-ink-soft mb-1 uppercase tracking-wide">
+          Data untuk Laporan Dinas
+        </p>
+        <p className="text-[12px] text-ink-soft mb-3">
+          Opsional — isi kalau tahu kode resminya. Dipakai di laporan Buku
+          Inventaris & KIB.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Kode Barang (Dinas)</label>
+            <input
+              {...register("kode_barang_dinas")}
+              placeholder="mis. 02.06.02.01.01"
+              className={`${inputClass} font-mono`}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Register</label>
+            <input
+              {...register("nomor_register")}
+              placeholder="mis. 0001 atau 0001-0003"
+              className={`${inputClass} font-mono`}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label className={labelClass}>
+              No. Sertifikat/ Pabrik/ Chasis/ Mesin
+            </label>
+            <input {...register("no_sertifikat_dll")} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Ukuran Barang/ Konstruksi (P,S,D)
+            </label>
+            <input {...register("ukuran_konstruksi")} className={inputClass} />
+          </div>
         </div>
       </div>
 

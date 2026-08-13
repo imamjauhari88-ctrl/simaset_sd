@@ -212,6 +212,49 @@ export function FormAsetMassal({
         </div>
       </div>
 
+      <div>
+        <p className="text-[12px] font-medium text-ink-soft mb-1 uppercase tracking-wide">
+          Data untuk Laporan Dinas
+        </p>
+        <p className="text-[12px] text-ink-soft mb-3">
+          Opsional, berlaku sama buat semua unit yang dibuat di batch ini.
+          Mis. 90 kursi siswa: Kode Barang sama buat semua, Register diisi
+          satu rentang <span className="font-mono">0001-0090</span>.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelClass}>Kode Barang (Dinas)</label>
+            <input
+              {...register("kode_barang_dinas")}
+              placeholder="mis. 02.06.02.01.04"
+              className={`${inputClass} font-mono`}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Register (rentang)</label>
+            <input
+              {...register("nomor_register")}
+              placeholder="mis. 0001-0090"
+              className={`${inputClass} font-mono`}
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label className={labelClass}>
+              No. Sertifikat/ Pabrik/ Chasis/ Mesin
+            </label>
+            <input {...register("no_sertifikat_dll")} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>
+              Ukuran Barang/ Konstruksi (P,S,D)
+            </label>
+            <input {...register("ukuran_konstruksi")} className={inputClass} />
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Sumber Dana</label>

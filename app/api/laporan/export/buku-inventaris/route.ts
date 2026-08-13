@@ -15,10 +15,11 @@ export async function GET() {
     getSekolahSaya(),
   ]);
 
-  // Kolom & urutan persis format Buku Inventaris dinas — No Sertifikat/
-  // Pabrik/Chasis/Mesin & Ukuran Barang/Konstruksi belum ada field-nya
-  // di data aset (khusus tanah/kendaraan/bangunan), dikosongkan aja
-  // bukan dihapus kolomnya.
+  // Kolom & urutan persis format Buku Inventaris dinas. "Bahan" belum
+  // ada field-nya di data aset — dikosongkan aja, bukan dihapus
+  // kolomnya. Label header digabung "Grup - Anak" (mis. "Nomor - Kode
+  // Barang") karena Excel gak punya cara natural nampilin header
+  // bertingkat 3 baris kayak di cetak HTML.
   const buffer = buatXlsxLaporan({
     judul: "BUKU INVENTARIS",
     subJudul: [
@@ -29,39 +30,39 @@ export async function GET() {
     ],
     header: [
       "No",
-      "Kode Barang",
-      "Register",
-      "Nama/ Jenis Barang",
-      "Merk/ Type",
-      "No.Sertifikat/ No.Pabrik/ No.Chasis/ No.Mesin",
-      "Bahan",
+      "Nomor - Kode Barang",
+      "Nomor - Register",
+      "Spesifikasi - Nama/ Jenis Barang",
+      "Spesifikasi - Merk/ Type",
+      "Spesifikasi - No.Sertifikat/ No.Pabrik/ No.Chasis/ No.Mesin",
+      "Spesifikasi - Bahan",
       "Asal/ Cara Perolehan Barang",
       "Tahun Perolehan",
       "Ukuran Barang/ Konstruksi (P,S,D)",
       "Satuan",
       "Keadaan Barang (B/KB/RB)",
-      "Jumlah Barang",
-      "Harga",
+      "Jumlah - Barang",
+      "Jumlah - Harga",
       "Ket.",
     ],
     baris: daftarAset.map((a, i) => [
       i + 1,
-      a.kode_aset,
-      "",
+      a.kode_barang_dinas || a.kode_aset,
+      a.nomor_register || "",
       a.nama,
       a.merk_tipe || "",
-      "",
+      a.no_sertifikat_dll || "",
       "",
       labelAsalUsul(a.sumber_dana),
       a.tahun_perolehan || "",
-      "",
+      a.ukuran_konstruksi || "",
       "bh",
       a.kondisi === "baik" ? "B" : a.kondisi === "rusak_ringan" ? "KB" : "RB",
       a.stok,
       a.harga_perolehan ?? 0,
       a.catatan || "",
     ]),
-    lebarKolom: [4, 14, 10, 26, 14, 20, 10, 18, 10, 16, 8, 10, 10, 16, 20],
+    lebarKolom: [4, 14, 10, 26, 14, 24, 10, 18, 10, 18, 8, 12, 10, 16, 20],
   });
 
   return new NextResponse(new Uint8Array(buffer), {
