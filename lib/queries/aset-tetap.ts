@@ -73,6 +73,7 @@ export function useSimpanAsetTetap() {
       const payload = {
         jenis_kib: values.jenis_kib,
         kode_barang: values.kode_barang || null,
+        nomor_register: values.nomor_register || null,
         nama: values.nama,
         tahun: values.tahun === "" ? null : Number(values.tahun),
         harga: values.harga === "" ? 0 : Number(values.harga),

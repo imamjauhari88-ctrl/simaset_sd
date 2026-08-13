@@ -231,6 +231,7 @@ export interface AsetTetap {
   sekolah_id: string;
   jenis_kib: JenisKib;
   kode_barang: string | null;
+  nomor_register: string | null;
   nama: string;
   tahun: number | null;
   harga: number;

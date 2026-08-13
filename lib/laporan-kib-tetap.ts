@@ -76,7 +76,7 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
   A: [
     { label: "No", ambil: (_a, i) => i + 1, lebar: 4 },
     { label: "Kode Barang", ambil: (a) => a.kode_barang || "", lebar: 14 },
-    { label: "Register", ambil: () => "", lebar: 10 },
+    { label: "Register", ambil: (a) => a.nomor_register || "", lebar: 10 },
     { label: "Jenis Barang/ Nama Barang", ambil: (a) => a.nama, lebar: 24 },
     { label: "Luas (M2)", ambil: (a) => a.detail.luas_m2 || "", lebar: 10 },
     { label: "Tahun Pengadaan", ambil: (a) => a.tahun || "", lebar: 10 },
@@ -105,7 +105,7 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
       label: "Nomor",
       anak: [
         { label: "Kode Barang", ambil: (a) => a.kode_barang || "", lebar: 14 },
-        { label: "Register", ambil: () => "", lebar: 8 },
+        { label: "Register", ambil: (a) => a.nomor_register || "", lebar: 8 },
       ],
     },
     { label: "Kondisi Bangunan", ambil: (a) => kondisiLabel(a.detail.kondisi), lebar: 10 },
@@ -143,7 +143,7 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
       label: "Nomor",
       anak: [
         { label: "Kode Barang", ambil: (a) => a.kode_barang || "", lebar: 14 },
-        { label: "Register", ambil: () => "", lebar: 8 },
+        { label: "Register", ambil: (a) => a.nomor_register || "", lebar: 8 },
       ],
     },
     { label: "Konstruksi", ambil: (a) => a.detail.konstruksi || "", lebar: 12 },
@@ -173,7 +173,7 @@ export const KOLOM_KIB: Record<JenisKib, KolomDef[]> = {
       label: "Nomor",
       anak: [
         { label: "Kode Barang", ambil: (a) => a.kode_barang || "", lebar: 14 },
-        { label: "Register", ambil: () => "", lebar: 8 },
+        { label: "Register", ambil: (a) => a.nomor_register || "", lebar: 8 },
       ],
     },
     { label: "Jenis Barang/ Nama Barang", ambil: (a) => a.nama, lebar: 22 },

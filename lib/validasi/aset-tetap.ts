@@ -5,6 +5,7 @@ export const jenisKibSchema = z.enum(["A", "C", "D", "E", "F"]);
 export const asetTetapSchema = z.object({
   jenis_kib: jenisKibSchema,
   kode_barang: z.string().max(60).optional().or(z.literal("")),
+  nomor_register: z.string().max(60).optional().or(z.literal("")),
   nama: z.string().min(1, "Nama barang wajib diisi").max(200),
   tahun: z.coerce.number().int().min(1900).max(2100).optional().or(z.literal("")),
   harga: z.coerce.number().min(0).optional().or(z.literal("")),
@@ -50,6 +51,7 @@ export function asetTetapDefaultValues(jenis: AsetTetapFormValues["jenis_kib"]):
   return {
     jenis_kib: jenis,
     kode_barang: "",
+    nomor_register: "",
     nama: "",
     tahun: "",
     harga: "",

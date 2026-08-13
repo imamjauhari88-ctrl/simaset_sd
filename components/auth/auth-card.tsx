@@ -1,12 +1,11 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2, Mail, Lock } from "lucide-react";
 import { login } from "@/app/login/actions";
 import { LogoMark } from "@/components/layout/sidebar";
 import { AuthInput } from "@/components/ui/auth-input";
 import { OnboardingForm } from "@/components/onboarding/onboarding-form";
-import { createClient } from "@/lib/supabase/client";
 
 const initialLoginState: { error?: string } = {};
 
@@ -20,32 +19,27 @@ const initialLoginState: { error?: string } = {};
  * baru form barunya kebuka). URL tetap disinkronin (history.replaceState,
  * tanpa remount) biar /login & /onboarding masih bisa diakses/dibookmark
  * langsung dari luar.
+ *
+ * `sudahLogin` datang dari server (dicek di app/login & app/onboarding
+ * page.tsx, bukan di-fetch ulang di client) — biar gak ada "flash" teks
+ * yang salah pas render pertama sebelum status login kebaca.
  */
 export function AuthCard({
   initialMode,
+  sudahLogin,
 }: {
   initialMode: "login" | "onboarding";
+  sudahLogin: boolean;
 }) {
   const [active, setActive] = useState(initialMode === "onboarding");
-  const [sudahLogin, setSudahLogin] = useState(false);
 
-  useEffect(() => {
-    let batal = false;
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      if (!batal) setSudahLogin(!!data.user);
-    });
-    return () => {
-      batal = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    const target = active ? "/onboarding" : "/login";
+  function toggle(nilai: boolean) {
+    setActive(nilai);
+    const target = nilai ? "/onboarding" : "/login";
     if (window.location.pathname !== target) {
       window.history.replaceState(null, "", target);
     }
-  }, [active]);
+  }
 
   const [loginState, loginFormAction, loginPending] = useActionState(
     async (_prev: typeof initialLoginState, formData: FormData) => {
@@ -189,7 +183,7 @@ export function AuthCard({
           </p>
           <button
             type="button"
-            onClick={() => setActive(true)}
+            onClick={() => toggle(true)}
             className="mt-6 inline-flex items-center justify-center border border-white/40 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/10 transition-colors backdrop-blur-sm"
           >
             Registrasi Sekolah
@@ -218,7 +212,7 @@ export function AuthCard({
               </p>
               <button
                 type="button"
-                onClick={() => setActive(false)}
+                onClick={() => toggle(false)}
                 className="mt-6 inline-flex items-center justify-center border border-white/40 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-white/10 transition-colors backdrop-blur-sm"
               >
                 Masuk

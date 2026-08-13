@@ -1050,3 +1050,11 @@ alter table aset add column if not exists nomor_register text;
 alter table aset add column if not exists no_sertifikat_dll text; -- No.Sertifikat/No.Pabrik/No.Chasis/No.Mesin (1 kolom gabungan)
 alter table aset add column if not exists ukuran_konstruksi text; -- Ukuran Barang/Konstruksi (P,S,D)
 alter table aset add column if not exists bahan text;
+
+-- ============================================================
+-- Register buat Aset Tetap Khusus (KIB A/C/D/E/F) — kelewat waktu
+-- bikin tabelnya, padahal Kode Barang udah ada duluan. Sama polanya
+-- kayak `aset.nomor_register`: nomor urut/rentang per unit-batch,
+-- terpisah dari `kode_barang` yang klasifikasi dinas.
+-- ============================================================
+alter table aset_tetap add column if not exists nomor_register text;

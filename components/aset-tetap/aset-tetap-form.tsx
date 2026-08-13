@@ -38,6 +38,7 @@ export function AsetTetapForm({
           ...asetTetapDefaultValues(jenis),
           jenis_kib: jenis,
           kode_barang: dataAwal.kode_barang ?? "",
+          nomor_register: dataAwal.nomor_register ?? "",
           nama: dataAwal.nama,
           tahun: dataAwal.tahun ?? "",
           harga: dataAwal.harga ?? "",
@@ -71,15 +72,21 @@ export function AsetTetapForm({
           <input {...register("kode_barang")} placeholder="mis. 01.01.11.04.02" className={`${inputClass} font-mono`} />
         </div>
         <div>
-          <label className={labelClass}>Tahun</label>
-          <input {...register("tahun")} type="number" placeholder="mis. 2020" className={inputClass} />
+          <label className={labelClass}>Register</label>
+          <input {...register("nomor_register")} placeholder="mis. 0001 atau 0001-0003" className={`${inputClass} font-mono`} />
         </div>
       </div>
 
-      <div>
-        <label className={labelClass}>Nama Barang</label>
-        <input {...register("nama")} placeholder="mis. Tanah Milik Sekolah" className={inputClass} autoFocus />
-        {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className={labelClass}>Tahun</label>
+          <input {...register("tahun")} type="number" placeholder="mis. 2020" className={inputClass} />
+        </div>
+        <div>
+          <label className={labelClass}>Nama Barang</label>
+          <input {...register("nama")} placeholder="mis. Tanah Milik Sekolah" className={inputClass} autoFocus />
+          {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
+        </div>
       </div>
 
       {/* ===== KIB A — Tanah ===== */}
