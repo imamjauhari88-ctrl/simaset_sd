@@ -8,10 +8,14 @@ import { LABEL_JENIS_KIB } from "@/lib/validasi/aset-tetap";
 import { Select } from "@/components/ui/select";
 
 const OPSI_TAHUN = daftarTahunOpsi();
-const OPSI_JENIS_KIB = (["A", "C", "D", "E", "F"] as const).map((j) => ({
-  value: j,
-  label: `${LABEL_JENIS_KIB[j].pendek} — ${LABEL_JENIS_KIB[j].label}`,
-}));
+const OPSI_JENIS_KIB = [
+  { value: "A", label: `${LABEL_JENIS_KIB.A.pendek} — ${LABEL_JENIS_KIB.A.label}` },
+  { value: "B", label: "KIB B — Peralatan dan Mesin" },
+  { value: "C", label: `${LABEL_JENIS_KIB.C.pendek} — ${LABEL_JENIS_KIB.C.label}` },
+  { value: "D", label: `${LABEL_JENIS_KIB.D.pendek} — ${LABEL_JENIS_KIB.D.label}` },
+  { value: "E", label: `${LABEL_JENIS_KIB.E.pendek} — ${LABEL_JENIS_KIB.E.label}` },
+  { value: "F", label: `${LABEL_JENIS_KIB.F.pendek} — ${LABEL_JENIS_KIB.F.label}` },
+];
 
 export function LaporanManager({
   kategoriList,
@@ -124,8 +128,17 @@ export function LaporanManager({
 
         {!modeKategori && (
           <p className="text-[11px] text-ink-soft -mt-2">
-            Datanya dikelola di menu{" "}
-            <span className="font-medium text-ink">Aset Tetap Khusus</span>.
+            {jenisKib === "B" ? (
+              <>
+                Datanya dikelola di menu{" "}
+                <span className="font-medium text-ink">Data Aset</span>.
+              </>
+            ) : (
+              <>
+                Datanya dikelola di menu{" "}
+                <span className="font-medium text-ink">Aset Tetap Khusus</span>.
+              </>
+            )}
           </p>
         )}
 
@@ -135,6 +148,8 @@ export function LaporanManager({
               bukaCetak(
                 modeKategori
                   ? `/cetak/laporan/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
+                  : jenisKib === "B"
+                  ? "/cetak/laporan/kib"
                   : `/cetak/laporan/kib-tetap/${jenisKib}`
               )
             }
@@ -147,6 +162,8 @@ export function LaporanManager({
             href={
               modeKategori
                 ? `/api/laporan/export/kib${kategoriId ? `?kategori=${kategoriId}` : ""}`
+                : jenisKib === "B"
+                ? "/api/laporan/export/kib"
                 : `/api/laporan/export/kib-tetap/${jenisKib}`
             }
             className="inline-flex items-center justify-center gap-1.5 border border-line text-ink-soft text-sm font-medium px-3 py-2 rounded-lg hover:bg-paper transition-colors"

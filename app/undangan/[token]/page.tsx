@@ -84,7 +84,7 @@ export default async function UndanganPage({
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-[28px] overflow-hidden border border-line shadow-xl bg-surface grid md:grid-cols-2">
           <div className="order-2 md:order-1 p-8 sm:p-10 flex flex-col justify-center animate-book-open-left">
             <div className="flex items-center gap-3 mb-8">
               <LogoMark size={28} />

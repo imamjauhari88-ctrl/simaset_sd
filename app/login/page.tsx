@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState, ViewTransition } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock } from "lucide-react";
 import { login } from "./actions";
 import { LogoMark } from "@/components/layout/sidebar";
 import { Footer } from "@/components/layout/footer";
 import { PanelBrand } from "@/components/ui/panel-brand";
+import { AuthInput } from "@/components/ui/auth-input";
 
 const initialState: { error?: string } = {};
 
@@ -21,7 +22,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2 animate-fade-in">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-[28px] overflow-hidden border border-line shadow-xl bg-surface grid md:grid-cols-2 animate-fade-in">
           {/* Form — di kiri saat Login, biar posisinya "ketuker" sama
               Onboarding (panel di kanan sana). name="auth-form" /
               "auth-brand" sama persis dengan yang dipakai di halaman
@@ -71,7 +72,8 @@ export default function LoginPage() {
                   <label className="text-[13px] text-ink-soft block mb-1">
                     Email
                   </label>
-                  <input
+                  <AuthInput
+                    icon={Mail}
                     name="email"
                     type="email"
                     required
@@ -79,7 +81,6 @@ export default function LoginPage() {
                     autoComplete="email"
                     disabled={pending}
                     placeholder="admin@sekolah.sch.id"
-                    className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
                   />
                 </div>
                 <div>
@@ -94,20 +95,20 @@ export default function LoginPage() {
                       Lupa kata sandi?
                     </a>
                   </div>
-                  <input
+                  <AuthInput
+                    icon={Lock}
                     name="password"
                     type="password"
                     required
                     autoComplete="current-password"
                     disabled={pending}
                     placeholder="••••••••"
-                    className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={pending}
-                  className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-3 rounded-xl hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
                 >
                   {pending && <Loader2 size={16} className="animate-spin" />}
                   {pending ? "Memproses..." : "Masuk"}

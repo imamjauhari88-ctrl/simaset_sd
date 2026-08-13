@@ -1,8 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Mail, Lock, User, School, Hash } from "lucide-react";
 import { buatSekolahBaru } from "@/app/onboarding/actions";
+import { AuthInput } from "@/components/ui/auth-input";
 
 const initialState: { error?: string } = {};
 
@@ -30,21 +31,22 @@ export function OnboardingForm({ sudahLogin }: { sudahLogin: boolean }) {
             <label className="text-[13px] text-ink-soft block mb-1">
               Email
             </label>
-            <input
+            <AuthInput
+              icon={Mail}
               name="email"
               type="email"
               required
               autoComplete="email"
               disabled={pending}
               placeholder="admin@sekolah.sch.id"
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
             />
           </div>
           <div>
             <label className="text-[13px] text-ink-soft block mb-1">
               Kata Sandi
             </label>
-            <input
+            <AuthInput
+              icon={Lock}
               name="password"
               type="password"
               required
@@ -52,7 +54,6 @@ export function OnboardingForm({ sudahLogin }: { sudahLogin: boolean }) {
               autoComplete="new-password"
               disabled={pending}
               placeholder="••••••••"
-              className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
             />
           </div>
           <hr className="border-line" />
@@ -63,35 +64,35 @@ export function OnboardingForm({ sudahLogin }: { sudahLogin: boolean }) {
         <label className="text-[13px] text-ink-soft block mb-1">
           Nama Kamu
         </label>
-        <input
+        <AuthInput
+          icon={User}
           name="nama_admin"
           required
           disabled={pending}
           placeholder="mis. Sri Wahyuni"
-          className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
         />
       </div>
       <div>
         <label className="text-[13px] text-ink-soft block mb-1">
           Nama Sekolah
         </label>
-        <input
+        <AuthInput
+          icon={School}
           name="nama"
           required
           disabled={pending}
           placeholder="mis. UPTD SDN Tamansareh 2"
-          className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
         />
       </div>
       <div>
         <label className="text-[13px] text-ink-soft block mb-1">
           NPSN <span className="text-ink-soft/70">(opsional)</span>
         </label>
-        <input
+        <AuthInput
+          icon={Hash}
           name="npsn"
           disabled={pending}
           placeholder="20xxxxxx"
-          className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
         />
       </div>
       <div>
@@ -102,14 +103,14 @@ export function OnboardingForm({ sudahLogin }: { sudahLogin: boolean }) {
           name="alamat"
           rows={2}
           disabled={pending}
-          className="w-full border border-line rounded-lg px-3 py-2 text-sm outline-none focus:border-pine bg-surface disabled:opacity-60"
+          className="w-full bg-paper border border-transparent rounded-xl px-4 py-3 text-sm text-ink outline-none transition-colors focus:border-pine focus:bg-surface disabled:opacity-60"
         />
       </div>
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-2.5 rounded-lg hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full flex items-center justify-center gap-2 bg-pine text-white font-medium text-sm py-3 rounded-xl hover:bg-pine-dark transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
       >
         {pending && <Loader2 size={16} className="animate-spin" />}
         {pending ? "Memproses..." : "Buat Sekolah & Masuk Dashboard"}

@@ -13,7 +13,7 @@ export default async function OnboardingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-paper">
       <main className="flex-1 flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-4xl md:h-[560px] rounded-2xl overflow-hidden border border-line shadow-sm bg-surface grid md:grid-cols-2 animate-fade-in">
+        <div className="w-full max-w-4xl md:h-[560px] rounded-[28px] overflow-hidden border border-line shadow-xl bg-surface grid md:grid-cols-2 animate-fade-in">
           {/* Panel di KIRI (posisinya sengaja ketuker dari Login yang
               panel-nya di kanan). name="auth-brand" sama persis dengan
               di halaman Login — begitu React ketemu nama yang sama di
