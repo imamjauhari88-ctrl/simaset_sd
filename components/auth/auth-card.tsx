@@ -162,7 +162,7 @@ export function AuthCard({
       <div className="auth-toggle-box">
         <div className="auth-toggle-panel auth-toggle-left">
           <h2 className="font-display text-2xl font-bold text-white">
-            Hello, Welcome!
+            Halo, Selamat datang!
           </h2>
           <p className="mt-2 max-w-xs text-sm text-white/75">
             Belum punya akun admin sekolah? Registrasi dulu sekolahmu di
