@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAsetTetapList, getAsetByKodeKib } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
-import { tetapDariAset } from "@/lib/laporan-adapter";
+import { tetapTergabungDariAset } from "@/lib/laporan-adapter";
 import { JUDUL_KIB, KOLOM_KIB, ratakanKolom, labelKolomExcel, isJenisKib } from "@/lib/laporan-kib-tetap";
 
 export async function GET(
@@ -27,7 +27,7 @@ export async function GET(
 
   const daftar = [
     ...daftarTetap,
-    ...daftarAsetKategori.map((a) => tetapDariAset(a, jenis)),
+    ...tetapTergabungDariAset(daftarAsetKategori, jenis),
   ].sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   const kolom = KOLOM_KIB[jenis];

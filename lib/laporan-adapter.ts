@@ -72,6 +72,23 @@ export function asetDariTetap(a: AsetTetap): AsetWithRelasi {
   };
 }
 
+/** Sama kayak tetapDariAset, tapi buat SEKUMPULAN baris Aset sekaligus
+ * — barang identik digabung 1 baris dulu (gabungkanBarisSerupa) sebelum
+ * diadaptasi, biar batch (mis. 20 buku identik ditandai KIB E) juga
+ * muncul ringkas 1 baris di laporan KIB, bukan 20 baris terpisah. */
+export function tetapTergabungDariAset(
+  daftar: AsetWithRelasi[],
+  jenisKib: JenisKib
+): AsetTetap[] {
+  return gabungkanBarisSerupa(daftar).map(({ contoh, jumlah, hargaTotal, registerGabungan }) => {
+    const hasil = tetapDariAset(contoh, jenisKib);
+    hasil.nomor_register = registerGabungan || null;
+    hasil.harga = hargaTotal;
+    if (jumlah > 1) hasil.detail = { ...hasil.detail, jumlah: String(jumlah) };
+    return hasil;
+  });
+}
+
 function kondisiKeGayaTetap(k: KondisiAset): "baik" | "kurang_baik" | "rusak_berat" {
   if (k === "baik") return "baik";
   if (k === "rusak_berat") return "rusak_berat";
@@ -82,4 +99,87 @@ function kondisiKeGayaAset(k?: "baik" | "kurang_baik" | "rusak_berat"): KondisiA
   if (k === "rusak_berat") return "rusak_berat";
   if (k === "baik") return "baik";
   return "rusak_ringan";
+}
+
+/**
+ * Gabungin baris-baris Aset yang identik (nama/kategori/ruangan/kode
+ * barang/merk/tahun/harga/kondisi/dll sama semua, cuma beda kode_aset &
+ * register-nya) jadi SATU baris laporan — persis konvensi blangko dinas:
+ * batch 90 kursi dicatat 1 baris "Register: 0001-0090", bukan 90 baris
+ * terpisah. Kolom "Register" tetap ngasih tau jumlahnya secara implisit
+ * lewat rentang itu sendiri (sama kayak contoh dinas asli), sementara
+ * `jumlah` & `hargaTotal` di sini dipakai laporan yang emang punya kolom
+ * Jumlah/Harga eksplisit (mis. Buku Inventaris).
+ *
+ * Data individu per unit (kode_aset, kondisi per-unit, riwayat
+ * pemeliharaan/peminjaman) TETAP granular di database — ini cuma
+ * ngerapiin TAMPILAN laporannya aja, gak ngubah data aslinya.
+ */
+export interface BarisTergabung {
+  contoh: AsetWithRelasi;
+  jumlah: number;
+  hargaTotal: number;
+  registerGabungan: string;
+}
+
+export function gabungkanBarisSerupa(daftar: AsetWithRelasi[]): BarisTergabung[] {
+  const grup = new Map<string, AsetWithRelasi[]>();
+
+  for (const a of daftar) {
+    // Sengaja TANPA ruangan_id — Buku Inventaris & KIB gak punya kolom
+    // Ruangan sama sekali (itu domainnya laporan KIR/Kartu Inventaris
+    // Ruangan yang emang per-ruangan). Kalau ruangan_id ikut jadi kunci
+    // pembeda, 60 kursi yang sama tapi kesebar ke 6 kelas bakal muncul
+    // 6 baris identik tanpa ada kolom yang nunjukkin bedanya di mana —
+    // ngebingungin, bukan makin rapi. Barang yang sama persis TETAP
+    // digabung 1 baris di laporan ini walau lokasi fisiknya kesebar.
+    const kunci = [
+      a.nama,
+      a.kategori_id,
+      a.kode_barang_dinas ?? "",
+      a.merk_tipe ?? "",
+      a.bahan ?? "",
+      a.tahun_perolehan,
+      a.harga_perolehan,
+      a.kondisi,
+      a.sumber_dana,
+      a.no_sertifikat_dll ?? "",
+      a.ukuran_konstruksi ?? "",
+      a.catatan ?? "",
+    ].join("\u0001");
+
+    const existing = grup.get(kunci);
+    if (existing) existing.push(a);
+    else grup.set(kunci, [a]);
+  }
+
+  return Array.from(grup.values())
+    .map((items) => ({
+      contoh: items[0],
+      jumlah: items.length,
+      hargaTotal: items[0].harga_perolehan * items.length,
+      registerGabungan: ringkasRegister(
+        items.map((i) => i.nomor_register).filter((r): r is string => !!r)
+      ),
+      _urutan: items[0].created_at,
+    }))
+    .sort((a, b) => a._urutan.localeCompare(b._urutan))
+    .map(({ _urutan: _abaikan, ...sisanya }) => sisanya);
+}
+
+/** "0001","0002",..,"0090" -> "0001-0090". Kalau nomornya gak beruntun
+ * (mis. ada yang bolong atau format beda-beda), tampil digabung koma
+ * apa adanya daripada maksa bikin rentang yang salah. */
+function ringkasRegister(list: string[]): string {
+  if (list.length === 0) return "";
+  const terurut = [...list].sort();
+  if (terurut.length === 1) return terurut[0];
+
+  const semuaAngka = terurut.every((s) => /^\d+$/.test(s));
+  if (semuaAngka) {
+    const angka = terurut.map(Number).sort((a, b) => a - b);
+    const beruntun = angka.every((n, i) => i === 0 || n === angka[i - 1] + 1);
+    if (beruntun) return `${terurut[0]}-${terurut[terurut.length - 1]}`;
+  }
+  return terurut.join(", ");
 }

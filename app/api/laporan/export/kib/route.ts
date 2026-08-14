@@ -6,6 +6,7 @@ import {
 } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
+import { gabungkanBarisSerupa } from "@/lib/laporan-adapter";
 import { labelAsalUsul } from "@/lib/format";
 
 export async function GET(request: NextRequest) {
@@ -16,11 +17,13 @@ export async function GET(request: NextRequest) {
 
   const kategoriId = request.nextUrl.searchParams.get("kategori") || undefined;
 
-  const [daftarAset, sekolah, kategoriList] = await Promise.all([
+  const [daftarAsetMentah, sekolah, kategoriList] = await Promise.all([
     kategoriId ? getLaporanAsetPerKategori(kategoriId) : getAsetByKodeKib("B"),
     getSekolahSaya(),
     getKategoriList(),
   ]);
+
+  const daftarAset = gabungkanBarisSerupa(daftarAsetMentah);
 
   const namaKategori = kategoriId
     ? kategoriList.find((k) => k.id === kategoriId)?.nama ?? "—"
@@ -56,11 +59,11 @@ export async function GET(request: NextRequest) {
       "Harga",
       "Ket.",
     ],
-    baris: daftarAset.map((a, i) => [
+    baris: daftarAset.map(({ contoh: a, hargaTotal, registerGabungan }, i) => [
       i + 1,
       a.kode_barang_dinas || a.kode_aset,
       a.nama,
-      a.nomor_register || "",
+      registerGabungan,
       a.merk_tipe || "",
       a.ukuran_konstruksi || "",
       a.bahan || "",
@@ -71,7 +74,7 @@ export async function GET(request: NextRequest) {
       "",
       "",
       labelAsalUsul(a.sumber_dana),
-      a.harga_perolehan ?? 0,
+      hargaTotal ?? 0,
       a.catatan || "",
     ]),
     lebarKolom: [4, 14, 26, 14, 16, 10, 10, 10, 10, 10, 10, 10, 10, 18, 14, 20],

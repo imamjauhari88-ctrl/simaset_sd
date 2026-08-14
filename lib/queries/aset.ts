@@ -14,7 +14,7 @@ import type {
 } from "@/lib/supabase/queries";
 import type { AsetFormValues } from "@/lib/validasi/aset";
 import {
-  buatKodeAsetMassal,
+  buatRegisterMassal,
   type AsetMassalFormValues,
 } from "@/lib/validasi/aset-massal";
 
@@ -29,6 +29,18 @@ function buatKodeAsetOtomatis(): string {
   const waktu = Date.now().toString(36).toUpperCase();
   const acak = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `AST-${waktu}${acak}`;
+}
+
+/** Sama kayak buatKodeAsetOtomatis, tapi buat generate banyak kode
+ * sekaligus (Tambah Massal) — dijamin gak ada yang kembar SESAMA
+ * batch ini (di-generate balik kalau ternyata tabrakan; peluangnya
+ * emang udah sangat kecil, ini cuma jaring pengaman tambahan). */
+function buatKodeAsetOtomatisBanyak(jumlah: number): string[] {
+  const hasil = new Set<string>();
+  while (hasil.size < jumlah) {
+    hasil.add(buatKodeAsetOtomatis());
+  }
+  return Array.from(hasil);
 }
 
 async function fetchDaftarAsetPaginated(
@@ -152,15 +164,15 @@ export function useSimpanAset() {
 
 export interface HasilSimpanAsetMassal {
   jumlah: number;
-  kodeAwal: string;
-  kodeAkhir: string;
 }
 
 /**
  * Insert banyak aset identik sekaligus (mis. 40 kursi siswa) dalam SATU
  * kali panggilan .insert([...]) — bukan loop insert satu-satu, biar cuma
  * satu round-trip ke Supabase walau jumlahnya sampai ratusan. kode_aset
- * tiap baris digenerate dari prefix+nomor urut (lihat buatKodeAsetMassal).
+ * tiap baris auto-generate (lihat buatKodeAsetOtomatisBanyak) — sama
+ * kayak Tambah Aset satuan, murni kode internal, gak perlu diisi/dilihat
+ * user lagi.
  */
 export function useSimpanAsetMassal() {
   const queryClient = useQueryClient();
@@ -170,13 +182,16 @@ export function useSimpanAsetMassal() {
       values: AsetMassalFormValues
     ): Promise<HasilSimpanAsetMassal> => {
       const supabase = createClient();
-      const kodeList = buatKodeAsetMassal(
-        values.kode_prefix,
-        values.nomor_mulai,
-        values.jumlah
-      );
+      const kodeList = buatKodeAsetOtomatisBanyak(values.jumlah);
+      // Register cuma di-generate kalau "Nomor Register Mulai" diisi —
+      // kalau dikosongin, semua unit null dulu (bisa diisi manual
+      // belakangan lewat Edit satu-satu).
+      const registerList =
+        values.register_mulai !== "" && values.register_mulai !== undefined
+          ? buatRegisterMassal(values.register_mulai, values.jumlah)
+          : null;
 
-      const rows = kodeList.map((kode_aset) => ({
+      const rows = kodeList.map((kode_aset, i) => ({
         kode_aset,
         nama: values.nama,
         kategori_id: values.kategori_id,
@@ -184,7 +199,7 @@ export function useSimpanAsetMassal() {
         merk_tipe: values.merk_tipe || null,
         bahan: values.bahan || null,
         kode_barang_dinas: values.kode_barang_dinas || null,
-        nomor_register: values.nomor_register || null,
+        nomor_register: registerList ? registerList[i] : null,
         no_sertifikat_dll: values.no_sertifikat_dll || null,
         ukuran_konstruksi: values.ukuran_konstruksi || null,
         tahun_perolehan: values.tahun_perolehan,
@@ -197,14 +212,12 @@ export function useSimpanAsetMassal() {
       const { error } = await supabase.from("aset").insert(rows);
 
       if (error) {
-        // 23505 = unique_violation Postgres, kena constraint
-        // unique(sekolah_id, kode_aset) — berarti sebagian kode di
-        // rentang ini udah kepakai aset lain.
+        // 23505 = unique_violation Postgres — kode_aset auto-generate
+        // acak jadi ini nyaris mustahil kejadian, tapi tetap dijaga
+        // biar errornya jelas kalau toh ada, bukan pesan teknis mentah.
         if (error.code === "23505") {
           throw new Error(
-            `Sebagian kode aset di rentang ${kodeList[0]}–${
-              kodeList[kodeList.length - 1]
-            } sudah dipakai. Coba ganti awalan kode atau nomor mulai.`
+            "Ada kode aset yang kebetulan tabrakan, coba simpan ulang."
           );
         }
         throw new Error(error.message);
@@ -212,8 +225,6 @@ export function useSimpanAsetMassal() {
 
       return {
         jumlah: values.jumlah,
-        kodeAwal: kodeList[0],
-        kodeAkhir: kodeList[kodeList.length - 1],
       };
     },
     onSuccess: () => {

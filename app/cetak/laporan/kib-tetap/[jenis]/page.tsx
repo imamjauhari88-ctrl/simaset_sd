@@ -3,14 +3,16 @@ import { getAsetTetapList, getAsetByKodeKib } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
-import { tetapDariAset } from "@/lib/laporan-adapter";
+import { tetapTergabungDariAset } from "@/lib/laporan-adapter";
 import { JUDUL_KIB, KOLOM_KIB, isGroup, ratakanKolom, isJenisKib } from "@/lib/laporan-kib-tetap";
 
 /** Gabungan 2 sumber data: Aset Tetap Khusus (tabel `aset_tetap`,
  * jenis_kib match) DAN Data Aset harian yang kategorinya ditandai
  * kode_kib huruf yang sama (mis. kategori "Alat Kesenian" ditandai
  * KIB E, harusnya muncul juga di laporan KIB E ini walau dicatat
- * lewat Data Aset biasa, bukan Aset Tetap Khusus). Diurutkan gabungan
+ * lewat Data Aset biasa, bukan Aset Tetap Khusus). Barang identik dari
+ * Data Aset digabung 1 baris (mis. 20 buku identik -> 1 baris Register
+ * gabungan), sama kayak Buku Inventaris & KIB B. Diurutkan gabungan
  * berdasar tanggal input (bukan per-sumber) biar nomor urutnya masuk
  * akal sebagai satu daftar. */
 export default async function CetakKibTetapPage({
@@ -29,7 +31,7 @@ export default async function CetakKibTetapPage({
 
   const daftar = [
     ...daftarTetap,
-    ...daftarAsetKategori.map((a) => tetapDariAset(a, jenis)),
+    ...tetapTergabungDariAset(daftarAsetKategori, jenis),
   ].sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   const kolom = KOLOM_KIB[jenis];

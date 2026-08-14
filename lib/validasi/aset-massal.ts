@@ -2,17 +2,6 @@ import { z } from "zod";
 
 export const asetMassalSchema = z.object({
   nama: z.string().min(1, "Nama aset wajib diisi").max(150),
-  // Prefix + nomor urut digabung jadi kode_aset tiap unit, mis. prefix
-  // "MBL-KURSI" + mulai 1 + jumlah 5 -> MBL-KURSI-001 s/d MBL-KURSI-005.
-  kode_prefix: z
-    .string()
-    .min(1, "Awalan kode wajib diisi")
-    .max(20, "Awalan kode maksimal 20 karakter")
-    .regex(/^[A-Za-z0-9-]+$/, "Cuma boleh huruf, angka, dan tanda hubung (-)"),
-  nomor_mulai: z.coerce
-    .number({ invalid_type_error: "Nomor mulai harus berupa angka" })
-    .int()
-    .min(1, "Nomor mulai minimal 1"),
   jumlah: z.coerce
     .number({ invalid_type_error: "Jumlah harus berupa angka" })
     .int()
@@ -23,7 +12,16 @@ export const asetMassalSchema = z.object({
   merk_tipe: z.string().max(100).optional().or(z.literal("")),
   bahan: z.string().max(100).optional().or(z.literal("")),
   kode_barang_dinas: z.string().max(60).optional().or(z.literal("")),
-  nomor_register: z.string().max(60).optional().or(z.literal("")),
+  // Nomor Register otomatis diurut per unit (mis. mulai 1 + jumlah 90 ->
+  // 0001 s/d 0090), bukan diisi manual sebagai teks bebas — soalnya
+  // tiap barang harusnya punya nomor register sendiri-sendiri dalam
+  // batch, bukan semua kebagian teks rentang yang sama persis.
+  register_mulai: z.coerce
+    .number({ invalid_type_error: "Nomor register mulai harus berupa angka" })
+    .int()
+    .min(1, "Nomor register mulai minimal 1")
+    .optional()
+    .or(z.literal("")),
   no_sertifikat_dll: z.string().max(150).optional().or(z.literal("")),
   ukuran_konstruksi: z.string().max(100).optional().or(z.literal("")),
   tahun_perolehan: z.coerce
@@ -47,15 +45,13 @@ export type AsetMassalFormValues = z.infer<typeof asetMassalSchema>;
 
 export const asetMassalDefaultValues: AsetMassalFormValues = {
   nama: "",
-  kode_prefix: "",
-  nomor_mulai: 1,
   jumlah: 2,
   kategori_id: "",
   ruangan_id: "",
   merk_tipe: "",
   bahan: "",
   kode_barang_dinas: "",
-  nomor_register: "",
+  register_mulai: "",
   no_sertifikat_dll: "",
   ukuran_konstruksi: "",
   tahun_perolehan: new Date().getFullYear(),
@@ -66,21 +62,16 @@ export const asetMassalDefaultValues: AsetMassalFormValues = {
 };
 
 /**
- * Generate daftar kode_aset berurutan dari prefix + nomor mulai + jumlah.
- * Lebar padding angka otomatis nyesuain nomor akhir (minimal 3 digit) —
- * jadi kalau nomornya sampai 4 digit (mis. mulai dari 950, jumlah 100,
- * nomor akhir 1049), paddingnya ikut jadi 4 digit semua biar tetap rapi
- * berurutan secara alfabetis (001 < 010 < 100, bukan 1 < 10 < 100 < 2).
+ * Nomor Register per unit, diurut otomatis dari nomor mulai — mis.
+ * mulai=1, jumlah=90 -> "0001".."0090". Register di blangko dinas emang
+ * cuma angka polos (gak pakai prefix kayak kode_aset dulu), dan lebar
+ * digit minimal 4 — samain sama konvensi di semua contoh blangko dinas
+ * ("0001-0003", "0001-0097", dst selalu 4 digit).
  */
-export function buatKodeAsetMassal(
-  prefix: string,
-  nomorMulai: number,
-  jumlah: number
-): string[] {
+export function buatRegisterMassal(nomorMulai: number, jumlah: number): string[] {
   const nomorAkhir = nomorMulai + jumlah - 1;
-  const lebarDigit = Math.max(3, String(nomorAkhir).length);
-  return Array.from(
-    { length: jumlah },
-    (_, i) => `${prefix}-${String(nomorMulai + i).padStart(lebarDigit, "0")}`
+  const lebarDigit = Math.max(4, String(nomorAkhir).length);
+  return Array.from({ length: jumlah }, (_, i) =>
+    String(nomorMulai + i).padStart(lebarDigit, "0")
   );
 }

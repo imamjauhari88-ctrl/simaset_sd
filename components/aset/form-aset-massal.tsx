@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import {
   asetMassalSchema,
   asetMassalDefaultValues,
-  buatKodeAsetMassal,
   type AsetMassalFormValues,
 } from "@/lib/validasi/aset-massal";
 import { useSimpanAsetMassal } from "@/lib/queries/aset";
@@ -41,24 +40,14 @@ export function FormAsetMassal({
     defaultValues: asetMassalDefaultValues,
   });
 
-  // Preview kode & total harga dihitung live dari input saat ini — biar
-  // user lihat dulu rentang kode yang bakal ke-generate SEBELUM submit,
-  // bukan baru tau setelah data kesimpan.
-  const prefix = watch("kode_prefix");
-  const nomorMulai = Number(watch("nomor_mulai")) || 1;
+  // Preview total harga dihitung live dari input saat ini.
   const jumlah = Number(watch("jumlah")) || 0;
   const harga = Number(watch("harga_perolehan")) || 0;
-  const previewValid = prefix && jumlah >= 2 && jumlah <= 300;
-  const kodePreview = previewValid
-    ? buatKodeAsetMassal(prefix, nomorMulai, Math.min(jumlah, 300))
-    : [];
 
   async function onSubmit(values: AsetMassalFormValues) {
     try {
       const hasil = await mutateAsync(values);
-      toast.success(
-        `${hasil.jumlah} aset berhasil ditambahkan (${hasil.kodeAwal} – ${hasil.kodeAkhir})`
-      );
+      toast.success(`${hasil.jumlah} aset berhasil ditambahkan`);
       router.push("/aset");
       router.refresh();
     } catch (e) {
@@ -102,51 +91,13 @@ export function FormAsetMassal({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass}>Awalan Kode Aset</label>
-          <input
-            {...register("kode_prefix")}
-            placeholder="mis. MBL-KURSI"
-            className={`${inputClass} font-mono uppercase`}
-          />
-          {errors.kode_prefix && (
-            <p className={errorClass}>{errors.kode_prefix.message}</p>
-          )}
-        </div>
-        <div>
-          <label className={labelClass}>Nomor Mulai</label>
-          <input
-            type="number"
-            {...register("nomor_mulai")}
-            className={`${inputClass} font-mono`}
-          />
-          {errors.nomor_mulai && (
-            <p className={errorClass}>{errors.nomor_mulai.message}</p>
-          )}
-        </div>
-      </div>
-
-      {kodePreview.length > 0 && (
+      {harga > 0 && jumlah >= 2 && (
         <div className="bg-pine-soft/40 border border-pine/20 rounded-lg px-3 py-2.5 text-[13px]">
-          <span className="text-ink-soft">Kode yang akan dibuat: </span>
+          <span className="text-ink-soft">Estimasi total nilai </span>
           <span className="font-mono font-medium text-pine-dark">
-            {kodePreview[0]}
+            {formatRupiah(harga * jumlah)}
           </span>
-          {kodePreview.length > 1 && (
-            <>
-              <span className="text-ink-soft"> s/d </span>
-              <span className="font-mono font-medium text-pine-dark">
-                {kodePreview[kodePreview.length - 1]}
-              </span>
-            </>
-          )}
-          {harga > 0 && jumlah > 0 && (
-            <span className="text-ink-soft">
-              {" "}
-              — total nilai {formatRupiah(harga * jumlah)}
-            </span>
-          )}
+          <span className="text-ink-soft"> untuk {jumlah} unit</span>
         </div>
       )}
 
@@ -217,9 +168,15 @@ export function FormAsetMassal({
           Data untuk Laporan Dinas
         </p>
         <p className="text-[12px] text-ink-soft mb-3">
-          Opsional, berlaku sama buat semua unit yang dibuat di batch ini.
-          Mis. 90 kursi siswa: Kode Barang sama buat semua, Register diisi
-          satu rentang <span className="font-mono">0001-0090</span>.
+          Opsional. Kode Barang berlaku sama buat semua unit (kode
+          klasifikasi dinas emang sama buat barang sejenis). Nomor
+          Register otomatis diurut per unit dari nomor mulai yang
+          diisi — mis. mulai <span className="font-mono">1</span> buat{" "}
+          {jumlah || "90"} unit jadi{" "}
+          <span className="font-mono">
+            {String(1).padStart(4, "0")}–{String(jumlah || 90).padStart(4, "0")}
+          </span>
+          .
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -231,12 +188,16 @@ export function FormAsetMassal({
             />
           </div>
           <div>
-            <label className={labelClass}>Register (rentang)</label>
+            <label className={labelClass}>Nomor Register Mulai</label>
             <input
-              {...register("nomor_register")}
-              placeholder="mis. 0001-0090"
+              type="number"
+              {...register("register_mulai")}
+              placeholder="mis. 1"
               className={`${inputClass} font-mono`}
             />
+            {errors.register_mulai && (
+              <p className={errorClass}>{errors.register_mulai.message}</p>
+            )}
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">

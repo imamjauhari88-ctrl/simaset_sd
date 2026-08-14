@@ -2,14 +2,14 @@ import { getLaporanAsetPerKategori, getAsetByKodeKib, getKategoriList } from "@/
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
+import { gabungkanBarisSerupa } from "@/lib/laporan-adapter";
 import { formatAngka, labelAsalUsul } from "@/lib/format";
 
 /** Sel kolom "NOMOR" (Pabrik/Rangka/Mesin/Polisi/BPKB) belum ada field-
  * nya di data aset (isian khusus kendaraan bermotor, jarang dipakai
  * sekolah) — sengaja ditampilkan kosong dulu di kolom cetak, bukan
  * dihapus, biar formatnya tetap 16 kolom persis format dinas dan bisa
- * ditulis manual di kertas kalau memang ada. Sama buat Nomor
- * Registrasi/Ukuran/Bahan.
+ * ditulis manual di kertas kalau memang ada. Sama buat Ukuran/Bahan.
  *
  * Tanpa filter kategori spesifik ("Semua Kategori"), laporan ini narik
  * dari kategori yang ditandai kode_kib='B' aja (Peralatan dan Mesin) —
@@ -17,6 +17,11 @@ import { formatAngka, labelAsalUsul } from "@/lib/format";
  * lain (mis. Buku & Bahan Pustaka yang kode_kib='E') punya laporan
  * KIB sendiri (lihat kib-tetap). Kalau user pilih kategori spesifik
  * secara manual, itu dihormati apa adanya (gak dipaksa harus 'B').
+ *
+ * Barang identik digabung 1 baris (mis. 90 kursi -> "Nomor Registrasi:
+ * 0001-0090"), persis konvensi blangko dinas — kolom Nomor Registrasi
+ * itu sendiri yang ngasih tau jumlahnya secara implisit lewat
+ * rentangnya (gak ada kolom "Jumlah" terpisah di format KIB B asli).
  */
 export default async function CetakKibPage({
   searchParams,
@@ -25,11 +30,13 @@ export default async function CetakKibPage({
 }) {
   const { kategori: kategoriId } = await searchParams;
 
-  const [daftarAset, sekolah, kategoriList] = await Promise.all([
+  const [daftarAsetMentah, sekolah, kategoriList] = await Promise.all([
     kategoriId ? getLaporanAsetPerKategori(kategoriId) : getAsetByKodeKib("B"),
     getSekolahSaya(),
     getKategoriList(),
   ]);
+
+  const daftarAset = gabungkanBarisSerupa(daftarAsetMentah);
 
   const namaKategori = kategoriId
     ? kategoriList.find((k) => k.id === kategoriId)?.nama ?? "—"
@@ -99,14 +106,14 @@ export default async function CetakKibPage({
               </tr>
             </thead>
             <tbody>
-              {daftarAset.map((a, i) => (
+              {daftarAset.map(({ contoh: a, hargaTotal, registerGabungan }, i) => (
                 <tr key={a.id} className="break-inside-avoid">
                   <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
                   <td className="border border-ink/40 px-1 py-1 font-mono">
                     {a.kode_barang_dinas || a.kode_aset}
                   </td>
                   <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
-                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.nomor_register || ""}</td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">{registerGabungan}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.bahan || ""}</td>
@@ -122,7 +129,7 @@ export default async function CetakKibPage({
                     {labelAsalUsul(a.sumber_dana)}
                   </td>
                   <td className="border border-ink/40 px-1 py-1 text-right">
-                    {a.harga_perolehan ? formatAngka(a.harga_perolehan) : ""}
+                    {hargaTotal ? formatAngka(hargaTotal) : ""}
                   </td>
                   <td className="border border-ink/40 px-1 py-1">{a.catatan || ""}</td>
                 </tr>

@@ -2,7 +2,7 @@ import { getLaporanAsetPerKategori, getAsetTetapList } from "@/lib/supabase/quer
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
-import { asetDariTetap } from "@/lib/laporan-adapter";
+import { asetDariTetap, gabungkanBarisSerupa } from "@/lib/laporan-adapter";
 import { formatAngka, labelAsalUsul } from "@/lib/format";
 
 /** Rekap SEMUA aset — lintas kategori Data Aset harian MAUPUN Aset
@@ -11,6 +11,12 @@ import { formatAngka, labelAsalUsul } from "@/lib/format";
  * data. Headernya bertingkat 3 baris persis blangko dinas: grup
  * "NOMOR" (Kode Barang/Register), grup "SPESIFIKASI BARANG"
  * (Nama/Merk/No.Sertifikat.../Bahan), dan grup "JUMLAH" (Barang/Harga).
+ *
+ * Barang identik (nama/kategori/ruangan/kode/dll sama, cuma beda unit)
+ * digabung jadi 1 baris — mis. 90 kursi jadi 1 baris "Register:
+ * 0001-0090, Jumlah: 90" — persis konvensi blangko dinas asli, bukan
+ * 90 baris terpisah (lihat gabungkanBarisSerupa). Data per-unit di
+ * database tetap granular, ini cuma ngerapiin tampilan cetaknya.
  *
  * "Kode Barang" pakai kode resmi dinas (`kode_barang_dinas`) kalau
  * sudah diisi, jatuh balik ke kode internal aplikasi (`kode_aset`)
@@ -22,10 +28,11 @@ export default async function CetakBukuInventarisPage() {
     getSekolahSaya(),
   ]);
 
-  const daftarAset = [
+  const gabungan = [
     ...daftarAsetHarian,
     ...daftarAsetTetap.map(asetDariTetap),
-  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
+  ];
+  const daftarAset = gabungkanBarisSerupa(gabungan);
 
   return (
     <div className="cetak-landscape max-w-[1400px] mx-auto">
@@ -90,13 +97,13 @@ export default async function CetakBukuInventarisPage() {
               </tr>
             </thead>
             <tbody>
-              {daftarAset.map((a, i) => (
+              {daftarAset.map(({ contoh: a, jumlah, hargaTotal, registerGabungan }, i) => (
                 <tr key={a.id} className="break-inside-avoid">
                   <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
                   <td className="border border-ink/40 px-1 py-1 font-mono">
                     {a.kode_barang_dinas || a.kode_aset}
                   </td>
-                  <td className="border border-ink/40 px-1 py-1 font-mono">{a.nomor_register || ""}</td>
+                  <td className="border border-ink/40 px-1 py-1 font-mono">{registerGabungan}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.nama}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.no_sertifikat_dll || ""}</td>
@@ -108,9 +115,9 @@ export default async function CetakBukuInventarisPage() {
                   <td className="border border-ink/40 px-1 py-1 text-center">
                     {a.kondisi === "baik" ? "B" : a.kondisi === "rusak_ringan" ? "KB" : "RB"}
                   </td>
-                  <td className="border border-ink/40 px-1 py-1 text-center">{a.stok}</td>
+                  <td className="border border-ink/40 px-1 py-1 text-center">{jumlah}</td>
                   <td className="border border-ink/40 px-1 py-1 text-right">
-                    {a.harga_perolehan ? formatAngka(a.harga_perolehan) : ""}
+                    {hargaTotal ? formatAngka(hargaTotal) : ""}
                   </td>
                   <td className="border border-ink/40 px-1 py-1">{a.catatan || ""}</td>
                 </tr>
