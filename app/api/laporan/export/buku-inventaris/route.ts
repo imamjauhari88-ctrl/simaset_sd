@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getLaporanAsetPerKategori } from "@/lib/supabase/queries";
+import { getLaporanAsetPerKategori, getAsetTetapList } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
+import { asetDariTetap } from "@/lib/laporan-adapter";
 import { labelAsalUsul } from "@/lib/format";
 
 export async function GET() {
@@ -10,10 +11,16 @@ export async function GET() {
     return NextResponse.json({ error: "Belum login." }, { status: 401 });
   }
 
-  const [daftarAset, sekolah] = await Promise.all([
+  const [daftarAsetHarian, daftarAsetTetap, sekolah] = await Promise.all([
     getLaporanAsetPerKategori(undefined),
+    getAsetTetapList(),
     getSekolahSaya(),
   ]);
+
+  const daftarAset = [
+    ...daftarAsetHarian,
+    ...daftarAsetTetap.map(asetDariTetap),
+  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   // Kolom & urutan persis format Buku Inventaris dinas. Label header
   // digabung "Grup - Anak" (mis. "Nomor - Kode Barang") karena Excel

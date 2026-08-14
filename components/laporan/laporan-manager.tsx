@@ -112,8 +112,10 @@ export function LaporanManager({
               value={kategoriId}
               onChange={setKategoriId}
               options={[
-                { value: "", label: "Semua Kategori" },
-                ...kategoriList.map((k) => ({ value: k.id, label: k.nama })),
+                { value: "", label: "Semua Kategori (Peralatan dan Mesin)" },
+                ...kategoriList
+                  .filter((k) => !k.kode_kib || k.kode_kib === "B")
+                  .map((k) => ({ value: k.id, label: k.nama })),
               ]}
             />
           ) : (
@@ -125,6 +127,14 @@ export function LaporanManager({
             />
           )}
         </div>
+
+        {modeKategori && (
+          <p className="text-[11px] text-ink-soft -mt-2">
+            Cuma nampilin kategori bertanda{" "}
+            <span className="font-medium text-ink">KIB B</span> atau belum
+            ditandai — kategori KIB lain (mis. Buku) punya laporan sendiri.
+          </p>
+        )}
 
         {!modeKategori && (
           <p className="text-[11px] text-ink-soft -mt-2">

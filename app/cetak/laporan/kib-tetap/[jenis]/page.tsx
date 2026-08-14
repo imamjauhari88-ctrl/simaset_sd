@@ -1,10 +1,18 @@
 import { notFound } from "next/navigation";
-import { getAsetTetapList } from "@/lib/supabase/queries";
+import { getAsetTetapList, getAsetByKodeKib } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
+import { tetapDariAset } from "@/lib/laporan-adapter";
 import { JUDUL_KIB, KOLOM_KIB, isGroup, ratakanKolom, isJenisKib } from "@/lib/laporan-kib-tetap";
 
+/** Gabungan 2 sumber data: Aset Tetap Khusus (tabel `aset_tetap`,
+ * jenis_kib match) DAN Data Aset harian yang kategorinya ditandai
+ * kode_kib huruf yang sama (mis. kategori "Alat Kesenian" ditandai
+ * KIB E, harusnya muncul juga di laporan KIB E ini walau dicatat
+ * lewat Data Aset biasa, bukan Aset Tetap Khusus). Diurutkan gabungan
+ * berdasar tanggal input (bukan per-sumber) biar nomor urutnya masuk
+ * akal sebagai satu daftar. */
 export default async function CetakKibTetapPage({
   params,
 }: {
@@ -13,10 +21,16 @@ export default async function CetakKibTetapPage({
   const { jenis } = await params;
   if (!isJenisKib(jenis)) notFound();
 
-  const [daftar, sekolah] = await Promise.all([
+  const [daftarTetap, daftarAsetKategori, sekolah] = await Promise.all([
     getAsetTetapList(jenis),
+    getAsetByKodeKib(jenis),
     getSekolahSaya(),
   ]);
+
+  const daftar = [
+    ...daftarTetap,
+    ...daftarAsetKategori.map((a) => tetapDariAset(a, jenis)),
+  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   const kolom = KOLOM_KIB[jenis];
   const leafKolom = ratakanKolom(kolom);

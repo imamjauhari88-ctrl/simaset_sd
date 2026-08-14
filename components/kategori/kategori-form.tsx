@@ -6,9 +6,11 @@ import { toast } from "sonner";
 import {
   kategoriSchema,
   kategoriDefaultValues,
+  LABEL_KODE_KIB,
   type KategoriFormValues,
 } from "@/lib/validasi/kategori";
 import { useSimpanKategori } from "@/lib/queries/kategori";
+import { Select } from "@/components/ui/select";
 import type { KategoriAset } from "@/types/database";
 
 const inputClass =
@@ -27,11 +29,13 @@ export function KategoriForm({
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<KategoriFormValues>({
     resolver: zodResolver(kategoriSchema),
     defaultValues: kategoriAwal
-      ? { nama: kategoriAwal.nama, kode_kib: kategoriAwal.kode_kib ?? "" }
+      ? { nama: kategoriAwal.nama, kode_kib: (kategoriAwal.kode_kib as KategoriFormValues["kode_kib"]) ?? "" }
       : kategoriDefaultValues,
   });
 
@@ -61,11 +65,19 @@ export function KategoriForm({
         <label className={labelClass}>
           Kode KIB <span className="text-ink-soft/70">(opsional)</span>
         </label>
-        <input
-          {...register("kode_kib")}
-          placeholder="mis. KIB-B"
-          className={`${inputClass} font-mono`}
+        <input type="hidden" {...register("kode_kib")} />
+        <Select
+          value={watch("kode_kib") ?? ""}
+          onChange={(v) => setValue("kode_kib", v as KategoriFormValues["kode_kib"], { shouldValidate: true })}
+          placeholder="Tidak ditentukan"
+          options={[
+            { value: "", label: "Tidak ditentukan" },
+            ...Object.entries(LABEL_KODE_KIB).map(([value, label]) => ({ value, label })),
+          ]}
         />
+        <p className="text-[11px] text-ink-soft mt-1">
+          Nentuin laporan KIB mana yang narik data dari kategori ini.
+        </p>
       </div>
       <div className="flex gap-3 pt-1">
         <button

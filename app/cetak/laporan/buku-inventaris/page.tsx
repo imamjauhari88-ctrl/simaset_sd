@@ -1,23 +1,31 @@
-import { getLaporanAsetPerKategori } from "@/lib/supabase/queries";
+import { getLaporanAsetPerKategori, getAsetTetapList } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
+import { asetDariTetap } from "@/lib/laporan-adapter";
 import { formatAngka, labelAsalUsul } from "@/lib/format";
 
-/** Rekap SEMUA aset lintas kategori jadi satu daftar — beda dari KIB
- * (per kategori A-F) & KIR (per ruangan). Headernya bertingkat 3 baris
- * persis blangko dinas: grup "NOMOR" (Kode Barang/Register), grup
- * "SPESIFIKASI BARANG" (Nama/Merk/No.Sertifikat.../Bahan), dan grup
- * "JUMLAH" (Barang/Harga) — bukan header rata 1 baris.
+/** Rekap SEMUA aset — lintas kategori Data Aset harian MAUPUN Aset
+ * Tetap Khusus (KIB A/C/D/E/F) — jadi satu daftar, sesuai definisi
+ * Buku Inventaris yang beneran "semua barang", bukan cuma satu sumber
+ * data. Headernya bertingkat 3 baris persis blangko dinas: grup
+ * "NOMOR" (Kode Barang/Register), grup "SPESIFIKASI BARANG"
+ * (Nama/Merk/No.Sertifikat.../Bahan), dan grup "JUMLAH" (Barang/Harga).
  *
  * "Kode Barang" pakai kode resmi dinas (`kode_barang_dinas`) kalau
  * sudah diisi, jatuh balik ke kode internal aplikasi (`kode_aset`)
  * kalau sekolah belum sempat isi kode dinasnya. */
 export default async function CetakBukuInventarisPage() {
-  const [daftarAset, sekolah] = await Promise.all([
+  const [daftarAsetHarian, daftarAsetTetap, sekolah] = await Promise.all([
     getLaporanAsetPerKategori(undefined),
+    getAsetTetapList(),
     getSekolahSaya(),
   ]);
+
+  const daftarAset = [
+    ...daftarAsetHarian,
+    ...daftarAsetTetap.map(asetDariTetap),
+  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
 
   return (
     <div className="cetak-landscape max-w-[1400px] mx-auto">

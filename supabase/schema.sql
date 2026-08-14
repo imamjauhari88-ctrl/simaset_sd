@@ -1058,3 +1058,22 @@ alter table aset add column if not exists bahan text;
 -- terpisah dari `kode_barang` yang klasifikasi dinas.
 -- ============================================================
 alter table aset_tetap add column if not exists nomor_register text;
+
+-- ============================================================
+-- Normalisasi `kategori_aset.kode_kib` — sebelumnya kolom ini teks
+-- bebas (contoh data lama: "KIB B", "KIB E"), sekarang dipakai beneran
+-- sebagai kunci routing data ke laporan KIB yang sesuai (bukan cuma
+-- teks informatif), jadi harus konsisten cuma huruf A-F. Query ini
+-- idempotent — aman dijalankan berkali-kali, gak ngerusak data yang
+-- udah dalam format pendek (A/B/C/dst).
+-- ============================================================
+update kategori_aset
+set kode_kib = upper(trim(regexp_replace(kode_kib, '^\s*KIB[-\s]*', '', 'i')))
+where kode_kib ~* '^\s*KIB';
+
+-- Data yang hasil normalisasinya masih bukan satu huruf A-F valid
+-- (typo/format aneh) dikosongin aja daripada nyangkut nilai salah yang
+-- gak ke-match laporan manapun — bisa diisi ulang manual di Kategori.
+update kategori_aset
+set kode_kib = null
+where kode_kib is not null and kode_kib not in ('A','B','C','D','E','F');

@@ -302,6 +302,28 @@ export async function getAsetTetapList(jenis?: JenisKib): Promise<AsetTetap[]> {
   return data as AsetTetap[];
 }
 
+/** Semua aset di kategori-kategori yang ditandai `kode_kib` tertentu
+ * (A-F) — dipakai laporan KIB buat narik "Data Aset" yang masuk grup
+ * KIB itu (di luar Aset Tetap Khusus, yang sumbernya beda tabel). */
+export async function getAsetByKodeKib(kodeKib: string): Promise<AsetWithRelasi[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("aset")
+    .select(
+      `*, kategori_aset:kategori_id!inner ( id, nama, kode_kib ), ruangan:ruangan_id ( id, nama )`
+    )
+    .eq("kategori_aset.kode_kib", kodeKib)
+    .order("kode_aset", { ascending: true });
+
+  if (error) {
+    console.error("Gagal mengambil aset per kode KIB:", error.message);
+    return [];
+  }
+
+  return data as unknown as AsetWithRelasi[];
+}
+
 export async function getKategoriList(): Promise<KategoriAset[]> {
   const supabase = await createClient();
   const { data, error } = await supabase

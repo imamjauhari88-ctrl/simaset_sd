@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useDaftarKategori, useHapusKategori } from "@/lib/queries/kategori";
 import { KategoriForm } from "./kategori-form";
+import { LABEL_KODE_KIB } from "@/lib/validasi/kategori";
 import type { KategoriAset } from "@/types/database";
 
 export function KategoriManager({
@@ -80,8 +81,8 @@ export function KategoriManager({
                   className="border-b border-line last:border-0 hover:bg-paper/70 transition-colors"
                 >
                   <td className="px-4 py-3 text-ink">{k.nama}</td>
-                  <td className="px-4 py-3 text-ink-soft font-mono text-[12px]">
-                    {k.kode_kib ?? "—"}
+                  <td className="px-4 py-3 text-ink-soft text-[12px]">
+                    {k.kode_kib ? LABEL_KODE_KIB[k.kode_kib] ?? k.kode_kib : "—"}
                   </td>
                   {bisaKelola && (
                     <td className="px-4 py-3">

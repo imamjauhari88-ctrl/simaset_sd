@@ -1,4 +1,4 @@
-import { getLaporanAsetPerKategori, getKategoriList } from "@/lib/supabase/queries";
+import { getLaporanAsetPerKategori, getAsetByKodeKib, getKategoriList } from "@/lib/supabase/queries";
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
@@ -10,6 +10,13 @@ import { formatAngka, labelAsalUsul } from "@/lib/format";
  * dihapus, biar formatnya tetap 16 kolom persis format dinas dan bisa
  * ditulis manual di kertas kalau memang ada. Sama buat Nomor
  * Registrasi/Ukuran/Bahan.
+ *
+ * Tanpa filter kategori spesifik ("Semua Kategori"), laporan ini narik
+ * dari kategori yang ditandai kode_kib='B' aja (Peralatan dan Mesin) —
+ * BUKAN benar-benar semua aset tanpa pandang jenis, karena kategori
+ * lain (mis. Buku & Bahan Pustaka yang kode_kib='E') punya laporan
+ * KIB sendiri (lihat kib-tetap). Kalau user pilih kategori spesifik
+ * secara manual, itu dihormati apa adanya (gak dipaksa harus 'B').
  */
 export default async function CetakKibPage({
   searchParams,
@@ -19,14 +26,14 @@ export default async function CetakKibPage({
   const { kategori: kategoriId } = await searchParams;
 
   const [daftarAset, sekolah, kategoriList] = await Promise.all([
-    getLaporanAsetPerKategori(kategoriId),
+    kategoriId ? getLaporanAsetPerKategori(kategoriId) : getAsetByKodeKib("B"),
     getSekolahSaya(),
     getKategoriList(),
   ]);
 
   const namaKategori = kategoriId
     ? kategoriList.find((k) => k.id === kategoriId)?.nama ?? "—"
-    : "Semua Kategori";
+    : "Semua Kategori (Peralatan dan Mesin)";
 
   return (
     <div className="cetak-landscape max-w-[1400px] mx-auto">

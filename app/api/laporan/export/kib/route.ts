@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getLaporanAsetPerKategori,
+  getAsetByKodeKib,
   getKategoriList,
 } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
@@ -16,14 +17,14 @@ export async function GET(request: NextRequest) {
   const kategoriId = request.nextUrl.searchParams.get("kategori") || undefined;
 
   const [daftarAset, sekolah, kategoriList] = await Promise.all([
-    getLaporanAsetPerKategori(kategoriId),
+    kategoriId ? getLaporanAsetPerKategori(kategoriId) : getAsetByKodeKib("B"),
     getSekolahSaya(),
     getKategoriList(),
   ]);
 
   const namaKategori = kategoriId
     ? kategoriList.find((k) => k.id === kategoriId)?.nama ?? "—"
-    : "Semua Kategori";
+    : "Semua Kategori (Peralatan dan Mesin)";
 
   // Kolom & urutan persis format KIB B (Peralatan dan Mesin) dinas —
   // Pabrik/Rangka/Mesin/Polisi/BPKB belum ada field terpisah di data
