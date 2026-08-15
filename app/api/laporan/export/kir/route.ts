@@ -5,6 +5,7 @@ import {
 } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
+import { gabungkanBarisSerupa } from "@/lib/laporan-adapter";
 
 export async function GET(request: NextRequest) {
   const profil = await getProfilSaya();
@@ -14,20 +15,24 @@ export async function GET(request: NextRequest) {
 
   const ruanganId = request.nextUrl.searchParams.get("ruangan") || undefined;
 
-  const [daftarAset, sekolah, ruanganList] = await Promise.all([
+  const [daftarAsetMentah, sekolah, ruanganList] = await Promise.all([
     getLaporanAsetPerRuangan(ruanganId),
     getSekolahSaya(),
     getRuanganList(),
   ]);
+
+  const daftarAset = gabungkanBarisSerupa(daftarAsetMentah);
 
   const namaRuangan = ruanganId
     ? ruanganList.find((r) => r.id === ruanganId)?.nama ?? "—"
     : "Semua Ruangan";
 
   // Kolom & urutan persis format KIR dinas — Merk/Model, No Seri Pabrik,
-  // Ukuran, Bahan belum ada field-nya di data aset (sama kayak KIB B),
+  // Ukuran belum ada field-nya di data aset (sama kayak KIB B),
   // dikosongkan aja bukan dihapus kolomnya. "Keadaan Barang" beneran
   // digabung jadi grup 3 sub-kolom (B/KB/RB), sama persis versi cetak.
+  // Barang identik di ruangan yang sama digabung jadi 1 baris, sama
+  // kayak Buku Inventaris & KIB.
   const buffer = await buatXlsxLaporan({
     judul: "KARTU INVENTARIS RUANGAN (KIR)",
     subJudul: [
@@ -51,20 +56,20 @@ export async function GET(request: NextRequest) {
       { label: "Keadaan Barang", anak: ["Baik (B)", "Kurang Baik (KB)", "Rusak Berat (RB)"] },
       "Keterangan Mutasi",
     ],
-    baris: daftarAset.map((a, i) => [
+    baris: daftarAset.map(({ contoh: a, jumlah, hargaTotal, registerGabungan }, i) => [
       i + 1,
       a.kode_barang_dinas || a.kode_aset,
       a.nama,
       a.merk_tipe || "",
       a.no_sertifikat_dll || "",
       a.ukuran_konstruksi || "",
-      "",
+      a.bahan || "",
       a.tahun_perolehan || "",
-      a.nomor_register || a.stok,
-      a.harga_perolehan ?? 0,
-      a.kondisi === "baik" ? a.stok : "",
-      a.kondisi === "rusak_ringan" ? a.stok : "",
-      a.kondisi === "rusak_berat" ? a.stok : "",
+      registerGabungan || jumlah,
+      hargaTotal ?? 0,
+      a.kondisi === "baik" ? jumlah : "",
+      a.kondisi === "rusak_ringan" ? jumlah : "",
+      a.kondisi === "rusak_berat" ? jumlah : "",
       a.catatan || "",
     ]),
     lebarKolom: [4, 14, 26, 14, 14, 10, 10, 12, 10, 16, 8, 12, 12, 20],

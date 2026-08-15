@@ -2,13 +2,18 @@ import { getLaporanAsetPerRuangan, getRuanganList } from "@/lib/supabase/queries
 import { getSekolahSaya } from "@/lib/tenant/context";
 import { TombolCetak } from "@/app/cetak/tombol-cetak";
 import { TandaTangan } from "@/app/cetak/tanda-tangan";
+import { gabungkanBarisSerupa } from "@/lib/laporan-adapter";
 import { formatAngka } from "@/lib/format";
 
-/** Kolom Merk/Model, No. Seri Pabrik, Ukuran, Bahan belum ada field-nya
- * di data aset (sama kayak KIB B) — sengaja dikosongkan dulu, bukan
+/** Kolom Merk/Model, No. Seri Pabrik, Ukuran belum ada field-nya di
+ * data aset (sama kayak KIB B) — sengaja dikosongkan dulu, bukan
  * dihapus kolomnya, biar formatnya tetap 14 kolom persis format dinas.
  * "Keadaan Barang" dipecah 3 kolom (B/KB/RB): kondisi aset "rusak_ringan"
- * dipetakan ke kolom KB (Kurang Baik), sesuai istilah form dinas. */
+ * dipetakan ke kolom KB (Kurang Baik), sesuai istilah form dinas.
+ *
+ * Barang identik di ruangan yang sama digabung jadi 1 baris (mis. 5
+ * kursi identik -> 1 baris "Register: 0001-0005, Jumlah: 5"), sama
+ * kayak Buku Inventaris & KIB — bukan 1 baris per unit lagi. */
 export default async function CetakKirPage({
   searchParams,
 }: {
@@ -16,11 +21,13 @@ export default async function CetakKirPage({
 }) {
   const { ruangan: ruanganId } = await searchParams;
 
-  const [daftarAset, sekolah, ruanganList] = await Promise.all([
+  const [daftarAsetMentah, sekolah, ruanganList] = await Promise.all([
     getLaporanAsetPerRuangan(ruanganId),
     getSekolahSaya(),
     getRuanganList(),
   ]);
+
+  const daftarAset = gabungkanBarisSerupa(daftarAsetMentah);
 
   const namaRuangan = ruanganId
     ? ruanganList.find((r) => r.id === ruanganId)?.nama ?? "—"
@@ -90,7 +97,7 @@ export default async function CetakKirPage({
               </tr>
             </thead>
             <tbody>
-              {daftarAset.map((a, i) => (
+              {daftarAset.map(({ contoh: a, jumlah, hargaTotal, registerGabungan }, i) => (
                 <tr key={a.id} className="break-inside-avoid">
                   <td className="border border-ink/40 px-1 py-1 text-center">{i + 1}</td>
                   <td className="border border-ink/40 px-1 py-1 font-mono">
@@ -100,24 +107,24 @@ export default async function CetakKirPage({
                   <td className="border border-ink/40 px-1 py-1">{a.merk_tipe || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.no_sertifikat_dll || ""}</td>
                   <td className="border border-ink/40 px-1 py-1">{a.ukuran_konstruksi || ""}</td>
-                  <td className="border border-ink/40 px-1 py-1"></td>
+                  <td className="border border-ink/40 px-1 py-1">{a.bahan || ""}</td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
                     {a.tahun_perolehan || ""}
                   </td>
-                  <td className="border border-ink/40 px-1 py-1 text-center">
-                    {a.nomor_register || a.stok}
+                  <td className="border border-ink/40 px-1 py-1 text-center font-mono">
+                    {registerGabungan || jumlah}
                   </td>
                   <td className="border border-ink/40 px-1 py-1 text-right">
-                    {a.harga_perolehan ? formatAngka(a.harga_perolehan) : ""}
+                    {hargaTotal ? formatAngka(hargaTotal) : ""}
                   </td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
-                    {a.kondisi === "baik" ? a.stok : ""}
+                    {a.kondisi === "baik" ? jumlah : ""}
                   </td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
-                    {a.kondisi === "rusak_ringan" ? a.stok : ""}
+                    {a.kondisi === "rusak_ringan" ? jumlah : ""}
                   </td>
                   <td className="border border-ink/40 px-1 py-1 text-center">
-                    {a.kondisi === "rusak_berat" ? a.stok : ""}
+                    {a.kondisi === "rusak_berat" ? jumlah : ""}
                   </td>
                   <td className="border border-ink/40 px-1 py-1">{a.catatan || ""}</td>
                 </tr>

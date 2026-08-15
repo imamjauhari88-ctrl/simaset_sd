@@ -167,19 +167,40 @@ export function gabungkanBarisSerupa(daftar: AsetWithRelasi[]): BarisTergabung[]
     .map(({ _urutan: _abaikan, ...sisanya }) => sisanya);
 }
 
-/** "0001","0002",..,"0090" -> "0001-0090". Kalau nomornya gak beruntun
- * (mis. ada yang bolong atau format beda-beda), tampil digabung koma
- * apa adanya daripada maksa bikin rentang yang salah. */
+/** "0001","0002","0004",..,"0011" -> "0001-0002, 0004-0011". Gabungin
+ * tiap kelompok angka yang beruntun jadi satu rentang sendiri-sendiri,
+ * dipisah koma antar kelompok — konvensi umum nulis rentang nomor yang
+ * ada bolongnya (mis. 100 kursi, cuma 2 yang kondisinya beda, jadi
+ * kepisah grup — daripada nulis 98 angka satu-satu, cukup "0001-0002,
+ * 0004-0100"). Kalau bukan angka murni sama sekali (format aneh),
+ * digabung koma apa adanya. */
 function ringkasRegister(list: string[]): string {
   if (list.length === 0) return "";
   const terurut = [...list].sort();
   if (terurut.length === 1) return terurut[0];
 
   const semuaAngka = terurut.every((s) => /^\d+$/.test(s));
-  if (semuaAngka) {
-    const angka = terurut.map(Number).sort((a, b) => a - b);
-    const beruntun = angka.every((n, i) => i === 0 || n === angka[i - 1] + 1);
-    if (beruntun) return `${terurut[0]}-${terurut[terurut.length - 1]}`;
+  if (!semuaAngka) return terurut.join(", ");
+
+  const lebarDigit = terurut[0].length;
+  const angka = terurut.map(Number).sort((a, b) => a - b);
+
+  const kelompok: [number, number][] = [];
+  let awal = angka[0];
+  let prev = angka[0];
+  for (let i = 1; i <= angka.length; i++) {
+    const now = angka[i];
+    if (now === prev + 1) {
+      prev = now;
+      continue;
+    }
+    kelompok.push([awal, prev]);
+    awal = now;
+    prev = now;
   }
-  return terurut.join(", ");
+
+  const tulis = (n: number) => String(n).padStart(lebarDigit, "0");
+  return kelompok
+    .map(([a, b]) => (a === b ? tulis(a) : `${tulis(a)}-${tulis(b)}`))
+    .join(", ");
 }
