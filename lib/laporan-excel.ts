@@ -78,7 +78,12 @@ export async function buatXlsxLaporan({
     const sel = sheet.getCell(baris_ke, KOLOM_MARGIN + 1);
     sel.value = teks;
     sel.font = { bold: tebal, size: tebal ? 14 : 10 };
-    sel.alignment = { horizontal: "center" };
+    sel.alignment = { horizontal: "center", vertical: "middle" };
+    // Tinggi baris default Excel (~15pt) jauh lebih rapat dibanding
+    // line-height paragraf di versi cetak HTML — makanya biar gak
+    // keliatan numpuk, tiap baris kop (judul & info sekolah) dikasih
+    // tinggi eksplisit yang lebih lega.
+    sheet.getRow(baris_ke).height = tebal ? 26 : 20;
     baris_ke++;
   }
 
