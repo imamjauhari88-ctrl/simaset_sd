@@ -76,6 +76,7 @@ export async function GET(request: NextRequest) {
       a.catatan || "",
     ]),
     lebarKolom: [4, 14, 26, 14, 16, 10, 10, 10, 10, 10, 10, 10, 10, 18, 14, 20],
+    sekolah,
   });
 
   return new NextResponse(new Uint8Array(buffer), {

@@ -45,6 +45,7 @@ export async function GET(
         ? [["", "NIHIL", ...Array(leafKolom.length - 2).fill("")]]
         : daftar.map((a, i) => leafKolom.map((k) => k.ambil(a, i))),
     lebarKolom: leafKolom.map((k) => k.lebar ?? 14),
+    sekolah,
   });
 
   return new NextResponse(new Uint8Array(buffer), {

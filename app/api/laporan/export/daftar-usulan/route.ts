@@ -55,6 +55,7 @@ export async function GET() {
     header,
     baris,
     lebarKolom: [4, 26, 14, 16, 14, 18, 12, 16, 16, 20],
+    sekolah,
   });
 
   return new NextResponse(new Uint8Array(buffer), {

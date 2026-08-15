@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
       m.keterangan || "—",
     ]),
     lebarKolom: [4, 12, 16, 28, 18, 18, 18, 30],
+    sekolah,
   });
 
   return new NextResponse(new Uint8Array(buffer), {
