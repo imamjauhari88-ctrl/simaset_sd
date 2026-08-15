@@ -167,12 +167,15 @@ export interface HasilSimpanAsetMassal {
 }
 
 /**
- * Insert banyak aset identik sekaligus (mis. 40 kursi siswa) dalam SATU
- * kali panggilan .insert([...]) — bukan loop insert satu-satu, biar cuma
- * satu round-trip ke Supabase walau jumlahnya sampai ratusan. kode_aset
- * tiap baris auto-generate (lihat buatKodeAsetOtomatisBanyak) — sama
- * kayak Tambah Aset satuan, murni kode internal, gak perlu diisi/dilihat
- * user lagi.
+ * Insert banyak aset identik sekaligus, sekarang bisa langsung kesebar
+ * ke beberapa ruangan sekaligus dalam SATU kali panggilan .insert([...])
+ * — bukan loop insert satu-satu, biar cuma satu round-trip ke Supabase
+ * walau totalnya sampai ratusan. kode_aset tiap baris auto-generate
+ * (lihat buatKodeAsetOtomatisBanyak) — sama kayak Tambah Aset satuan,
+ * murni kode internal, gak perlu diisi/dilihat user lagi. Nomor Register
+ * (kalau diisi) nyambung URUT LINTAS SEMUA ruangan di distribusi, bukan
+ * diulang dari 1 tiap ruangan — biar pas dicetak di laporan, batch ini
+ * kegabung balik jadi 1 baris rapi walau fisiknya kesebar.
  */
 export function useSimpanAsetMassal() {
   const queryClient = useQueryClient();
@@ -182,32 +185,40 @@ export function useSimpanAsetMassal() {
       values: AsetMassalFormValues
     ): Promise<HasilSimpanAsetMassal> => {
       const supabase = createClient();
-      const kodeList = buatKodeAsetOtomatisBanyak(values.jumlah);
+      const totalUnit = values.distribusi.reduce((t, d) => t + d.jumlah, 0);
+      const kodeList = buatKodeAsetOtomatisBanyak(totalUnit);
       // Register cuma di-generate kalau "Nomor Register Mulai" diisi —
       // kalau dikosongin, semua unit null dulu (bisa diisi manual
       // belakangan lewat Edit satu-satu).
       const registerList =
         values.register_mulai !== "" && values.register_mulai !== undefined
-          ? buatRegisterMassal(values.register_mulai, values.jumlah)
+          ? buatRegisterMassal(values.register_mulai, totalUnit)
           : null;
 
-      const rows = kodeList.map((kode_aset, i) => ({
-        kode_aset,
-        nama: values.nama,
-        kategori_id: values.kategori_id,
-        ruangan_id: values.ruangan_id,
-        merk_tipe: values.merk_tipe || null,
-        bahan: values.bahan || null,
-        kode_barang_dinas: values.kode_barang_dinas || null,
-        nomor_register: registerList ? registerList[i] : null,
-        no_sertifikat_dll: values.no_sertifikat_dll || null,
-        ukuran_konstruksi: values.ukuran_konstruksi || null,
-        tahun_perolehan: values.tahun_perolehan,
-        sumber_dana: values.sumber_dana,
-        harga_perolehan: values.harga_perolehan,
-        kondisi: values.kondisi,
-        catatan: values.catatan || null,
-      }));
+      const rows: Record<string, unknown>[] = [];
+      let idxGlobal = 0;
+      for (const d of values.distribusi) {
+        for (let i = 0; i < d.jumlah; i++) {
+          rows.push({
+            kode_aset: kodeList[idxGlobal],
+            nama: values.nama,
+            kategori_id: values.kategori_id,
+            ruangan_id: d.ruangan_id,
+            merk_tipe: values.merk_tipe || null,
+            bahan: values.bahan || null,
+            kode_barang_dinas: values.kode_barang_dinas || null,
+            nomor_register: registerList ? registerList[idxGlobal] : null,
+            no_sertifikat_dll: values.no_sertifikat_dll || null,
+            ukuran_konstruksi: values.ukuran_konstruksi || null,
+            tahun_perolehan: values.tahun_perolehan,
+            sumber_dana: values.sumber_dana,
+            harga_perolehan: values.harga_perolehan,
+            kondisi: values.kondisi,
+            catatan: values.catatan || null,
+          });
+          idxGlobal++;
+        }
+      }
 
       const { error } = await supabase.from("aset").insert(rows);
 
@@ -224,7 +235,7 @@ export function useSimpanAsetMassal() {
       }
 
       return {
-        jumlah: values.jumlah,
+        jumlah: totalUnit,
       };
     },
     onSuccess: () => {

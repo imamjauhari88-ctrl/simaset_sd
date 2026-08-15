@@ -105,6 +105,18 @@ export function FormAset({
           menambahkan aset ini yang bisa mengubahnya.
         </p>
       )}
+      {!asetAwal && (
+        <p className="text-[13px] text-ink-soft bg-paper border border-line rounded-lg px-3 py-2">
+          <span className="font-medium text-ink">Kode Aset</span> dibuat
+          otomatis sama sistem (buat isi QR & tracking internal doang,
+          gak perlu dipikirin). Kalau tahu{" "}
+          <span className="font-medium text-ink">Kode Barang</span> resmi
+          dari dinas/ARKAS & <span className="font-medium text-ink">Register</span>
+          -nya, isi di bagian &quot;Data untuk Laporan Dinas&quot; di
+          bawah — kalau belum tahu, boleh dikosongin dulu, bisa diisi
+          belakangan lewat Edit.
+        </p>
+      )}
       <fieldset disabled={!bisaSimpan} className="space-y-5 disabled:opacity-70">
       <FotoAsetInput
         fotoUrlAwal={watch("foto_url")}

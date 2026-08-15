@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { Plus, Trash2 } from "lucide-react";
 import {
   asetMassalSchema,
   asetMassalDefaultValues,
@@ -34,15 +35,34 @@ export function FormAsetMassal({
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<AsetMassalFormValues>({
     resolver: zodResolver(asetMassalSchema),
     defaultValues: asetMassalDefaultValues,
   });
 
-  // Preview total harga dihitung live dari input saat ini.
-  const jumlah = Number(watch("jumlah")) || 0;
+  const { fields, append, remove } = useFieldArray({ control, name: "distribusi" });
+
+  // Preview total unit & harga dihitung live dari semua baris distribusi.
+  const distribusi = watch("distribusi") ?? [];
+  const jumlah = distribusi.reduce((t, d) => t + (Number(d.jumlah) || 0), 0);
   const harga = Number(watch("harga_perolehan")) || 0;
+  const registerMulai = watch("register_mulai");
+
+  // Preview rentang register per ruangan — nyambung urut lintas
+  // ruangan (bukan diulang dari 1 tiap ruangan), biar keliatan jelas
+  // ruangan mana kebagian nomor berapa sebelum submit.
+  let kursorRegister =
+    registerMulai !== "" && registerMulai !== undefined ? Number(registerMulai) : null;
+  const previewPerRuangan = distribusi.map((d) => {
+    const jml = Number(d.jumlah) || 0;
+    if (kursorRegister === null || jml <= 0) return null;
+    const awal = kursorRegister;
+    const akhir = kursorRegister + jml - 1;
+    kursorRegister += jml;
+    return { awal, akhir };
+  });
 
   async function onSubmit(values: AsetMassalFormValues) {
     try {
@@ -61,34 +81,103 @@ export function FormAsetMassal({
       className="tag-card p-6 space-y-5 max-w-3xl"
     >
       <p className="text-[13px] text-ink-soft bg-paper border border-line rounded-lg px-3 py-2">
-        Buat banyak aset identik sekaligus (mis. 40 kursi siswa) — cocok
-        buat barang yang jumlahnya banyak tapi sama persis (nama, kategori,
-        ruangan, harga satuan). Tiap unit tetap dapat kode & QR sendiri,
-        jadi kondisinya bisa dilacak satu-satu nanti.
+        Buat banyak aset identik sekaligus (mis. 60 kursi siswa) — cocok
+        buat barang yang jumlahnya banyak tapi sama persis (nama,
+        kategori, harga satuan). Bisa langsung dibagi ke beberapa
+        ruangan dengan jumlah beda-beda dalam satu kali input — gak
+        harus rata. Tiap unit tetap dapat kode & QR sendiri, jadi
+        kondisinya bisa dilacak satu-satu nanti.
       </p>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass}>Nama Aset</label>
-          <input
-            {...register("nama")}
-            placeholder="mis. Kursi Siswa"
-            className={inputClass}
-          />
-          {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
+      <div>
+        <label className={labelClass}>Nama Aset</label>
+        <input
+          {...register("nama")}
+          placeholder="mis. Kursi Siswa"
+          className={inputClass}
+        />
+        {errors.nama && <p className={errorClass}>{errors.nama.message}</p>}
+      </div>
+
+      <div>
+        <label className={labelClass}>Kategori</label>
+        <input type="hidden" {...register("kategori_id")} />
+        <Select
+          value={watch("kategori_id") ?? ""}
+          onChange={(v) => setValue("kategori_id", v, { shouldValidate: true })}
+          placeholder="Pilih kategori"
+          options={kategoriList.map((k) => ({ value: k.id, label: k.nama }))}
+        />
+        {errors.kategori_id && (
+          <p className={errorClass}>{errors.kategori_id.message}</p>
+        )}
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className={labelClass + " mb-0"}>Ruangan & Jumlah</label>
+          <button
+            type="button"
+            onClick={() => append({ ruangan_id: "", jumlah: 1 })}
+            className="inline-flex items-center gap-1 text-[12px] text-pine hover:text-pine-dark font-medium"
+          >
+            <Plus size={13} />
+            Tambah Ruangan
+          </button>
         </div>
-        <div>
-          <label className={labelClass}>Jumlah Unit</label>
-          <input
-            type="number"
-            {...register("jumlah")}
-            placeholder="mis. 40"
-            className={inputClass}
-          />
-          {errors.jumlah && (
-            <p className={errorClass}>{errors.jumlah.message}</p>
-          )}
+        <div className="space-y-2">
+          {fields.map((field, idx) => (
+            <div key={field.id} className="flex items-start gap-2">
+              <div className="flex-1">
+                <input type="hidden" {...register(`distribusi.${idx}.ruangan_id`)} />
+                <Select
+                  size="sm"
+                  value={watch(`distribusi.${idx}.ruangan_id`) ?? ""}
+                  onChange={(v) =>
+                    setValue(`distribusi.${idx}.ruangan_id`, v, { shouldValidate: true })
+                  }
+                  placeholder="Pilih ruangan"
+                  options={ruanganList.map((r) => ({ value: r.id, label: r.nama }))}
+                />
+                {errors.distribusi?.[idx]?.ruangan_id && (
+                  <p className={errorClass}>
+                    {errors.distribusi[idx]?.ruangan_id?.message}
+                  </p>
+                )}
+              </div>
+              <div className="w-24 shrink-0">
+                <input
+                  type="number"
+                  {...register(`distribusi.${idx}.jumlah`)}
+                  placeholder="Jumlah"
+                  className={`${inputClass} py-1.5 text-sm`}
+                />
+              </div>
+              {previewPerRuangan[idx] && (
+                <p className="text-[11px] text-ink-soft font-mono shrink-0 pt-2 w-24">
+                  {String(previewPerRuangan[idx]!.awal).padStart(4, "0")}–
+                  {String(previewPerRuangan[idx]!.akhir).padStart(4, "0")}
+                </p>
+              )}
+              {fields.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => remove(idx)}
+                  className="text-ink-soft hover:text-brick transition-colors shrink-0 p-2"
+                  aria-label="Hapus baris"
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
+            </div>
+          ))}
         </div>
+        {errors.distribusi?.message && (
+          <p className={errorClass}>{errors.distribusi.message}</p>
+        )}
+        {errors.distribusi?.root?.message && (
+          <p className={errorClass}>{errors.distribusi.root.message}</p>
+        )}
       </div>
 
       {harga > 0 && jumlah >= 2 && (
@@ -100,35 +189,6 @@ export function FormAsetMassal({
           <span className="text-ink-soft"> untuk {jumlah} unit</span>
         </div>
       )}
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass}>Kategori</label>
-          <input type="hidden" {...register("kategori_id")} />
-          <Select
-            value={watch("kategori_id") ?? ""}
-            onChange={(v) => setValue("kategori_id", v, { shouldValidate: true })}
-            placeholder="Pilih kategori"
-            options={kategoriList.map((k) => ({ value: k.id, label: k.nama }))}
-          />
-          {errors.kategori_id && (
-            <p className={errorClass}>{errors.kategori_id.message}</p>
-          )}
-        </div>
-        <div>
-          <label className={labelClass}>Ruangan</label>
-          <input type="hidden" {...register("ruangan_id")} />
-          <Select
-            value={watch("ruangan_id") ?? ""}
-            onChange={(v) => setValue("ruangan_id", v, { shouldValidate: true })}
-            placeholder="Pilih ruangan"
-            options={ruanganList.map((r) => ({ value: r.id, label: r.nama }))}
-          />
-          {errors.ruangan_id && (
-            <p className={errorClass}>{errors.ruangan_id.message}</p>
-          )}
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
@@ -170,13 +230,10 @@ export function FormAsetMassal({
         <p className="text-[12px] text-ink-soft mb-3">
           Opsional. Kode Barang berlaku sama buat semua unit (kode
           klasifikasi dinas emang sama buat barang sejenis). Nomor
-          Register otomatis diurut per unit dari nomor mulai yang
-          diisi — mis. mulai <span className="font-mono">1</span> buat{" "}
-          {jumlah || "90"} unit jadi{" "}
-          <span className="font-mono">
-            {String(1).padStart(4, "0")}–{String(jumlah || 90).padStart(4, "0")}
-          </span>
-          .
+          Register otomatis diurut nyambung lintas semua ruangan di
+          atas (bukan diulang dari 1 tiap ruangan) — preview rentang
+          per ruangan udah kelihatan di sebelah kolom Jumlah di atas
+          begitu field ini diisi.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>

@@ -31,6 +31,16 @@ export default async function AsetPage({
     <>
       <Topbar title="Data Aset" />
       <main className="flex-1 p-6 space-y-4">
+        <p className="text-[13px] text-ink-soft bg-paper border border-line rounded-lg px-3 py-2">
+          Tiap unit dicatat sendiri-sendiri (kondisi & riwayatnya bisa
+          dilacak satu-satu), tapi barang yang identik otomatis
+          digabung jadi 1 baris ringkas pas dicetak di laporan Buku
+          Inventaris/KIB. Mau tau isi lengkap 1 ruangan tertentu? Cek{" "}
+          <Link href="/laporan" className="text-pine hover:underline">
+            laporan KIR
+          </Link>
+          .
+        </p>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <p className="text-[13px] text-ink-soft">
             {totalAset} aset tercatat

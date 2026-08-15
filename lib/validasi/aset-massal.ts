@@ -1,21 +1,32 @@
 import { z } from "zod";
 
-export const asetMassalSchema = z.object({
-  nama: z.string().min(1, "Nama aset wajib diisi").max(150),
+export const distribusiRuanganSchema = z.object({
+  ruangan_id: z.string().uuid("Pilih ruangan"),
   jumlah: z.coerce
     .number({ invalid_type_error: "Jumlah harus berupa angka" })
     .int()
-    .min(2, "Minimal 2 unit — kalau cuma 1, pakai Tambah Aset biasa")
-    .max(300, "Maksimal 300 unit sekaligus dalam satu kali input"),
+    .min(1, "Minimal 1 unit"),
+});
+
+export const asetMassalSchema = z.object({
+  nama: z.string().min(1, "Nama aset wajib diisi").max(150),
   kategori_id: z.string().uuid("Pilih kategori"),
-  ruangan_id: z.string().uuid("Pilih ruangan"),
+  // Barang yang sama bisa langsung dibagi ke beberapa ruangan sekaligus
+  // dalam satu kali input (mis. 60 kursi: 15 ke Kelas 1, 8 ke Kelas 2,
+  // dst — jumlahnya boleh beda-beda tiap ruangan, gak harus rata).
+  // Total unit dijumlah dari semua baris distribusi ini.
+  distribusi: z
+    .array(distribusiRuanganSchema)
+    .min(1, "Isi minimal 1 ruangan"),
   merk_tipe: z.string().max(100).optional().or(z.literal("")),
   bahan: z.string().max(100).optional().or(z.literal("")),
   kode_barang_dinas: z.string().max(60).optional().or(z.literal("")),
-  // Nomor Register otomatis diurut per unit (mis. mulai 1 + jumlah 90 ->
-  // 0001 s/d 0090), bukan diisi manual sebagai teks bebas — soalnya
-  // tiap barang harusnya punya nomor register sendiri-sendiri dalam
-  // batch, bukan semua kebagian teks rentang yang sama persis.
+  // Nomor Register otomatis diurut nyambung LINTAS SEMUA ruangan di
+  // distribusi (bukan diulang dari 1 tiap ruangan) — mis. 15 ke Kelas 1
+  // + 8 ke Kelas 2 -> Kelas 1 dapat 0001-0015, Kelas 2 lanjut 0016-0023.
+  // Ini biar pas dicetak di Buku Inventaris/KIB, batch ini kegabung
+  // balik jadi 1 baris rapi "Register 0001-0023, Jumlah 23" — walau
+  // fisiknya kesebar ke ruangan berbeda-beda.
   register_mulai: z.coerce
     .number({ invalid_type_error: "Nomor register mulai harus berupa angka" })
     .int()
@@ -39,15 +50,26 @@ export const asetMassalSchema = z.object({
     errorMap: () => ({ message: "Pilih kondisi" }),
   }),
   catatan: z.string().max(1000).optional().or(z.literal("")),
-});
+}).refine(
+  (v) => v.distribusi.reduce((total, d) => total + (Number(d.jumlah) || 0), 0) >= 2,
+  {
+    message: "Total unit (semua ruangan dijumlah) minimal 2 — kalau cuma 1, pakai Tambah Aset biasa",
+    path: ["distribusi"],
+  }
+).refine(
+  (v) => v.distribusi.reduce((total, d) => total + (Number(d.jumlah) || 0), 0) <= 300,
+  {
+    message: "Total unit (semua ruangan dijumlah) maksimal 300 sekaligus",
+    path: ["distribusi"],
+  }
+);
 
 export type AsetMassalFormValues = z.infer<typeof asetMassalSchema>;
 
 export const asetMassalDefaultValues: AsetMassalFormValues = {
   nama: "",
-  jumlah: 2,
   kategori_id: "",
-  ruangan_id: "",
+  distribusi: [{ ruangan_id: "", jumlah: 2 }],
   merk_tipe: "",
   bahan: "",
   kode_barang_dinas: "",
