@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     ? `RINGKASAN SEKOLAH — ${(daftar[0]?.nama ?? "SATU TENANT").toUpperCase()}`
     : "RINGKASAN SEKOLAH — SEMUA TENANT";
 
-  const buffer = buatXlsxLaporan({
+  const buffer = await buatXlsxLaporan({
     judul: judulScope,
     subJudul: [
       "SIMASET SD — Panel Super Admin",

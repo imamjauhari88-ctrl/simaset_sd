@@ -1,5 +1,6 @@
 import type { AsetTetap, JenisKib } from "@/types/database";
 import { formatAngka } from "@/lib/format";
+import type { HeaderKolom } from "@/lib/laporan-excel";
 
 /**
  * Konfigurasi kolom laporan KIB A/C/D/E/F — dipakai bareng sama halaman
@@ -53,9 +54,13 @@ export function ratakanKolom(kolom: KolomDef[]): KolomLeaf[] {
  * cara natural buat nampilin header 2 baris bertingkat kayak di cetak
  * HTML; digabung jadi satu label tetap jelas konteksnya dan malah lebih
  * gampang di-filter/sort ketimbang header merge cell di Excel. */
-export function labelKolomExcel(kolom: KolomDef[]): string[] {
-  return kolom.flatMap((k) =>
-    isGroup(k) ? k.anak.map((a) => `${k.label} - ${a.label}`) : [k.label]
+/** Konversi struktur kolom (bisa ada grup) jadi format header buat
+ * `buatXlsxLaporan` — sekarang Excel-nya beneran bisa header 2 baris
+ * digabung (merge cell), sama persis versi cetak HTML, jadi gak perlu
+ * lagi digabung jadi teks "Grup - Anak" satu baris kayak sebelumnya. */
+export function headerKolomExcel(kolom: KolomDef[]): HeaderKolom[] {
+  return kolom.map((k) =>
+    isGroup(k) ? { label: k.label, anak: k.anak.map((a) => a.label) } : k.label
   );
 }
 

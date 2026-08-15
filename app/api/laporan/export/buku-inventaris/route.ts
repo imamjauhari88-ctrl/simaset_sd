@@ -23,11 +23,11 @@ export async function GET() {
   ];
   const daftarAset = gabungkanBarisSerupa(gabungan);
 
-  // Kolom & urutan persis format Buku Inventaris dinas. Label header
-  // digabung "Grup - Anak" (mis. "Nomor - Kode Barang") karena Excel
-  // gak punya cara natural nampilin header bertingkat 3 baris kayak di
-  // cetak HTML.
-  const buffer = buatXlsxLaporan({
+  // Kolom & urutan persis format Buku Inventaris dinas — headernya
+  // beneran 2 baris digabung (NOMOR/SPESIFIKASI BARANG/JUMLAH sebagai
+  // grup), sama persis versi cetak HTML-nya, bukan cuma teks
+  // "Grup - Anak" digabung 1 baris kayak sebelumnya.
+  const buffer = await buatXlsxLaporan({
     judul: "BUKU INVENTARIS",
     subJudul: [
       `SKPD: ${sekolah?.nama ?? ""}`,
@@ -37,19 +37,17 @@ export async function GET() {
     ],
     header: [
       "No",
-      "Nomor - Kode Barang",
-      "Nomor - Register",
-      "Spesifikasi - Nama/ Jenis Barang",
-      "Spesifikasi - Merk/ Type",
-      "Spesifikasi - No.Sertifikat/ No.Pabrik/ No.Chasis/ No.Mesin",
-      "Spesifikasi - Bahan",
+      { label: "Nomor", anak: ["Kode Barang", "Register"] },
+      {
+        label: "Spesifikasi Barang",
+        anak: ["Nama/ Jenis Barang", "Merk/ Type", "No.Sertifikat/ No.Pabrik/ No.Chasis/ No.Mesin", "Bahan"],
+      },
       "Asal/ Cara Perolehan Barang",
       "Tahun Perolehan",
       "Ukuran Barang/ Konstruksi (P,S,D)",
       "Satuan",
       "Keadaan Barang (B/KB/RB)",
-      "Jumlah - Barang",
-      "Jumlah - Harga",
+      { label: "Jumlah", anak: ["Barang", "Harga"] },
       "Ket.",
     ],
     baris: daftarAset.map(({ contoh: a, jumlah, hargaTotal, registerGabungan }, i) => [

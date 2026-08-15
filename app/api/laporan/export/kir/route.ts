@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
 
   // Kolom & urutan persis format KIR dinas — Merk/Model, No Seri Pabrik,
   // Ukuran, Bahan belum ada field-nya di data aset (sama kayak KIB B),
-  // dikosongkan aja bukan dihapus kolomnya. "Keadaan Barang" dipecah 3
-  // kolom (B/KB/RB) sesuai istilah form dinas.
-  const buffer = buatXlsxLaporan({
+  // dikosongkan aja bukan dihapus kolomnya. "Keadaan Barang" beneran
+  // digabung jadi grup 3 sub-kolom (B/KB/RB), sama persis versi cetak.
+  const buffer = await buatXlsxLaporan({
     judul: "KARTU INVENTARIS RUANGAN (KIR)",
     subJudul: [
       `Provinsi: ${sekolah?.provinsi || "—"}  |  Kab/Kota: ${sekolah?.kabupaten_kota || "—"}`,
@@ -48,9 +48,7 @@ export async function GET(request: NextRequest) {
       "Tahun Pembuatan/ Pembelian",
       "Jumlah Barang/ Register",
       "Harga Beli/ Perolehan",
-      "Baik (B)",
-      "Kurang Baik (KB)",
-      "Rusak Berat (RB)",
+      { label: "Keadaan Barang", anak: ["Baik (B)", "Kurang Baik (KB)", "Rusak Berat (RB)"] },
       "Keterangan Mutasi",
     ],
     baris: daftarAset.map((a, i) => [

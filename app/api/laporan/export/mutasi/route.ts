@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     getSekolahSaya(),
   ]);
 
-  const buffer = buatXlsxLaporan({
+  const buffer = await buatXlsxLaporan({
     judul: "LAPORAN MUTASI ASET",
     subJudul: [
       sekolah?.nama ?? "",

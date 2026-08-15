@@ -45,7 +45,7 @@ export async function GET() {
         a.catatan || "",
       ]);
 
-  const buffer = buatXlsxLaporan({
+  const buffer = await buatXlsxLaporan({
     judul: "DAFTAR USULAN BARANG YANG DIHAPUS",
     subJudul: [
       `SKPD: ${sekolah?.nama ?? ""}`,

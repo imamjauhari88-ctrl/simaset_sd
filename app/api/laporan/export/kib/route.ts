@@ -30,10 +30,12 @@ export async function GET(request: NextRequest) {
     : "Semua Kategori (Peralatan dan Mesin)";
 
   // Kolom & urutan persis format KIB B (Peralatan dan Mesin) dinas —
-  // Pabrik/Rangka/Mesin/Polisi/BPKB belum ada field terpisah di data
-  // aset (dianggap 1 kolom gabungan "No.Sertifikat/dll" di form),
-  // dikosongkan aja di sini, bukan dihapus kolomnya.
-  const buffer = buatXlsxLaporan({
+  // grup "NOMOR" (Pabrik/Rangka/Mesin/Polisi/BPKB) beneran digabung
+  // jadi header 2 baris, sama persis versi cetak HTML-nya. Belum ada
+  // field terpisah di data aset buat 5 sub-kolom itu (dianggap 1 kolom
+  // gabungan "No.Sertifikat/dll" di form), dikosongkan aja, bukan
+  // dihapus kolomnya.
+  const buffer = await buatXlsxLaporan({
     judul: "KARTU INVENTARIS BARANG (KIB) B — PERALATAN DAN MESIN",
     subJudul: [
       sekolah?.nama ?? "",
@@ -50,11 +52,7 @@ export async function GET(request: NextRequest) {
       "Ukuran/ CC",
       "Bahan",
       "Tahun Pembelian",
-      "Nomor Pabrik",
-      "Nomor Rangka",
-      "Nomor Mesin",
-      "Nomor Polisi",
-      "Nomor BPKB",
+      { label: "Nomor", anak: ["Pabrik", "Rangka", "Mesin", "Polisi", "BPKB"] },
       "Asal Usul Cara Perolehan",
       "Harga",
       "Ket.",

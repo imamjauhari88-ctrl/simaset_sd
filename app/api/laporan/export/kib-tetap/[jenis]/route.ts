@@ -3,7 +3,7 @@ import { getAsetTetapList, getAsetByKodeKib } from "@/lib/supabase/queries";
 import { getProfilSaya, getSekolahSaya } from "@/lib/tenant/context";
 import { buatXlsxLaporan } from "@/lib/laporan-excel";
 import { tetapTergabungDariAset } from "@/lib/laporan-adapter";
-import { JUDUL_KIB, KOLOM_KIB, ratakanKolom, labelKolomExcel, isJenisKib } from "@/lib/laporan-kib-tetap";
+import { JUDUL_KIB, KOLOM_KIB, ratakanKolom, headerKolomExcel, isJenisKib } from "@/lib/laporan-kib-tetap";
 
 export async function GET(
   _request: NextRequest,
@@ -33,13 +33,13 @@ export async function GET(
   const kolom = KOLOM_KIB[jenis];
   const leafKolom = ratakanKolom(kolom);
 
-  const buffer = buatXlsxLaporan({
+  const buffer = await buatXlsxLaporan({
     judul: `KARTU INVENTARIS BARANG (KIB) ${jenis} — ${JUDUL_KIB[jenis].toUpperCase()}`,
     subJudul: [
       `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
       `Dicetak: ${new Date().toLocaleString("id-ID")}`,
     ],
-    header: labelKolomExcel(kolom),
+    header: headerKolomExcel(kolom),
     baris:
       daftar.length === 0
         ? [["", "NIHIL", ...Array(leafKolom.length - 2).fill("")]]
