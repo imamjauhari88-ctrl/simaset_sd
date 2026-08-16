@@ -48,10 +48,10 @@ export default async function CetakKibPage({
 
       <div className="text-center mb-1">
         <p className="font-display font-bold text-ink text-base uppercase">
-          Kartu Inventaris Barang (KIB) B
+          Kartu Inventaris Barang (KIB)
         </p>
         <p className="font-display font-bold text-ink text-base uppercase">
-          Peralatan dan Mesin
+          B — Peralatan dan Mesin
         </p>
       </div>
 

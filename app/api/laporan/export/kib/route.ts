@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   // gabungan "No.Sertifikat/dll" di form), dikosongkan aja, bukan
   // dihapus kolomnya.
   const buffer = await buatXlsxLaporan({
-    judul: "KARTU INVENTARIS BARANG (KIB) B — PERALATAN DAN MESIN",
+    judul: ["KARTU INVENTARIS BARANG (KIB)", "B — PERALATAN DAN MESIN"],
     subJudulTengah: [
       sekolah?.nama ?? "",
       ...(sekolah?.alamat ? [sekolah.alamat] : []),

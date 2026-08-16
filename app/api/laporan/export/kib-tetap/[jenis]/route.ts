@@ -34,7 +34,7 @@ export async function GET(
   const leafKolom = ratakanKolom(kolom);
 
   const buffer = await buatXlsxLaporan({
-    judul: `KARTU INVENTARIS BARANG (KIB) ${jenis} — ${JUDUL_KIB[jenis].toUpperCase()}`,
+    judul: ["KARTU INVENTARIS BARANG (KIB)", `${jenis} — ${JUDUL_KIB[jenis].toUpperCase()}`],
     kodeLokasi: sekolah?.kode_lokasi || "—",
     header: headerKolomExcel(kolom),
     baris:

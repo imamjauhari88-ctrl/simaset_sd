@@ -55,7 +55,10 @@ export async function buatXlsxLaporan({
   lebarKolom,
   sekolah,
 }: {
-  judul: string;
+  /** String buat judul 1 baris, atau array buat judul 2 baris+ (mis.
+   * "KARTU INVENTARIS BARANG (KIB)" di baris 1, "B — PERALATAN DAN
+   * MESIN" di baris 2) — sama-sama bold & rata tengah tiap barisnya. */
+  judul: string | string[];
   /** Grid rata kiri "Label : Nilai", satu per baris — dipakai laporan
    * yang di versi cetaknya pakai `grid grid-cols-[auto_1fr]` (KIR,
    * Buku Inventaris, Daftar Usulan). */
@@ -107,7 +110,9 @@ export async function buatXlsxLaporan({
     baris_ke++;
   }
 
-  tulisBarisGabung(judul, { tebal: true, ukuran: 14 });
+  for (const baris_judul of Array.isArray(judul) ? judul : [judul]) {
+    tulisBarisGabung(baris_judul, { tebal: true, ukuran: 14 });
+  }
   baris_ke++; // sedikit jarak antara judul & info di bawahnya
 
   if (infoKiri && infoKiri.length > 0) {

@@ -44,10 +44,10 @@ export default async function CetakKibTetapPage({
 
       <div className="text-center mb-3">
         <p className="font-display font-bold text-ink text-base uppercase">
-          Kartu Inventaris Barang (KIB) {jenis}
+          Kartu Inventaris Barang (KIB)
         </p>
-        <p className="font-display font-semibold text-ink text-sm uppercase">
-          {JUDUL_KIB[jenis]}
+        <p className="font-display font-bold text-ink text-base uppercase">
+          {jenis} — {JUDUL_KIB[jenis]}
         </p>
       </div>
 
