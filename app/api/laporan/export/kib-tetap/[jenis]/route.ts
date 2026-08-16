@@ -35,10 +35,7 @@ export async function GET(
 
   const buffer = await buatXlsxLaporan({
     judul: `KARTU INVENTARIS BARANG (KIB) ${jenis} — ${JUDUL_KIB[jenis].toUpperCase()}`,
-    subJudul: [
-      `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
-      `Dicetak: ${new Date().toLocaleString("id-ID")}`,
-    ],
+    kodeLokasi: sekolah?.kode_lokasi || "—",
     header: headerKolomExcel(kolom),
     baris:
       daftar.length === 0

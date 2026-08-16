@@ -47,10 +47,10 @@ export async function GET() {
 
   const buffer = await buatXlsxLaporan({
     judul: "DAFTAR USULAN BARANG YANG DIHAPUS",
-    subJudul: [
-      `SKPD: ${sekolah?.nama ?? ""}`,
-      `Kab/Kota: ${sekolah?.kabupaten_kota || "—"}  |  Provinsi: ${sekolah?.provinsi || "—"}`,
-      `Dicetak: ${new Date().toLocaleString("id-ID")}`,
+    infoKiri: [
+      { label: "SKPD", nilai: sekolah?.nama ?? "—" },
+      { label: "KAB/KOTA", nilai: sekolah?.kabupaten_kota || "—" },
+      { label: "PROVINSI", nilai: sekolah?.provinsi || "—" },
     ],
     header,
     baris,

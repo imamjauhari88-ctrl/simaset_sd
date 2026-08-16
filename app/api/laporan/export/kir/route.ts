@@ -35,13 +35,14 @@ export async function GET(request: NextRequest) {
   // kayak Buku Inventaris & KIB.
   const buffer = await buatXlsxLaporan({
     judul: "KARTU INVENTARIS RUANGAN (KIR)",
-    subJudul: [
-      `Provinsi: ${sekolah?.provinsi || "—"}  |  Kab/Kota: ${sekolah?.kabupaten_kota || "—"}`,
-      `Satuan Kerja: ${sekolah?.nama ?? ""}`,
-      `Ruangan: ${namaRuangan}`,
-      `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
-      `Dicetak: ${new Date().toLocaleString("id-ID")}`,
+    infoKiri: [
+      { label: "PROVINSI", nilai: sekolah?.provinsi || "—" },
+      { label: "KAB/KOTA", nilai: sekolah?.kabupaten_kota || "—" },
+      { label: "UNIT", nilai: "DINAS PENDIDIKAN" },
+      { label: "SATUAN KERJA", nilai: sekolah?.nama ?? "—" },
+      { label: "RUANGAN", nilai: namaRuangan },
     ],
+    kodeLokasi: sekolah?.kode_lokasi || "—",
     header: [
       "No",
       "Kode Barang",

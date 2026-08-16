@@ -2,11 +2,24 @@ import ExcelJS from "exceljs";
 import type { Sekolah } from "@/types/database";
 
 /**
- * Bikin file .xlsx dari header + baris data, mirip persis bentuk cetak
- * HTML-nya: kop judul, header kolom (bisa bertingkat 2 baris kalau ada
- * grup), garis pinggir di semua sel, dan blok tanda tangan "MENGETAHUI/
- * PENGURUS BARANG" di bawah — sama kayak <TandaTangan> versi cetak,
- * bukan cuma tabel data doang tanpa kop tanda tangan kayak sebelumnya.
+ * Bikin file .xlsx dari header + baris data, ngikutin PERSIS struktur
+ * layout kop versi cetak HTML — bukan disamain rata (dulu semua baris
+ * info dipukul-rata jadi 1 gaya "centered", padahal versi cetak
+ * sebenernya campuran 2 gaya berbeda tergantung laporannya):
+ *
+ *   - `infoKiri`      -> grid rata KIRI "Label : Nilai" (dipakai KIR,
+ *                        Buku Inventaris, Daftar Usulan — cocokin sama
+ *                        `grid grid-cols-[auto_1fr]` di JSX-nya)
+ *   - `subJudulTengah`-> baris rata TENGAH biasa (dipakai KIB B & Mutasi
+ *                        — cocokin sama `text-center` di JSX-nya)
+ *   - `kodeLokasi`    -> baris "NO. KODE LOKASI : X" tersendiri, SELALU
+ *                        rata kiri (KIR/Buku Inventaris/KIB pakai ini,
+ *                        posisinya emang gak digabung ke blok di atas
+ *                        di versi cetak, jadi ditulis terpisah)
+ *
+ * "Dicetak: <waktu>" juga BUKAN bagian kop lagi — di versi cetak itu
+ * ada di FOOTER (bawah tabel, sebelum blok tanda tangan), makanya di
+ * sini otomatis ditaruh di situ juga, bukan digabung ke info atas.
  *
  * Sengaja pindah dari `xlsx` (SheetJS) ke `exceljs` — versi gratis
  * SheetJS itu gak bisa nulis border/style ke file .xlsx (fitur itu
@@ -34,14 +47,25 @@ const LEBAR_MARGIN = 2.5;
 
 export async function buatXlsxLaporan({
   judul,
-  subJudul,
+  infoKiri,
+  subJudulTengah,
+  kodeLokasi,
   header,
   baris,
   lebarKolom,
   sekolah,
 }: {
   judul: string;
-  subJudul: string[];
+  /** Grid rata kiri "Label : Nilai", satu per baris — dipakai laporan
+   * yang di versi cetaknya pakai `grid grid-cols-[auto_1fr]` (KIR,
+   * Buku Inventaris, Daftar Usulan). */
+  infoKiri?: { label: string; nilai: string }[];
+  /** Baris teks biasa rata TENGAH — dipakai laporan yang di versi
+   * cetaknya pakai `text-center` buat blok info sekolah (KIB B, Mutasi). */
+  subJudulTengah?: string[];
+  /** Baris "NO. KODE LOKASI : X" — selalu rata kiri, digambar terpisah
+   * dari blok info di atasnya (sesuai posisinya di versi cetak). */
+  kodeLokasi?: string;
   /** String biasa buat kolom tunggal, atau `{label, anak}` buat kolom
    * yang jadi 1 grup dengan beberapa sub-kolom (mis. "Nomor" pecah
    * jadi "Kode Barang" + "Register") — header-nya otomatis jadi 2
@@ -51,11 +75,11 @@ export async function buatXlsxLaporan({
   /** Lebar tiap kolom dalam karakter, urut sesuai kolom hasil ratakan
    * (bukan sesuai `header` kalau ada grup — satu per kolom LEAF). */
   lebarKolom: number[];
-  /** Buat blok tanda tangan "MENGETAHUI/PENGURUS BARANG" di bawah
-   * tabel — sama datanya kayak yang diisi di Pengaturan > Info
-   * Sekolah, dipakai berulang di <TandaTangan> versi cetak. Opsional:
-   * kalau gak dikasih, blok tanda tangannya dilewat (mis. laporan
-   * ringkasan super admin yang emang bukan format tanda tangan dinas). */
+  /** Buat blok tanda tangan "MENGETAHUI/PENGURUS BARANG" + baris
+   * "Dicetak: ..." di footer — sama datanya kayak yang diisi di
+   * Pengaturan > Info Sekolah, dipakai berulang di <TandaTangan> versi
+   * cetak. Opsional: kalau gak dikasih, dua-duanya dilewat (mis.
+   * laporan ringkasan super admin yang emang bukan format dinas). */
   sekolah?: Sekolah | null;
 }): Promise<Buffer> {
   const workbook = new ExcelJS.Workbook();
@@ -73,24 +97,41 @@ export async function buatXlsxLaporan({
 
   let baris_ke = 1;
 
-  function gabungBarisPenuh(teks: string, tebal: boolean) {
+  function tulisBarisGabung(teks: string, opsi: { tebal?: boolean; ukuran?: number; rata?: "left" | "center" } = {}) {
     sheet.mergeCells(baris_ke, KOLOM_MARGIN + 1, baris_ke, kolomTerakhir);
     const sel = sheet.getCell(baris_ke, KOLOM_MARGIN + 1);
     sel.value = teks;
-    sel.font = { bold: tebal, size: tebal ? 14 : 10 };
-    sel.alignment = { horizontal: "center", vertical: "middle" };
-    // Tinggi baris default Excel (~15pt) jauh lebih rapat dibanding
-    // line-height paragraf di versi cetak HTML — makanya biar gak
-    // keliatan numpuk, tiap baris kop (judul & info sekolah) dikasih
-    // tinggi eksplisit yang lebih lega.
-    sheet.getRow(baris_ke).height = tebal ? 26 : 20;
+    sel.font = { bold: opsi.tebal ?? false, size: opsi.ukuran ?? 10 };
+    sel.alignment = { horizontal: opsi.rata ?? "center", vertical: "middle" };
+    sheet.getRow(baris_ke).height = opsi.tebal ? 26 : 20;
     baris_ke++;
   }
 
-  gabungBarisPenuh(judul, true);
-  baris_ke++; // sedikit jarak antara judul & sub-judul
-  for (const s of subJudul) gabungBarisPenuh(s, false);
-  baris_ke += 2; // jarak lebih lega sebelum tabel mulai
+  tulisBarisGabung(judul, { tebal: true, ukuran: 14 });
+  baris_ke++; // sedikit jarak antara judul & info di bawahnya
+
+  if (infoKiri && infoKiri.length > 0) {
+    for (const { label, nilai } of infoKiri) {
+      sheet.getCell(baris_ke, KOLOM_MARGIN + 1).value = label;
+      sheet.getCell(baris_ke, KOLOM_MARGIN + 2).value = `: ${nilai}`;
+      sheet.getRow(baris_ke).height = 18;
+      baris_ke++;
+    }
+  }
+
+  if (subJudulTengah) {
+    for (const s of subJudulTengah) tulisBarisGabung(s, { rata: "center" });
+  }
+
+  if (kodeLokasi) {
+    baris_ke++; // jarak sebelum baris kode lokasi, sama kayak versi cetak
+    sheet.getCell(baris_ke, KOLOM_MARGIN + 1).value = `NO. KODE LOKASI : ${kodeLokasi}`;
+    sheet.getCell(baris_ke, KOLOM_MARGIN + 1).font = { bold: true, size: 10 };
+    sheet.getRow(baris_ke).height = 20;
+    baris_ke++;
+  }
+
+  baris_ke += 1; // jarak lebih lega sebelum tabel mulai
 
   // ===== Header kolom (1 atau 2 baris, tergantung ada grup atau enggak) =====
   const barisHeaderAwal = baris_ke;
@@ -142,9 +183,21 @@ export async function buatXlsxLaporan({
   });
   sheet.getRow(barisHeaderAwal).height = jumlahBarisHeader === 2 ? 28 : 20;
 
+  let barisSetelahTabel = barisDataAwal + baris.length;
+
+  // ===== Footer "Dicetak: ..." — sama posisinya kayak versi cetak
+  // (di bawah tabel, sebelum tanda tangan, rata kiri) =====
+  if (sekolah !== undefined) {
+    barisSetelahTabel += 2;
+    const selDicetak = sheet.getCell(barisSetelahTabel, KOLOM_MARGIN + 1);
+    selDicetak.value = `Dicetak: ${new Date().toLocaleString("id-ID")}`;
+    selDicetak.font = { size: 9, italic: true };
+    barisSetelahTabel++;
+  }
+
   // ===== Blok tanda tangan — sama persis <TandaTangan> versi cetak =====
   if (sekolah !== undefined) {
-    let barisTtd = barisDataAwal + baris.length + 3;
+    let barisTtd = barisSetelahTabel + 2;
     const tengahKiri = KOLOM_MARGIN + 1 + Math.floor((totalKolom - 1) / 4);
     const tengahKanan = KOLOM_MARGIN + 1 + Math.floor((totalKolom * 3) / 4);
     const kabKota = sekolah?.kabupaten_kota || "…………………";
@@ -160,11 +213,7 @@ export async function buatXlsxLaporan({
     }
 
     tulisTtd(tengahKiri, barisTtd, "MENGETAHUI");
-    tulisTtd(
-      tengahKanan,
-      barisTtd,
-      `${kabKota}, ${tanggal}`
-    );
+    tulisTtd(tengahKanan, barisTtd, `${kabKota}, ${tanggal}`);
     barisTtd++;
     tulisTtd(
       tengahKiri,

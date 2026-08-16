@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
   // dihapus kolomnya.
   const buffer = await buatXlsxLaporan({
     judul: "KARTU INVENTARIS BARANG (KIB) B — PERALATAN DAN MESIN",
-    subJudul: [
+    subJudulTengah: [
       sekolah?.nama ?? "",
-      `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
-      `Kategori: ${namaKategori}`,
-      `Dicetak: ${new Date().toLocaleString("id-ID")}`,
+      ...(sekolah?.alamat ? [sekolah.alamat] : []),
+      ...(kategoriId ? [`Kategori: ${namaKategori}`] : []),
     ],
+    kodeLokasi: sekolah?.kode_lokasi || "—",
     header: [
       "No",
       "Kode Barang",

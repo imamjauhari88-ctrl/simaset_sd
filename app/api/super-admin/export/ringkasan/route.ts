@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
 
   const buffer = await buatXlsxLaporan({
     judul: judulScope,
-    subJudul: [
+    subJudulTengah: [
       "SIMASET SD — Panel Super Admin",
       `Dicetak: ${new Date().toLocaleString("id-ID")}`,
       `Total sekolah: ${daftar.length}`,

@@ -29,12 +29,12 @@ export async function GET() {
   // "Grup - Anak" digabung 1 baris kayak sebelumnya.
   const buffer = await buatXlsxLaporan({
     judul: "BUKU INVENTARIS",
-    subJudul: [
-      `SKPD: ${sekolah?.nama ?? ""}`,
-      `Kabupaten/Kota: ${sekolah?.kabupaten_kota || "—"}  |  Provinsi: ${sekolah?.provinsi || "—"}`,
-      `No. Kode Lokasi: ${sekolah?.kode_lokasi || "—"}`,
-      `Dicetak: ${new Date().toLocaleString("id-ID")}`,
+    infoKiri: [
+      { label: "SKPD", nilai: sekolah?.nama ?? "—" },
+      { label: "KABUPATEN/KOTA", nilai: sekolah?.kabupaten_kota || "—" },
+      { label: "PROVINSI", nilai: sekolah?.provinsi || "—" },
     ],
+    kodeLokasi: sekolah?.kode_lokasi || "—",
     header: [
       "No",
       { label: "Nomor", anak: ["Kode Barang", "Register"] },

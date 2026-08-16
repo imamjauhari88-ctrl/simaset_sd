@@ -20,10 +20,11 @@ export async function GET(request: NextRequest) {
 
   const buffer = await buatXlsxLaporan({
     judul: "LAPORAN MUTASI ASET",
-    subJudul: [
+    subJudulTengah: [
       sekolah?.nama ?? "",
+      ...(sekolah?.alamat ? [sekolah.alamat] : []),
+      ...(sekolah?.npsn ? [`NPSN: ${sekolah.npsn}`] : []),
       `Periode: ${tahun ?? "Semua Tahun"}`,
-      `Dicetak: ${new Date().toLocaleString("id-ID")}`,
     ],
     header: [
       "No",
