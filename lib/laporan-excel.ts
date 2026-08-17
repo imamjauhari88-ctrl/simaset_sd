@@ -117,8 +117,14 @@ export async function buatXlsxLaporan({
 
   if (infoKiri && infoKiri.length > 0) {
     for (const { label, nilai } of infoKiri) {
+      // Nilai sengaja ditaruh di kolom D (bukan langsung C) — kolom B
+      // lebar aslinya ditentuin sama kolom pertama tabel data di
+      // bawahnya (biasanya sempit, buat kolom "No"), jadi kalau
+      // labelnya panjang (mis. "SATUAN KERJA") bakal kepotong kalau
+      // nilai-nya nempel pas di kolom sebelah. Kolom C dibiarin kosong
+      // jadi "zona luber" buat teks label yang kepanjangan.
       sheet.getCell(baris_ke, KOLOM_MARGIN + 1).value = label;
-      sheet.getCell(baris_ke, KOLOM_MARGIN + 2).value = `: ${nilai}`;
+      sheet.getCell(baris_ke, KOLOM_MARGIN + 3).value = `: ${nilai}`;
       sheet.getRow(baris_ke).height = 18;
       baris_ke++;
     }

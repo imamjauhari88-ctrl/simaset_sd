@@ -55,7 +55,7 @@ export function DaftarPengguna({
   }
 
   return (
-    <div className="tag-card p-5 max-w-xl">
+    <div className="tag-card p-5">
       <div className="flex items-center gap-2 mb-1">
         <Users size={18} className="text-pine" />
         <p className="font-display font-semibold text-ink">

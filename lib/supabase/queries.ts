@@ -352,6 +352,44 @@ export async function getRuanganList(): Promise<Ruangan[]> {
   return data;
 }
 
+/** Jumlah aset per kategori — dipakai kartu di halaman Kategori Barang
+ * biar keliatan tiap kategori isinya berapa barang, tanpa perlu buka
+ * Data Aset & filter manual. Diitung di JS dari kolom `kategori_id`
+ * doang (bukan `select('*')`) biar ringan walau asetnya ratusan. */
+export async function getJumlahAsetPerKategori(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("aset").select("kategori_id");
+
+  if (error) {
+    console.error("Gagal menghitung jumlah aset per kategori:", error.message);
+    return {};
+  }
+
+  const hasil: Record<string, number> = {};
+  for (const row of data) {
+    hasil[row.kategori_id] = (hasil[row.kategori_id] ?? 0) + 1;
+  }
+  return hasil;
+}
+
+/** Sama kayak getJumlahAsetPerKategori, tapi per ruangan — dipakai
+ * kartu di halaman Ruangan/Lokasi. */
+export async function getJumlahAsetPerRuangan(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("aset").select("ruangan_id");
+
+  if (error) {
+    console.error("Gagal menghitung jumlah aset per ruangan:", error.message);
+    return {};
+  }
+
+  const hasil: Record<string, number> = {};
+  for (const row of data) {
+    hasil[row.ruangan_id] = (hasil[row.ruangan_id] ?? 0) + 1;
+  }
+  return hasil;
+}
+
 // ============================================================
 // Dashboard — agregasi data real, bukan mock
 // ============================================================

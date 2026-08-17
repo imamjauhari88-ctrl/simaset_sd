@@ -1,11 +1,12 @@
 import { Topbar } from "@/components/layout/topbar";
 import { RuanganManager } from "@/components/ruangan/ruangan-manager";
-import { getRuanganList } from "@/lib/supabase/queries";
+import { getRuanganList, getJumlahAsetPerRuangan } from "@/lib/supabase/queries";
 import { getProfilSaya } from "@/lib/tenant/context";
 
 export default async function RuanganPage() {
-  const [ruanganList, profil] = await Promise.all([
+  const [ruanganList, jumlahAset, profil] = await Promise.all([
     getRuanganList(),
+    getJumlahAsetPerRuangan(),
     getProfilSaya(),
   ]);
 
@@ -15,6 +16,7 @@ export default async function RuanganPage() {
       <main className="flex-1 p-6">
         <RuanganManager
           initialData={ruanganList}
+          jumlahAset={jumlahAset}
           bisaKelola={profil?.role === "admin"}
         />
       </main>

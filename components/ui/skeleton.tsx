@@ -145,8 +145,8 @@ export function ReportCardGridSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
-/** Beberapa card ringkas berjejer vertikal, ala manager kategori/ruangan
- *  atau daftar sesi opname. */
+/** Beberapa card ringkas berjejer vertikal — dipakai daftar sesi opname
+ *  & tempat lain yang masih list horizontal 1 kolom (bukan grid). */
 export function ListCardSkeleton({ count = 5 }: { count?: number }) {
   return (
     <div className="space-y-2.5">
@@ -163,6 +163,32 @@ export function ListCardSkeleton({ count = 5 }: { count?: number }) {
             </div>
           </div>
           <Skeleton className="h-7 w-16 rounded-lg shrink-0" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Grid kartu per-item (ikon + nama + subjudul + footer angka) — dipakai
+ *  manager Kategori Barang & Ruangan/Lokasi yang gaya tampilannya kartu
+ *  grid, bukan tabel atau list horizontal. */
+export function ItemCardGridSkeleton({ count = 6 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="tag-card p-4 flex flex-col gap-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-start gap-2.5 min-w-0 flex-1">
+              <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+              <div className="space-y-1.5 flex-1 min-w-0 pt-0.5">
+                <Skeleton className="h-3.5 w-2/3" />
+                <Skeleton className="h-2.5 w-1/2" />
+              </div>
+            </div>
+          </div>
+          <div className="pt-3 border-t border-line/60">
+            <Skeleton className="h-2.5 w-16" />
+          </div>
         </div>
       ))}
     </div>

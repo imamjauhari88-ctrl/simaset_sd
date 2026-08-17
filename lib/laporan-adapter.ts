@@ -1,4 +1,4 @@
-import type { AsetTetap, JenisKib, KondisiAset } from "@/types/database";
+import type { AsetTetap, JenisKib, KondisiAset, SumberDana } from "@/types/database";
 import type { AsetWithRelasi } from "@/lib/supabase/queries";
 
 /**
@@ -52,7 +52,7 @@ export function asetDariTetap(a: AsetTetap): AsetWithRelasi {
     ruangan_id: "",
     merk_tipe: null,
     tahun_perolehan: a.tahun ?? 0,
-    sumber_dana: "lainnya",
+    sumber_dana: sumberDanaDariAsalUsul(a.detail.asal_usul || a.detail.asal_usul_pembiayaan),
     harga_perolehan: a.harga,
     kondisi: kondisiKeGayaAset(a.detail.kondisi),
     stok: 1,
@@ -99,6 +99,23 @@ function kondisiKeGayaAset(k?: "baik" | "kurang_baik" | "rusak_berat"): KondisiA
   if (k === "rusak_berat") return "rusak_berat";
   if (k === "baik") return "baik";
   return "rusak_ringan";
+}
+
+/** Aset Tetap Khusus nyimpen "Asal Usul" sebagai teks bebas (user
+ * ketik manual, mis. "Beli", "Bantuan", "Swadana") — bukan pilihan
+ * dari dropdown Sumber Dana kayak di Data Aset biasa. Biar pas masuk
+ * Buku Inventaris teks yang diketik itu ketangkep (bukan selalu jatuh
+ * ke "Lainnya"), dicocokin ke kata kunci yang paling deket ke opsi
+ * Sumber Dana yang ada. Kalau gak ketemu kata kunci apapun, baru
+ * bener-bener jatuh ke "Lainnya". */
+function sumberDanaDariAsalUsul(teks?: string): SumberDana {
+  const t = (teks || "").toLowerCase();
+  if (t.includes("apbd")) return "apbd";
+  if (t.includes("bos")) return "bos";
+  if (t.includes("hibah") || t.includes("bantuan")) return "hibah";
+  if (t.includes("swadaya") || t.includes("swadana")) return "swadaya";
+  if (t.includes("beli") || t.includes("pembelian")) return "bos";
+  return "lainnya";
 }
 
 /**

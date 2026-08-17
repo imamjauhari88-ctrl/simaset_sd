@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, DoorOpen } from "lucide-react";
+import { Plus, Pencil, Trash2, DoorOpen, Boxes } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useDaftarRuangan, useHapusRuangan } from "@/lib/queries/ruangan";
@@ -11,9 +11,13 @@ import type { Ruangan } from "@/types/database";
 
 export function RuanganManager({
   initialData,
+  jumlahAset,
   bisaKelola,
 }: {
   initialData: Ruangan[];
+  /** Jumlah aset per ruangan (kunci = ruangan_id), buat ditampilin di
+   * tiap kartu — dihitung sekali di server, bukan tiap kartu query sendiri. */
+  jumlahAset: Record<string, number>;
   bisaKelola: boolean;
 }) {
   const { data = [] } = useDaftarRuangan(initialData);
@@ -61,53 +65,49 @@ export function RuanganManager({
           description="Daftarkan ruangan agar aset bisa ditempatkan dan dilacak per lokasi."
         />
       ) : (
-        <div className="tag-card overflow-hidden">
-          <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-ink-soft border-b border-line">
-                <th className="font-medium px-4 py-3">Nama Ruangan</th>
-                <th className="font-medium px-4 py-3">Keterangan</th>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {data.map((r) => (
+            <div
+              key={r.id}
+              className="tag-card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex items-start gap-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-sage-soft flex items-center justify-center shrink-0">
+                    <DoorOpen size={16} className="text-sage" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-ink truncate">{r.nama}</p>
+                    <p className="text-[12px] text-ink-soft truncate">
+                      {r.keterangan || "Tanpa keterangan"}
+                    </p>
+                  </div>
+                </div>
                 {bisaKelola && (
-                  <th className="font-medium px-4 py-3 w-24">Aksi</th>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <button
+                      onClick={() => setEditRuangan(r)}
+                      className="text-ink-soft hover:text-pine transition-colors"
+                      aria-label="Edit"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      onClick={() => setHapusTarget(r)}
+                      className="text-ink-soft hover:text-brick transition-colors"
+                      aria-label="Hapus"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 )}
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-b border-line last:border-0 hover:bg-paper/70 transition-colors"
-                >
-                  <td className="px-4 py-3 text-ink">{r.nama}</td>
-                  <td className="px-4 py-3 text-ink-soft">
-                    {r.keterangan ?? "—"}
-                  </td>
-                  {bisaKelola && (
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => setEditRuangan(r)}
-                          className="text-ink-soft hover:text-pine transition-colors"
-                          aria-label="Edit"
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => setHapusTarget(r)}
-                          className="text-ink-soft hover:text-brick transition-colors"
-                          aria-label="Hapus"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[12px] text-ink-soft pt-3 border-t border-line/60">
+                <Boxes size={13} />
+                <span>{jumlahAset[r.id] ?? 0} aset</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

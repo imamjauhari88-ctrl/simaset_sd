@@ -1,11 +1,12 @@
 import { Topbar } from "@/components/layout/topbar";
 import { KategoriManager } from "@/components/kategori/kategori-manager";
-import { getKategoriList } from "@/lib/supabase/queries";
+import { getKategoriList, getJumlahAsetPerKategori } from "@/lib/supabase/queries";
 import { getProfilSaya } from "@/lib/tenant/context";
 
 export default async function KategoriPage() {
-  const [kategoriList, profil] = await Promise.all([
+  const [kategoriList, jumlahAset, profil] = await Promise.all([
     getKategoriList(),
+    getJumlahAsetPerKategori(),
     getProfilSaya(),
   ]);
 
@@ -15,6 +16,7 @@ export default async function KategoriPage() {
       <main className="flex-1 p-6">
         <KategoriManager
           initialData={kategoriList}
+          jumlahAset={jumlahAset}
           bisaKelola={profil?.role === "admin"}
         />
       </main>

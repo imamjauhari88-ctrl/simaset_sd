@@ -123,7 +123,7 @@ export function InfoSekolah({
   const labelClass = "text-[11px] text-ink-soft uppercase tracking-wide mb-0.5 block";
 
   return (
-    <div className="tag-card p-5 max-w-xl">
+    <div className="tag-card p-5">
       <div className="flex items-center gap-2 mb-4">
         <School size={18} className="text-pine" />
         <p className="font-display font-semibold text-ink">Info Sekolah</p>
