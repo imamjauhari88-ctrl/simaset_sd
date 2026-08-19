@@ -85,6 +85,8 @@ export interface DaftarAsetParams {
   pageSize?: number;
   search?: string;
   kondisi?: KondisiAset | "semua";
+  kategoriId?: string;
+  ruanganId?: string;
 }
 
 export interface DaftarAsetResult {
@@ -101,7 +103,7 @@ export interface DaftarAsetResult {
 export async function getDaftarAsetPaginated(
   params: DaftarAsetParams = {}
 ): Promise<DaftarAsetResult> {
-  const { page = 1, pageSize = 15, search = "", kondisi = "semua" } = params;
+  const { page = 1, pageSize = 15, search = "", kondisi = "semua", kategoriId, ruanganId } = params;
   const supabase = await createClient();
 
   let query = supabase
@@ -120,6 +122,12 @@ export async function getDaftarAsetPaginated(
   }
   if (kondisi !== "semua") {
     query = query.eq("kondisi", kondisi);
+  }
+  if (kategoriId) {
+    query = query.eq("kategori_id", kategoriId);
+  }
+  if (ruanganId) {
+    query = query.eq("ruangan_id", ruanganId);
   }
 
   const dari = (Math.max(1, page) - 1) * pageSize;

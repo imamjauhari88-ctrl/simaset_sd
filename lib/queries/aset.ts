@@ -243,3 +243,46 @@ export function useSimpanAsetMassal() {
     },
   });
 }
+
+/** Daftar aset dalam satu kategori/ruangan — dipakai modal "rincian
+ * aset" pas kartu Kategori Barang / Ruangan diklik. Dibatasi 100 baris
+ * biar modal-nya gak berat kalau kebetulan isinya ratusan; kalau lebih
+ * dari itu, arahkan ke Data Aset (link "Lihat semua") buat lihat
+ * sisanya lewat halaman biasa yang udah ada paginasinya. */
+const BATAS_RINCIAN = 100;
+
+export function useAsetRingkasByKategori(kategoriId: string | null) {
+  return useQuery({
+    queryKey: ["aset-ringkas-kategori", kategoriId],
+    enabled: !!kategoriId,
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("aset")
+        .select("id, kode_aset, nama, kondisi, merk_tipe")
+        .eq("kategori_id", kategoriId as string)
+        .order("nama")
+        .limit(BATAS_RINCIAN);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+}
+
+export function useAsetRingkasByRuangan(ruanganId: string | null) {
+  return useQuery({
+    queryKey: ["aset-ringkas-ruangan", ruanganId],
+    enabled: !!ruanganId,
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from("aset")
+        .select("id, kode_aset, nama, kondisi, merk_tipe")
+        .eq("ruangan_id", ruanganId as string)
+        .order("nama")
+        .limit(BATAS_RINCIAN);
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  });
+}

@@ -47,6 +47,9 @@ export function TabelAset({
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const kondisi = searchParams.get("kondisi") ?? "semua";
   const qUrl = searchParams.get("q") ?? "";
+  const kategoriId = searchParams.get("kategori") ?? "";
+  const ruanganId = searchParams.get("ruangan") ?? "";
+  const filterNama = searchParams.get("nama") ?? "";
 
   // Input pencarian dipisah dari nilai yang dipakai untuk fetch, supaya
   // ketikan user terasa instan sementara request ke server ditunda
@@ -85,8 +88,11 @@ export function TabelAset({
     pageSize: PAGE_SIZE,
     search: qUrl,
     kondisi: kondisi as KondisiAset | "semua",
+    kategoriId,
+    ruanganId,
   };
-  const { data, isFetching } = useDaftarAsetPaginated(params, page === 1 && !qUrl && kondisi === "semua" ? initialData : undefined);
+  const filterAktif = Boolean(kategoriId || ruanganId);
+  const { data, isFetching } = useDaftarAsetPaginated(params, page === 1 && !qUrl && kondisi === "semua" && !filterAktif ? initialData : undefined);
 
   const daftar: AsetWithRelasi[] = data?.data ?? [];
   const total = data?.count ?? 0;
@@ -101,7 +107,7 @@ export function TabelAset({
     // sebelumnya kebawa ke hasil baru. Pola sama kayak topbar-search.tsx.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTerpilih(new Set());
-  }, [page, qUrl, kondisi]);
+  }, [page, qUrl, kondisi, kategoriId, ruanganId]);
 
   function toggleSatu(id: string) {
     setTerpilih((prev) => {
@@ -180,6 +186,25 @@ export function TabelAset({
           ]}
         />
       </div>
+
+      {filterAktif && (
+        <div className="px-4 pt-3 -mb-1">
+          <div className="inline-flex items-center gap-2 bg-pine-soft text-pine-dark text-[12px] font-medium px-3 py-1.5 rounded-lg">
+            <span>
+              Difilter{filterNama ? `: ${filterNama}` : ""}
+            </span>
+            <button
+              onClick={() =>
+                perbaruiUrl({ kategori: null, ruangan: null, nama: null, page: null })
+              }
+              className="hover:text-pine transition-colors"
+              aria-label="Hapus filter"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

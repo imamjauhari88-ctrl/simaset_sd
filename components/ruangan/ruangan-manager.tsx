@@ -6,6 +6,8 @@ import { Plus, Pencil, Trash2, DoorOpen, Boxes } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useDaftarRuangan, useHapusRuangan } from "@/lib/queries/ruangan";
+import { useAsetRingkasByRuangan } from "@/lib/queries/aset";
+import { ModalRincianAset } from "@/components/aset/modal-rincian-aset";
 import { RuanganForm } from "./ruangan-form";
 import type { Ruangan } from "@/types/database";
 
@@ -26,6 +28,10 @@ export function RuanganManager({
   const [modalTambah, setModalTambah] = useState(false);
   const [editRuangan, setEditRuangan] = useState<Ruangan | null>(null);
   const [hapusTarget, setHapusTarget] = useState<Ruangan | null>(null);
+  const [rincianRuangan, setRincianRuangan] = useState<Ruangan | null>(null);
+  const { data: dataRincian, isLoading: rincianLoading } = useAsetRingkasByRuangan(
+    rincianRuangan?.id ?? null
+  );
 
   async function konfirmasiHapus() {
     if (!hapusTarget) return;
@@ -67,46 +73,69 @@ export function RuanganManager({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {data.map((r) => (
-            <div
+            <button
               key={r.id}
-              className="tag-card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
+              onClick={() => setRincianRuangan(r)}
+              className="tag-card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow text-left"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex items-start gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-sage-soft flex items-center justify-center shrink-0">
-                    <DoorOpen size={16} className="text-sage" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-ink truncate">{r.nama}</p>
-                    <p className="text-[12px] text-ink-soft truncate">
-                      {r.keterangan || "Tanpa keterangan"}
-                    </p>
-                  </div>
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-sage-soft flex items-center justify-center shrink-0">
+                  <DoorOpen size={16} className="text-sage" />
                 </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-ink truncate">{r.nama}</p>
+                  <p className="text-[12px] text-ink-soft truncate">
+                    {r.keterangan || "Tanpa keterangan"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-line/60">
+                <span className="flex items-center gap-1.5 text-[12px] text-ink-soft">
+                  <Boxes size={13} />
+                  {jumlahAset[r.id] ?? 0} aset
+                </span>
                 {bisaKelola && (
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <button
-                      onClick={() => setEditRuangan(r)}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditRuangan(r);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          setEditRuangan(r);
+                        }
+                      }}
                       className="text-ink-soft hover:text-pine transition-colors"
                       aria-label="Edit"
                     >
                       <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => setHapusTarget(r)}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHapusTarget(r);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          setHapusTarget(r);
+                        }
+                      }}
                       className="text-ink-soft hover:text-brick transition-colors"
                       aria-label="Hapus"
                     >
                       <Trash2 size={14} />
-                    </button>
+                    </span>
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[12px] text-ink-soft pt-3 border-t border-line/60">
-                <Boxes size={13} />
-                <span>{jumlahAset[r.id] ?? 0} aset</span>
-              </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -148,6 +177,16 @@ export function RuanganManager({
             </button>
           </div>
         </Modal>
+      )}
+
+      {rincianRuangan && (
+        <ModalRincianAset
+          judul={rincianRuangan.nama}
+          data={dataRincian}
+          isLoading={rincianLoading}
+          filterHref={`/aset?ruangan=${rincianRuangan.id}&nama=${encodeURIComponent(rincianRuangan.nama)}`}
+          onClose={() => setRincianRuangan(null)}
+        />
       )}
     </div>
   );

@@ -13,15 +13,24 @@ const PAGE_SIZE = 15;
 export default async function AsetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; q?: string; kondisi?: string }>;
+  searchParams: Promise<{
+    page?: string;
+    q?: string;
+    kondisi?: string;
+    kategori?: string;
+    ruangan?: string;
+    nama?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
   const search = sp.q ?? "";
   const kondisi = (sp.kondisi ?? "semua") as KondisiAset | "semua";
+  const kategoriId = sp.kategori ?? "";
+  const ruanganId = sp.ruangan ?? "";
 
   const [daftarAsetHalamanIni, totalAset, profil] = await Promise.all([
-    getDaftarAsetPaginated({ page, pageSize: PAGE_SIZE, search, kondisi }),
+    getDaftarAsetPaginated({ page, pageSize: PAGE_SIZE, search, kondisi, kategoriId, ruanganId }),
     getTotalAset(),
     getProfilSaya(),
   ]);

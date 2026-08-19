@@ -6,6 +6,8 @@ import { Plus, Pencil, Trash2, Tags, Boxes } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useDaftarKategori, useHapusKategori } from "@/lib/queries/kategori";
+import { useAsetRingkasByKategori } from "@/lib/queries/aset";
+import { ModalRincianAset } from "@/components/aset/modal-rincian-aset";
 import { KategoriForm } from "./kategori-form";
 import { LABEL_KODE_KIB } from "@/lib/validasi/kategori";
 import type { KategoriAset } from "@/types/database";
@@ -27,6 +29,10 @@ export function KategoriManager({
   const [modalTambah, setModalTambah] = useState(false);
   const [editKategori, setEditKategori] = useState<KategoriAset | null>(null);
   const [hapusTarget, setHapusTarget] = useState<KategoriAset | null>(null);
+  const [rincianKategori, setRincianKategori] = useState<KategoriAset | null>(null);
+  const { data: dataRincian, isLoading: rincianLoading } = useAsetRingkasByKategori(
+    rincianKategori?.id ?? null
+  );
 
   async function konfirmasiHapus() {
     if (!hapusTarget) return;
@@ -68,46 +74,69 @@ export function KategoriManager({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {data.map((k) => (
-            <div
+            <button
               key={k.id}
-              className="tag-card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow"
+              onClick={() => setRincianKategori(k)}
+              className="tag-card p-4 flex flex-col gap-3 hover:shadow-md transition-shadow text-left"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex items-start gap-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-pine-soft flex items-center justify-center shrink-0">
-                    <Tags size={16} className="text-pine" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-medium text-ink truncate">{k.nama}</p>
-                    <p className="text-[12px] text-ink-soft truncate">
-                      {k.kode_kib ? LABEL_KODE_KIB[k.kode_kib] ?? k.kode_kib : "Kode KIB belum ditentukan"}
-                    </p>
-                  </div>
+              <div className="flex items-start gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-pine-soft flex items-center justify-center shrink-0">
+                  <Tags size={16} className="text-pine" />
                 </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-ink truncate">{k.nama}</p>
+                  <p className="text-[12px] text-ink-soft truncate">
+                    {k.kode_kib ? LABEL_KODE_KIB[k.kode_kib] ?? k.kode_kib : "Kode KIB belum ditentukan"}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-line/60">
+                <span className="flex items-center gap-1.5 text-[12px] text-ink-soft">
+                  <Boxes size={13} />
+                  {jumlahAset[k.id] ?? 0} aset
+                </span>
                 {bisaKelola && (
                   <div className="flex items-center gap-2.5 shrink-0">
-                    <button
-                      onClick={() => setEditKategori(k)}
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditKategori(k);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          setEditKategori(k);
+                        }
+                      }}
                       className="text-ink-soft hover:text-pine transition-colors"
                       aria-label="Edit"
                     >
                       <Pencil size={14} />
-                    </button>
-                    <button
-                      onClick={() => setHapusTarget(k)}
+                    </span>
+                    <span
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setHapusTarget(k);
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.stopPropagation();
+                          setHapusTarget(k);
+                        }
+                      }}
                       className="text-ink-soft hover:text-brick transition-colors"
                       aria-label="Hapus"
                     >
                       <Trash2 size={14} />
-                    </button>
+                    </span>
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[12px] text-ink-soft pt-3 border-t border-line/60">
-                <Boxes size={13} />
-                <span>{jumlahAset[k.id] ?? 0} aset</span>
-              </div>
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -149,6 +178,16 @@ export function KategoriManager({
             </button>
           </div>
         </Modal>
+      )}
+
+      {rincianKategori && (
+        <ModalRincianAset
+          judul={rincianKategori.nama}
+          data={dataRincian}
+          isLoading={rincianLoading}
+          filterHref={`/aset?kategori=${rincianKategori.id}&nama=${encodeURIComponent(rincianKategori.nama)}`}
+          onClose={() => setRincianKategori(null)}
+        />
       )}
     </div>
   );
